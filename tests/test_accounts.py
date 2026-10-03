@@ -379,6 +379,82 @@ def test_el_409_cuenta_cuantas_operaciones_tiene(client, cuenta):
     assert "3 operacion" in resp.json()["detail"]
 
 
+# ====================================================================
+# trade_count en la respuesta
+# ====================================================================
+#
+# El frontend solo tiene cargadas las operaciones de la cuenta ACTIVA. Si
+# contara en el cliente, al borrar cualquier otra cuenta daria 0, no apareceria
+# el aviso y se podrian perder operaciones sin querer. Por eso el contador lo
+# pone el backend, que si sabe la verdad.
+
+def test_listar_cuentas_incluye_el_numero_de_operaciones(client, cuenta):
+    for i in range(2):
+        client.post("/trades/", json={
+            "account_id": str(cuenta.id), "symbol": f"SYM{i}", "direction": "long",
+            "quantity": 0.1, "entry_price": 1.0, "exit_price": 1.1, "pnl_bruto": 1.0,
+        })
+
+    datos = client.get("/accounts/").json()
+    assert datos[0]["trade_count"] == 2
+
+
+def test_una_cuenta_sin_operaciones_devuelve_cero(client, cuenta):
+    datos = client.get("/accounts/").json()
+    assert datos[0]["trade_count"] == 0
+
+
+def test_cada_cuenta_reporta_su_propio_contador(client, cuenta):
+    """Dos cuentas con conteos distintos: cada una debe dar el suyo."""
+    otra = client.post("/accounts/", json={
+        "name": "Con operaciones", "initial_balance": 1.0,
+        "currency": "USD", "source": "manual",
+    }).json()
+
+    for i in range(5):
+        client.post("/trades/", json={
+            "account_id": otra["id"], "symbol": f"S{i}", "direction": "long",
+            "quantity": 0.1, "entry_price": 1.0, "exit_price": 1.1, "pnl_bruto": 1.0,
+        })
+
+    # La API serializa el id como texto, por eso str() en la clave.
+    por_id = {c["id"]: c["trade_count"] for c in client.get("/accounts/").json()}
+    assert por_id[otra["id"]] == 5
+    assert por_id[str(cuenta.id)] == 0
+
+
+def test_crear_cuenta_devuelve_contador_en_cero(client):
+    creada = client.post("/accounts/", json={
+        "name": "Nueva", "initial_balance": 1.0,
+        "currency": "USD", "source": "manual",
+    }).json()
+    assert creada["trade_count"] == 0
+
+
+def test_editar_cuenta_devuelve_el_contador(client, cuenta):
+    """Al editar, el contador no debe perder informacion."""
+    for i in range(4):
+        client.post("/trades/", json={
+            "account_id": str(cuenta.id), "symbol": f"S{i}", "direction": "long",
+            "quantity": 0.1, "entry_price": 1.0, "exit_price": 1.1, "pnl_bruto": 1.0,
+        })
+
+    resp = client.put(f"/accounts/{cuenta.id}", json={"name": "Renombrada"})
+    assert resp.status_code == 200
+    assert resp.json()["trade_count"] == 4
+
+
+def test_obtener_cuenta_devuelve_el_contador(client, cuenta):
+    for i in range(2):
+        client.post("/trades/", json={
+            "account_id": str(cuenta.id), "symbol": f"S{i}", "direction": "long",
+            "quantity": 0.1, "entry_price": 1.0, "exit_price": 1.1, "pnl_bruto": 1.0,
+        })
+
+    resp = client.get(f"/accounts/{cuenta.id}")
+    assert resp.json()["trade_count"] == 2
+
+
 def test_borrar_cuenta_inexistente_da_404(client):
     resp = client.delete("/accounts/00000000-0000-0000-0000-000000000000")
     assert resp.status_code == 404

@@ -155,6 +155,7 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "accounts.empty": "You have no accounts yet.",
   "accounts.current": "Current",
   "accounts.initialDeposit": "Initial deposit ${amount}",
+  "accounts.tradesCount": { one: "{n} trade", other: "{n} trades" },
   "accounts.useThis": "Use this account",
   "accounts.importInstead": "Would you rather import it from MT5 instead of creating it manually?",
   "accounts.importInsteadLink": "Import CSV as a new account",

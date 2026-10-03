@@ -154,6 +154,7 @@ export const es = {
   "accounts.empty": "Aún no tienes cuentas creadas.",
   "accounts.current": "Actual",
   "accounts.initialDeposit": "Depósito inicial ${amount}",
+  "accounts.tradesCount": { one: "{n} operación", other: "{n} operaciones" },
   "accounts.useThis": "Usar esta cuenta",
   "accounts.importInstead": "¿Quieres importarla desde MT5 en vez de crearla manual?",
   "accounts.importInsteadLink": "Importar CSV como cuenta nueva",

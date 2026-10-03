@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -7,6 +8,26 @@ from app.models import User, Account, Trade
 from app.schemas_accounts import AccountCreate, AccountUpdate, AccountOut
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
+
+
+def _anadir_contadores(cuentas: list[Account], db: Session) -> list[Account]:
+    """
+    Rellena account.trade_count en una sola consulta.
+
+    Hacerlo con un COUNT por cuenta seria N+1: con 12 cuentas, 12 viajes a la
+    base de datos por cada vez que se abre la vista de cuentas.
+    """
+    if not cuentas:
+        return cuentas
+    conteos = dict(
+        db.query(Trade.account_id, func.count(Trade.id))
+        .filter(Trade.account_id.in_([c.id for c in cuentas]))
+        .group_by(Trade.account_id)
+        .all()
+    )
+    for cuenta in cuentas:
+        cuenta.trade_count = conteos.get(cuenta.id, 0)
+    return cuentas
 
 
 @router.post("/", response_model=AccountOut, status_code=201)
@@ -25,7 +46,7 @@ def create_account(
     db.add(account)
     db.commit()
     db.refresh(account)
-    return account
+    return _anadir_contadores([account], db)[0]
 
 
 @router.get("/", response_model=list[AccountOut])
@@ -33,7 +54,8 @@ def list_accounts(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return db.query(Account).filter(Account.user_id == current_user.id).all()
+    cuentas = db.query(Account).filter(Account.user_id == current_user.id).all()
+    return _anadir_contadores(cuentas, db)
 
 
 @router.get("/{account_id}", response_model=AccountOut)
@@ -49,7 +71,7 @@ def get_account(
     )
     if not account:
         raise HTTPException(status_code=404, detail="Cuenta no encontrada")
-    return account
+    return _anadir_contadores([account], db)[0]
 
 
 @router.put("/{account_id}", response_model=AccountOut)
@@ -81,7 +103,7 @@ def update_account(
 
     db.commit()
     db.refresh(account)
-    return account
+    return _anadir_contadores([account], db)[0]
 
 
 @router.delete("/{account_id}", status_code=204)

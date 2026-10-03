@@ -17,6 +17,10 @@ type Account = {
   initial_balance: number;
   currency: string;
   source: string;
+  /* Cuantas operaciones tiene. Lo envia el backend: aquí solo tenemos cargadas
+     las operaciones de la cuenta activa, así que contarlas en el cliente
+     daría 0 para cualquier otra cuenta. */
+  trade_count: number;
 };
 
 type Trade = {
@@ -487,10 +491,9 @@ export default function DashboardPage() {
   const accDeleteOpen = accDeleteId !== null;
   const accEnEdicion = accEditId ? accounts.find((a) => a.id === accEditId) ?? null : null;
   const accEnBorrado = accDeleteId ? accounts.find((a) => a.id === accDeleteId) ?? null : null;
-  const tradesDeAccEnBorrado = useMemo(
-    () => (accDeleteId ? trades.filter((tr) => tr.account_id === accDeleteId).length : 0),
-    [accDeleteId, trades],
-  );
+  /* Sale de account.trade_count, no de la lista de trades del cliente: esa
+     solo tiene la cuenta activa, y con ella el contador daba siempre 0. */
+  const tradesDeAccEnBorrado = accEnBorrado?.trade_count ?? 0;
 
   function openAccEdit(id: string) {
     const acc = accounts.find((a) => a.id === id);
@@ -519,8 +522,14 @@ export default function DashboardPage() {
         body: JSON.stringify({ name: accEditName.trim(), initial_balance: balance }),
       });
       if (!res.ok) throw new Error("fallo");
+
+      const idBorrada = accEditId;
       const actualizada: Account = await res.json();
-      setAccounts((prev) => prev.map((a) => (a.id === actualizada.id ? actualizada : a)));
+      // Conservar el contador: la respuesta de PUT lo trae, pero si el backend
+      // no lo devolviera se perderia y la cuenta pareceria vacia al borrarla.
+      setAccounts((prev) =>
+        prev.map((a) => (a.id === actualizada.id ? { ...actualizada, trade_count: actualizada.trade_count ?? a.trade_count } : a)),
+      );
       setAccEditId(null);
       setAccNotice(t("accounts.wasUpdated"));
     } catch {
@@ -541,7 +550,19 @@ export default function DashboardPage() {
         `/accounts/${accDeleteId}${accDeleteTrades ? "?delete_trades=true" : ""}`,
         { method: "DELETE" },
       );
-      if (!res.ok) throw new Error("fallo");
+
+      if (!res.ok) {
+        /* Mostrar lo que dice el backend en vez de un mensaje generico: es el
+           que sabe por que fallo (409 con operaciones, 404, etc.). Antes se
+           tragaba su explicacion y el usuario veia 'intenta de nuevo' sin
+           pista de que hacer. */
+        const cuerpo = await res.json().catch(() => null);
+        setAccDeleteError(
+          (cuerpo && typeof cuerpo.detail === "string" && cuerpo.detail) ||
+            t("errors.accountDeleteFailed"),
+        );
+        return;
+      }
 
       const idBorrada = accDeleteId;
       const eraActiva = idBorrada === currentAccountId;
@@ -1132,6 +1153,11 @@ export default function DashboardPage() {
                             {active && <span className="acc-badge">{t("accounts.current")}</span>}
                           </div>
                           <div className="acc-sub">{a.source === "csv" ? t("datasource.mt5") : t("datasource.manual")} · {t("accounts.initialDeposit", { amount: a.initial_balance.toFixed(2) })}</div>
+                          {a.trade_count > 0 && (
+                            <div className="mini-note" style={{ marginTop: 4 }}>
+                              {t("accounts.tradesCount", { n: a.trade_count })}
+                            </div>
+                          )}
                         </div>
                         <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
                           {!active && (

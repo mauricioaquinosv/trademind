@@ -73,3 +73,8 @@ class AccountOut(BaseModel):
     initial_balance: float
     currency: str
     source: str
+    # Cuantas operaciones tiene la cuenta. Lo calcula el backend porque es el
+    # unico que sabe la verdad: el frontend solo tiene cargadas las operaciones
+    # de la cuenta activa, asi que al borrar otra cuenta contaria cero y dejaria
+    # borrar sin avisar.
+    trade_count: int = 0
