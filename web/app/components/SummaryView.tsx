@@ -599,27 +599,31 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
   const monthLabel = calYear !== null && calMonth !== null ? `${mesesFull[calMonth]} ${calYear}` : "—";
 
   /**
-   * Semanas del mes visible, de lunes a domingo.
+   * Semanas del mes visible, de lunes a domingo, numeradas 1, 2, 3... dentro
+   * de cada mes.
    *
-   * REGLA: cada semana pertenece al mes que contiene su JUEVES. Con eso los
-   * meses se encajan sin huecos ni solapes: la última semana de enero llega
-   * hasta el 1 de febrero, y la semana 1 de febrero empieza el 2, porque esa
-   * semana ya se.contó en enero.
+   * REGLA: una semana pertenece al mes donde cae SU JUEVES. Equivale a decir
+   * "el mes que tiene más días de esa semana": el jueves es el cuarto día de
+   * una semana de siete, así que si el jueves está en un mes, ese mes tiene
+   * al menos 4 de los 7 días.
    *
-   * Ejemplo con enero de 2026, que empieza en jueves:
-   *   S1   1-4 ene        (la semana empieza a medio mes)
-   *   S2   5-11 ene
-   *   S3   12-18 ene
-   *   S4   19-25 ene
-   *   S5   26 ene - 1 feb   (se pasa del fin de mes)
+   * Por qué el jueves y no el lunes ni el domingo:
+   *   - La semana del 26 ene-1 feb tiene 6 días de enero y 1 de febrero, así
+   *     que es de ENERO. If fuera por el lunes también.
+   *   - La semana del 30 mar-5 abr tiene 2 días de marzo y 5 de abril, así que
+   *     es de ABRIL. Por el lunes sería de marzo y por el domingo también.
+   * Con el jueves las dos salen bien, y no hay que inventar excepciones.
+   *
+   * Comprobado con enero de 2026, que empieza en jueves:
+   *   S1  29 dic - 4 ene     S2  5-11 ene     S3  12-18 ene
+   *   S4  19-25 ene         S5  26 ene - 1 feb
    * y febrero empieza de nuevo:
-   *   S1   2-8 feb
-   *   S2   9-15 feb
+   *   S1  2-8 feb    S2  9-15 feb    S3  16-22 feb    S4  23 feb - 1 mar
    *
-   * La etiqueta se recorta al mes que se está viendo, para no mostrar fechas de
-   * diciembre en la lista de enero. El importe, en cambio, suma la semana
-   * entera: si un día cae fuera del mes sigue contando, y así no se pierde
-   * ninguna operación por un cambio de mes.
+   * La etiqueta SIEMPRE muestra las fechas reales de la semana, sin recortar.
+   * Recortar era lo que confundía: en enero, la semana del 29 dic al 4 ene se
+   * veía como "1-4 ene" y parecía que el sistema se había inventado una
+   * semana de cuatro días.
    */
   const semanas = useMemo(() => {
     if (calYear === null || calMonth === null) return [];
@@ -658,11 +662,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
         }
       }
 
-      // La etiqueta se recorta al mes visible.
-      const desde = lunes < primeroISO ? primeroISO : lunes;
-      const hasta = domingo > ultimoISO ? ultimoISO : domingo;
-
-      salida.push({ n, lunes: desde, domingo: hasta, suma, dias });
+      salida.push({ n, lunes, domingo, suma, dias });
 
       lunes = addDias(lunes, 7);
       n += 1;
