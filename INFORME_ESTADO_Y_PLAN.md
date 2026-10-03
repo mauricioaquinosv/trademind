@@ -166,7 +166,7 @@ Cuando navegas el calendario, cambian el calendario, el resumen semanal y el res
 
 Verificado en `SummaryView.tsx`: solo `filas` (resumen semanal, L818) y `resumenMes` (L903) dependen de `calYear`/`calMonth`. Las 8 tarjetas leen el objeto `s`, que no lleva filtro de mes.
 
-**Esto es una decisión de diseño, no un error de código.** unanswered desde que se señaló: ¿los KPIs son "de la cuenta" o "del mes que estás viendo"?
+**Esto es una decisión de diseño, no un error de código.** Pero está sin responder desde que se señaló: ¿los KPIs son "de la cuenta" o "del mes que estás viendo"?
 
 ### 🟠 D3 — El frontend no tiene ni un test
 
@@ -232,7 +232,7 @@ El orden está pensado para **minimizar retrabajo**: primero lo barato que evita
 | 3.8a · Poner las 28 cadenas en el diccionario | D1 | 30 min |
 | 3.8b · Resolver el filtrado por mes de KPIs y gráfico | D2 | depende de la decisión |
 | 3.8c · Borrar la imagen duplicada y arreglar `.gitignore` | D5, D6 | 10 min |
-| 3.8d | Mover los tests del calendario al repositorio, como HTML ejecutable | D3 | 20 min |
+| 3.8d · Llevar al repositorio los tests del calendario y del resumen semanal | D3 | 20 min |
 | 3.8e · Tests de `auth` y de `upload` | D4 | 1 h |
 | 3.8f · Retirar los scripts de depuración | D8 | 5 min |
 | 3.8g · **Subir los 19 commits** | D9 | 5 min |
