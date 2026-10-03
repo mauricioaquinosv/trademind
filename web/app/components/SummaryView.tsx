@@ -3,6 +3,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "../../lib/i18n/LocaleProvider";
 import {
+  FILAS_FIJAS,
+  addDias,
+  celdasEnPantalla as rotarCeldas,
+  computeStats,
+  filasDelMes,
+  lunesDe,
+  pad,
+  resumenDelMes,
+  type StatInput,
+} from "../../lib/resumen";
+import {
   Chart,
   LineController,
   LineElement,
@@ -75,19 +86,6 @@ export type SummaryTrade = {
   pnl_neto: number | null;
 };
 
-const pad = (n: number) => String(n).padStart(2, "0");
-
-/** Filas que tiene siempre el calendario, para que su alto no cambie al navegar.
- *
- *  5, no 6. Parece que un mes de 31 días que empieza en domingo daría 6 filas,
- *  pero no: como la semana 1 es la que contiene al menos el jueves del día 1,
- *  el primer jueves cae en el día 1, 2 o 3 como muy tarde, y desde ahí solo
- *  caben 5 jueves separados por 7 días dentro de 31 días (1, 8, 15, 22, 29).
- *  Comprobado sobre 156 meses de 2020 a 2032: el máximo es 5.
- *
- *  Con 6 quedaría una fila vacía permanente abajo, que es justo el defecto
- *  que se quería evitar. */
-const FILAS_FIJAS = 5;
 
 /* Cifras SIEMPRE completas, con separador de miles.
    Antes esta función abreviaba: 1086 se veía como "$1.09K". Venía del HTML
@@ -99,88 +97,9 @@ function fmtMoney(n: number) {
   return sign + "$" + abs.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-type StatInput = { date: string; pnl: number };
 
-/** Suma N días a una fecha ISO y devuelve la nueva fecha ISO. */
-function addDias(fechaISO: string, n: number): string {
-  const d = new Date(`${fechaISO}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
-}
 
-/**
- * Fecha ISO (YYYY-MM-DD) del lunes de la semana a la que pertenece un día.
- *
- * Se usa UTC a propósito y no la fecha local: las claves de los trades vienen
- * en UTC y mezclarlas con el huso del navegador movería los días de una semana
- * al bordering incorrecto.
- */
-function lunesDe(fechaISO: string): string {
-  const d = new Date(`${fechaISO}T00:00:00Z`);
-  const dow = d.getUTCDay(); // 0 = domingo ... 6 = sábado
-  const retroceder = (dow + 6) % 7; // lunes = 0, domingo = 6
-  d.setUTCDate(d.getUTCDate() - retroceder);
-  return d.toISOString().slice(0, 10);
-}
 
-function computeStats(items: StatInput[]) {
-  const sorted = [...items].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  const total = sorted.length;
-  const wins = sorted.filter((t) => t.pnl > 0);
-  const losses = sorted.filter((t) => t.pnl < 0);
-  const netPnl = sorted.reduce((s, t) => s + t.pnl, 0);
-  const winRate = total ? (wins.length / total) * 100 : 0;
-  const avgWin = wins.length ? wins.reduce((s, t) => s + t.pnl, 0) / wins.length : 0;
-  const avgLoss = losses.length ? losses.reduce((s, t) => s + t.pnl, 0) / losses.length : 0;
-  const grossWin = wins.reduce((s, t) => s + t.pnl, 0);
-  const grossLoss = Math.abs(losses.reduce((s, t) => s + t.pnl, 0));
-  const profitFactor = grossLoss ? grossWin / grossLoss : grossWin > 0 ? 99 : 0;
-
-  const dailyMap: Record<string, number> = {};
-  const dailyCountMap: Record<string, number> = {};
-  sorted.forEach((t) => {
-    dailyMap[t.date] = (dailyMap[t.date] || 0) + t.pnl;
-    dailyCountMap[t.date] = (dailyCountMap[t.date] || 0) + 1;
-  });
-  const dailyEntries = Object.entries(dailyMap).sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime());
-
-  let cum = 0;
-  const cumSeries = dailyEntries.map(([d, v]) => {
-    cum += v;
-    return { date: d, cum, pnl: v, count: dailyCountMap[d] || 0 };
-  });
-
-  /* El resumen semanal se calcula aparte, en el componente, porque depende del
-     mes que se está viendo en el calendario. Aquí solo va lo que es
-     independiente del mes. */
-
-  let peak = -Infinity;
-  let maxDD = 0;
-  cumSeries.forEach((p) => {
-    peak = Math.max(peak, p.cum);
-    maxDD = Math.max(maxDD, peak - p.cum);
-  });
-  const dailyVals = dailyEntries.map((e) => e[1]);
-  const mean = dailyVals.reduce((a, b) => a + b, 0) / (dailyVals.length || 1);
-  const variance = dailyVals.reduce((s, v) => s + (v - mean) ** 2, 0) / (dailyVals.length || 1);
-  const stdev = Math.sqrt(variance);
-  const consistency = mean ? Math.max(0, Math.min(100, 100 - (stdev / Math.abs(mean)) * 20)) : 50;
-  const recovery = maxDD ? Math.max(0, Math.min(100, (netPnl / maxDD) * 15)) : netPnl > 0 ? 100 : 0;
-  const ddScore = netPnl !== 0 ? Math.max(0, Math.min(100, 100 - (maxDD / Math.abs(netPnl || 1)) * 40)) : 50;
-  const wlRatio = avgLoss ? Math.abs(avgWin / avgLoss) : avgWin > 0 ? 5 : 0;
-
-  const radar = {
-    winRate: Math.min(100, winRate),
-    profitFactor: Math.min(100, profitFactor * 33),
-    wlRatio: Math.min(100, wlRatio * 30),
-    recovery,
-    ddScore,
-    consistency,
-  };
-  const score = (radar.winRate + radar.profitFactor + radar.wlRatio + radar.recovery + radar.ddScore + radar.consistency) / 6;
-
-  return { total, wins, losses, netPnl, winRate, avgWin, avgLoss, profitFactor, dailyEntries, cumSeries, radar, score };
-}
 
 function avgTradeDurationLabel(trades: SummaryTrade[]): string {
   const durations = trades
@@ -276,18 +195,10 @@ function RowSemana({
     ? "cal-wk vacia"
     : fila.suma > 0 ? "cal-wk win" : fila.suma < 0 ? "cal-wk loss" : "cal-wk";
 
-  /* La semana se construye de lunes a domingo, pero las cabeceras están en el
-     orden tradicional domingo-primero. Por eso la última celda (el domingo)
-     se dibuja la primera.
-     Si no se gira, cada día cae una columna a la izquierda de la suya: el
-     lunes 26 de enero se veía bajo "Sun". */
-  const celdasEnPantalla = fila.celdas.length
-    ? [fila.celdas[fila.celdas.length - 1], ...fila.celdas.slice(0, -1)]
-    : [];
 
   return (
     <>
-      {celdasEnPantalla.map((c) => (
+      {rotarCeldas(fila.celdas).map((c) => (
         <div
           key={c.iso}
           className={`day${c.v !== undefined ? (c.v > 0 ? " win" : c.v < 0 ? " loss" : "") : ""}`
@@ -815,77 +726,10 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
    * asi el total de la fila es el total de la semana, sin duplicar ni perder
    * nada al cambiar de mes.
    */
-  const filas = useMemo(() => {
-    if (calYear === null || calMonth === null) return [];
-
-    const prefijo = `${calYear}-${pad(calMonth + 1)}`;
-    const primeroISO = `${prefijo}-01`;
-    const ultimoDia = new Date(Date.UTC(calYear, calMonth + 1, 0)).getUTCDate();
-    const ultimoISO = `${prefijo}-${pad(ultimoDia)}`;
-
-    // Primera semana cuyo jueves cae dentro del mes.
-    let lunes = lunesDe(primeroISO);
-    while (addDias(lunes, 3) < primeroISO) {
-      lunes = addDias(lunes, 7);
-    }
-
-    const salida: {
-      n: number;
-      lunes: string;
-      domingo: string;
-      suma: number;
-      dias: number;
-      relleno?: boolean;
-      celdas: { iso: string; dia: number; otroMes: boolean; v: number | undefined }[];
-    }[] = [];
-
-    let n = 1;
-    for (;;) {
-      const jueves = addDias(lunes, 3);
-      if (jueves > ultimoISO) break;
-
-      const celdas: { iso: string; dia: number; otroMes: boolean; v: number | undefined }[] = [];
-      let suma = 0;
-      let dias = 0;
-
-      for (let i = 0; i < 7; i++) {
-        const iso = addDias(lunes, i);
-        const v = dailyMap[iso];
-        if (v !== undefined) {
-          suma += v;
-          dias += 1;
-        }
-        celdas.push({
-          iso,
-          dia: new Date(`${iso}T00:00:00Z`).getUTCDate(),
-          otroMes: iso.slice(0, 7) !== prefijo,
-          v,
-        });
-      }
-
-      salida.push({ n, lunes, domingo: addDias(lunes, 6), suma, dias, celdas });
-      lunes = addDias(lunes, 7);
-      n += 1;
-    }
-
-    /* ALTO FIJO: se rellenan siempre 6 filas, el máximo que puede tener un
-       mes (31 días que empiezan en domingo = 37 celdas = 6 filas).
-       Sin esto el panel crecía o menguaba al navegar y todo lo de abajo saltaba.
-       Las filas de relleno no se pintan: sólo mantienen la altura. */
-    while (salida.length < FILAS_FIJAS) {
-      salida.push({
-        n: 0,
-        lunes: "",
-        domingo: "",
-        suma: 0,
-        dias: 0,
-        celdas: [],
-        relleno: true,
-      });
-    }
-
-    return salida;
-  }, [calYear, calMonth, dailyMap]);
+  const filas = useMemo(
+    () => (calYear === null || calMonth === null ? [] : filasDelMes(calYear, calMonth, dailyMap)),
+    [calYear, calMonth, dailyMap]
+  );
 
 
 
@@ -900,26 +744,10 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
   /* Resumen del mes que se está viendo: total, días operados, mejor y peor
      día. Se calcula sobre el mes del calendario, no sobre todo el histórico,
      para que responda a "¿cómo fue este mes?". */
-  const resumenMes = useMemo(() => {
-    if (calYear === null || calMonth === null) return null;
-    const prefijo = `${calYear}-${pad(calMonth + 1)}`;
-    let suma = 0;
-    let dias = 0;
-    let mejor: { key: string; v: number } | null = null;
-    let peor: { key: string; v: number } | null = null;
-
-    const ultimoDia = new Date(Date.UTC(calYear, calMonth + 1, 0)).getUTCDate();
-    for (let dia = 1; dia <= ultimoDia; dia++) {
-      const key = `${prefijo}-${pad(dia)}`;
-      const v = dailyMap[key];
-      if (v === undefined) continue;
-      suma += v;
-      dias += 1;
-      if (!mejor || v > mejor.v) mejor = { key, v };
-      if (!peor || v < peor.v) peor = { key, v };
-    }
-    return { suma, dias, mejor, peor };
-  }, [calYear, calMonth, dailyMap]);
+  const resumenMes = useMemo(
+    () => (calYear === null || calMonth === null ? null : resumenDelMes(calYear, calMonth, dailyMap)),
+    [calYear, calMonth, dailyMap]
+  );
 
   return (
     <>
