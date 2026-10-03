@@ -109,6 +109,7 @@ export const es = {
   "weekly.empty": "Sin operaciones todavía.",
   "weekly.week": "Semana {n}",
   "weekly.dayCount": { one: "{n} día", other: "{n} días" },
+  "weekly.noTrades": "sin operaciones",
 
   // ------------------------------------------------------------------
   // Vista Analytics

@@ -133,26 +133,9 @@ function computeStats(items: StatInput[]) {
     return { date: d, cum, pnl: v, count: dailyCountMap[d] || 0 };
   });
 
-  /* Semanas reales, de lunes a domingo. La clave es la fecha ISO del lunes:
-     única para cada semana e independiente del mes y del año.
-
-     Antes se agrupaba por día del mes en bloques de 7 (días 1-7 = "Semana 1"),
-     lo que mezclaba semanas que no tienen nada que ver: los días 1-7 de enero
-     y los días 1-7 de febrero acababan sumados en la misma "Semana 1", y la
-     numeración se reiniciaba cada mes. */
-  const weekMap: Record<string, { sum: number; days: Set<string>; first: string; last: string }> = {};
-  dailyEntries.forEach(([d, v]) => {
-    const key = lunesDe(d);
-    const w = (weekMap[key] ??= { sum: 0, days: new Set(), first: d, last: d });
-    w.sum += v;
-    w.days.add(d);
-    if (d < w.first) w.first = d;
-    if (d > w.last) w.last = d;
-  });
-  // Las fechas ISO en formato AAAA-MM-DD ordenan correctamente como texto.
-  const weeks = Object.keys(weekMap)
-    .sort()
-    .map((key) => ({ lunes: key, ...weekMap[key] }));
+  /* El resumen semanal se calcula aparte, en el componente, porque depende del
+     mes que se está viendo en el calendario. Aquí solo va lo que es
+     independiente del mes. */
 
   let peak = -Infinity;
   let maxDD = 0;
@@ -179,7 +162,7 @@ function computeStats(items: StatInput[]) {
   };
   const score = (radar.winRate + radar.profitFactor + radar.wlRatio + radar.recovery + radar.ddScore + radar.consistency) / 6;
 
-  return { total, wins, losses, netPnl, winRate, avgWin, avgLoss, profitFactor, dailyEntries, cumSeries, weeks, radar, score };
+  return { total, wins, losses, netPnl, winRate, avgWin, avgLoss, profitFactor, dailyEntries, cumSeries, radar, score };
 }
 
 function avgTradeDurationLabel(trades: SummaryTrade[]): string {
@@ -608,6 +591,65 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
 
   const monthLabel = calYear !== null && calMonth !== null ? `${mesesFull[calMonth]} ${calYear}` : "—";
 
+  /**
+   * Semanas del mes que se está viendo en el calendario, de lunes a domingo.
+   *
+   * Dos decisiones que hacen que los números signifiquen algo:
+   *
+   * 1. La semana 1 es la que contiene el día 1 del mes, no la primera semana
+   *    con operaciones. Si no, en enero el día 22 sería "Semana 1" y el trader
+   *    no tiene forma de saber a qué semana corresponde cada número.
+   *
+   * 2. Solo se cuentan los días DENTRO del mes visible. La semana 1 de enero
+   *    de 2026 empieza el 29 de diciembre de 2025; ese día pertenece a
+   *    diciembre y no debe sumar en la lista de enero.
+   *
+   * Se incluyen también las semanas sin operaciones: saber que no operaste una
+   *    semana es información, no ruido.
+   */
+  const semanas = useMemo(() => {
+    if (calYear === null || calMonth === null) return [];
+
+    const prefijo = `${calYear}-${pad(calMonth + 1)}`;
+    const primeroISO = `${prefijo}-01`;
+    const ultimoDia = new Date(Date.UTC(calYear, calMonth + 1, 0)).getUTCDate();
+    const ultimoISO = `${prefijo}-${pad(ultimoDia)}`;
+
+    const salida: {
+      n: number; lunes: string; domingo: string; suma: number; dias: number;
+    }[] = [];
+
+    let lunes = lunesDe(primeroISO);
+    let n = 1;
+
+    while (lunes <= ultimoISO) {
+      const d = new Date(`${lunes}T00:00:00Z`);
+      d.setUTCDate(d.getUTCDate() + 6);
+      const domingo = d.toISOString().slice(0, 10);
+
+      let suma = 0;
+      let dias = 0;
+      for (let dia = 1; dia <= ultimoDia; dia++) {
+        const iso = `${prefijo}-${pad(dia)}`;
+        if (iso < lunes || iso > domingo) continue;
+        const v = dailyMap[iso];
+        if (v !== undefined) {
+          suma += v;
+          dias += 1;
+        }
+      }
+
+      salida.push({ n, lunes, domingo, suma, dias });
+
+      const sig = new Date(`${lunes}T00:00:00Z`);
+      sig.setUTCDate(sig.getUTCDate() + 7);
+      lunes = sig.toISOString().slice(0, 10);
+      n += 1;
+    }
+
+    return salida;
+  }, [calYear, calMonth, dailyMap]);
+
   const calendarCells = useMemo(() => {
     if (calYear === null || calMonth === null) return [];
     const startOffset = new Date(Date.UTC(calYear, calMonth, 1)).getUTCDay();
@@ -724,20 +766,25 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
         <div className="panel">
           <h2>{t("weekly.title")}</h2>
           <div className="weeklist">
-            {s.weeks.length === 0 && <p className="mini-note">{t("weekly.empty")}</p>}
-            {s.weeks.map((w, i) => {
-              const color = w.sum > 0 ? "var(--green)" : w.sum < 0 ? "var(--red)" : "var(--muted)";
+            {semanas.length === 0 && <p className="mini-note">{t("weekly.empty")}</p>}
+            {semanas.map((w) => {
+              const sinOperaciones = w.dias === 0;
+              const color = w.suma > 0 ? "var(--green)" : w.suma < 0 ? "var(--red)" : "var(--muted)";
               return (
-                <div className="wk" key={w.lunes}>
+                <div className={`wk${sinOperaciones ? " vacia" : ""}`} key={w.lunes}>
                   <span className="l">
-                    {t("weekly.week", { n: i + 1 })}
-                    {/* El rango de fechas deja claro a qué semana corresponde
-                        cada número, que es justo lo que no se veía antes. */}
-                    <span className="wk-range">{rangoSemana(w.first, w.last)}</span>
+                    {t("weekly.week", { n: w.n })}
+                    <span className="wk-range">{rangoSemana(w.lunes, w.domingo)}</span>
                   </span>
                   <span className="r">
-                    <b style={{ color }}>{fmtMoney(w.sum)}</b>
-                    {t("weekly.dayCount", { n: w.days.size })}
+                    {sinOperaciones ? (
+                      <i className="wk-sin">{t("weekly.noTrades")}</i>
+                    ) : (
+                      <>
+                        <b style={{ color }}>{fmtMoney(w.suma)}</b>
+                        {t("weekly.dayCount", { n: w.dias })}
+                      </>
+                    )}
                   </span>
                 </div>
               );

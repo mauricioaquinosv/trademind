@@ -125,6 +125,10 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
 /* Rango de fechas de la semana, junto al número. Va en tono apagado para no
    competir con el nombre de la semana ni con el importe. */
 .wk .wk-range{color:var(--muted);font-size:.92em;margin-left:7px;font-weight:400;}
+/* Semana sin operaciones: se mantiene visible (saber que no operaste una
+   semana es información) pero atenuada para no competir con las que sí. */
+.wk.vacia .l,.wk.vacia .r{opacity:.5;}
+.wk .wk-sin{font-style:normal;font-size:12px;color:var(--muted);}
 /* El relleno arranca en width:0% y el componente lo sube al valor en el
    siguiente frame; sin ese frame intermedio la transición no tiene desde
    donde arrancar y la barra aparece de golpe. El HTML original lo conseguía

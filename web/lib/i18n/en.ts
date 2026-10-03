@@ -110,6 +110,7 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "weekly.empty": "No trades yet.",
   "weekly.week": "Week {n}",
   "weekly.dayCount": { one: "{n} day", other: "{n} days" },
+  "weekly.noTrades": "no trades",
 
   // ------------------------------------------------------------------
   // Vista Analytics
