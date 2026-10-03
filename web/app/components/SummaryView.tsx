@@ -217,6 +217,92 @@ function WinRateBar({ value }: { value: number }) {
   );
 }
 
+/**
+ * Una fila del calendario: los siete días de una semana y, en la última
+ * columna, el resumen de ESA MISMA semana.
+ *
+ * Es un componente aparte para que quede claro que las dos mitades de la fila
+ * son la misma semana. Al vivir en la misma rejilla, el resumen no puede
+ * desalinearse de sus días por muy que cambie el número de semanas del mes.
+ *
+ * `rango` se le pasa ya calculado porque el componente está fuera del que tiene
+ * acceso al idioma.
+ */
+function RowSemana({
+  fila,
+  rango,
+  setHoverDia,
+  hoverDia,
+  hoyISO,
+  fmtMoney,
+  textos,
+}: {
+  fila: {
+    n: number;
+    lunes: string;
+    domingo: string;
+    suma: number;
+    dias: number;
+    celdas: { iso: string; dia: number; otroMes: boolean; v: number | undefined }[];
+  };
+  rango: string;
+  setHoverDia: (iso: string | null) => void;
+  hoverDia: string | null;
+  hoyISO: string;
+  fmtMoney: (n: number) => string;
+  textos: {
+    semana: (n: number) => string;
+    dayCount: (n: number) => string;
+    noTrades: string;
+  };
+}) {
+  const sinOperaciones = fila.dias === 0;
+  const color = fila.suma > 0 ? "var(--green)" : fila.suma < 0 ? "var(--red)" : "var(--muted)";
+  // La clase dispara el pulso del total, igual que en los importes del
+  // calendario. Sin operaciones no hay pulso ni color.
+  const claseWk = sinOperaciones
+    ? "cal-wk vacia"
+    : fila.suma > 0 ? "cal-wk win" : fila.suma < 0 ? "cal-wk loss" : "cal-wk";
+
+  return (
+    <>
+      {fila.celdas.map((c) => (
+        <div
+          key={c.iso}
+          className={`day${c.v !== undefined ? (c.v > 0 ? " win" : c.v < 0 ? " loss" : "") : ""}`
+            + `${c.otroMes ? " otro" : ""}`
+            + `${c.iso === hoyISO ? " hoy" : ""}`
+            + `${c.iso === hoyISO && c.otroMes ? " hoy-otro" : ""}`
+            + `${c.iso === hoverDia ? " senalado" : ""}`}
+          onMouseEnter={() => setHoverDia(c.iso)}
+        >
+          <div className="d">{c.dia}</div>
+          {c.v !== undefined && (
+            <div className="p">{c.v > 0 ? "+" : ""}{fmtMoney(c.v)}</div>
+          )}
+        </div>
+      ))}
+
+      <div className={claseWk}>
+        <span className="l">
+          {textos.semana(fila.n)}
+          <span className="wk-range">{rango}</span>
+        </span>
+        <span className="r">
+          {sinOperaciones ? (
+            <i className="wk-sin">{textos.noTrades}</i>
+          ) : (
+            <>
+              <b style={{ color }}>{fmtMoney(fila.suma)}</b>
+              {textos.dayCount(fila.dias)}
+            </>
+          )}
+        </span>
+      </div>
+    </>
+  );
+}
+
 export default function SummaryView({ trades, initialBalance }: { trades: SummaryTrade[]; initialBalance: number | null }) {
   const { t, list, locale } = useI18n();
   const mesesCorto = list("months.short");
@@ -671,33 +757,27 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
   const monthLabel = calYear !== null && calMonth !== null ? `${mesesFull[calMonth]} ${calYear}` : "—";
 
   /**
-   * Semanas del mes visible, de lunes a domingo, numeradas 1, 2, 3... dentro
-   * de cada mes.
+   * Filas del calendario. UNA fila = UNA semana completa de lunes a domingo.
    *
-   * REGLA: una semana pertenece al mes donde cae SU JUEVES. Equivale a decir
-   * "el mes que tiene más días de esa semana": el jueves es el cuarto día de
-   * una semana de siete, así que si el jueves está en un mes, ese mes tiene
-   * al menos 4 de los 7 días.
+   * Aqui esta el cambio de fondo: antes el calendario y el resumen semanal eran
+   * dos rejillas separadas y, la buena fe del CSS para que las filas
+   * coincidieran. Ahora son la MISMA rejilla, asi que es imposible que se
+   * desalineen.
    *
-   * Por qué el jueves y no el lunes ni el domingo:
-   *   - La semana del 26 ene-1 feb tiene 6 días de enero y 1 de febrero, así
-   *     que es de ENERO. If fuera por el lunes también.
-   *   - La semana del 30 mar-5 abr tiene 2 días de marzo y 5 de abril, así que
-   *     es de ABRIL. Por el lunes sería de marzo y por el domingo también.
-   * Con el jueves las dos salen bien, y no hay que inventar excepciones.
+   * Por eso el calendario muestra semanas COMPLETAS, con los dias del mes
+   * anterior y posterior que caen dentro de la semana. En enero de 2026, que
+   * empieza en jueves, la primera fila es 29 dic - 4 ene: los tres primeros dias
+   * son de diciembre y se muestran atenuados. Sin eso, la fila del calendario
+   * que contiene el dia 4 mixearía dos semanas y no habría forma de alinear.
    *
-   * Comprobado con enero de 2026, que empieza en jueves:
-   *   S1  29 dic - 4 ene     S2  5-11 ene     S3  12-18 ene
-   *   S4  19-25 ene         S5  26 ene - 1 feb
-   * y febrero empieza de nuevo:
-   *   S1  2-8 feb    S2  9-15 feb    S3  16-22 feb    S4  23 feb - 1 mar
+   * La semana pertenece al mes donde cae su jueves, y se numera 1, 2, 3...
+   * dentro de cada mes (misma regla que antes).
    *
-   * La etiqueta SIEMPRE muestra las fechas reales de la semana, sin recortar.
-   * Recortar era lo que confundía: en enero, la semana del 29 dic al 4 ene se
-   * veía como "1-4 ene" y parecía que el sistema se había inventado una
-   * semana de cuatro días.
+   * El importe de la fila suma los siete dias, incluidos los del mes vecino:
+   * asi el total de la fila es el total de la semana, sin duplicar ni perder
+   * nada al cambiar de mes.
    */
-  const semanas = useMemo(() => {
+  const filas = useMemo(() => {
     if (calYear === null || calMonth === null) return [];
 
     const prefijo = `${calYear}-${pad(calMonth + 1)}`;
@@ -705,16 +785,19 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     const ultimoDia = new Date(Date.UTC(calYear, calMonth + 1, 0)).getUTCDate();
     const ultimoISO = `${prefijo}-${pad(ultimoDia)}`;
 
-    // Primera semana cuyo jueves cae dentro del mes. Como mucho hay que
-    // avanzar una semana: el jueves de la semana que contiene el día 1 está
-    // como mucho 3 días antes de él.
+    // Primera semana cuyo jueves cae dentro del mes.
     let lunes = lunesDe(primeroISO);
     while (addDias(lunes, 3) < primeroISO) {
       lunes = addDias(lunes, 7);
     }
 
     const salida: {
-      n: number; lunes: string; domingo: string; suma: number; dias: number;
+      n: number;
+      lunes: string;
+      domingo: string;
+      suma: number;
+      dias: number;
+      celdas: { iso: string; dia: number; otroMes: boolean; v: number | undefined }[];
     }[] = [];
 
     let n = 1;
@@ -722,20 +805,26 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
       const jueves = addDias(lunes, 3);
       if (jueves > ultimoISO) break;
 
-      const domingo = addDias(lunes, 6);
-
+      const celdas: { iso: string; dia: number; otroMes: boolean; v: number | undefined }[] = [];
       let suma = 0;
       let dias = 0;
-      for (let iso = lunes; iso <= domingo; iso = addDias(iso, 1)) {
+
+      for (let i = 0; i < 7; i++) {
+        const iso = addDias(lunes, i);
         const v = dailyMap[iso];
         if (v !== undefined) {
           suma += v;
           dias += 1;
         }
+        celdas.push({
+          iso,
+          dia: new Date(`${iso}T00:00:00Z`).getUTCDate(),
+          otroMes: iso.slice(0, 7) !== prefijo,
+          v,
+        });
       }
 
-      salida.push({ n, lunes, domingo, suma, dias });
-
+      salida.push({ n, lunes, domingo: addDias(lunes, 6), suma, dias, celdas });
       lunes = addDias(lunes, 7);
       n += 1;
     }
@@ -743,23 +832,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     return salida;
   }, [calYear, calMonth, dailyMap]);
 
-  const calendarCells = useMemo(() => {
-    if (calYear === null || calMonth === null) return [];
-    const startOffset = new Date(Date.UTC(calYear, calMonth, 1)).getUTCDay();
-    const daysInMonth = new Date(Date.UTC(calYear, calMonth + 1, 0)).getUTCDate();
-    const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
-    const cells: { dayNum: number; key: string; v: number | undefined; other: boolean }[] = [];
-    for (let i = 0; i < totalCells; i++) {
-      const dayNum = i - startOffset + 1;
-      if (dayNum < 1 || dayNum > daysInMonth) {
-        cells.push({ dayNum: 0, key: "", v: undefined, other: true });
-        continue;
-      }
-      const key = `${calYear}-${pad(calMonth + 1)}-${pad(dayNum)}`;
-      cells.push({ dayNum, key, v: dailyMap[key], other: false });
-    }
-    return cells;
-  }, [calYear, calMonth, dailyMap]);
+
 
   /* Día de hoy en la zona horaria del navegador, que es la del usuario.
      Las celdas del calendario se numeran en UTC, así que comparar con
@@ -864,41 +937,50 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
           </div>
         </div>
 
-        <div className="panel">
+        {/* Un solo panel: cada fila es una semana completa (7 dias) y a su
+            derecha, el resumen de ESA MISMA semana. Al ser la misma rejilla,
+            las filas no pueden desalinearse. Ocupa todo el ancho de
+            .grid-main porque ya no hay panel hermano al que dejarle sitio. */}
+        <div className="panel cal-panel">
+          <h2>{t("cal.title")}</h2>
           <div className="cal-nav">
             <span className="cal-arrow" style={{ cursor: "pointer", padding: "2px 8px" }} onClick={() => navigateCalendar(-1)}>‹</span>
             <span className="cal-month">{monthLabel}</span><span className="cal-arrow" style={{ cursor: "pointer", padding: "2px 8px" }} onClick={() => navigateCalendar(1)}>›</span>
             <span className="pill" style={{ padding: "3px 9px", cursor: "pointer" }} onClick={goToday}>{t("common.thisMonth")}</span>
           </div>
+
           <div
-            className={`cal anim-${calDesplazamiento > 0 ? "next" : "prev"}`}
+            className={`cal-grid anim-${calDesplazamiento > 0 ? "next" : "prev"}`}
             key={calAnim}
             onMouseLeave={() => setHoverDia(null)}
           >
             {dowNames.map((d, i) => (
               <div className={`dow${i === 0 || i === 6 ? " fin" : ""}`} key={d}>{d}</div>
             ))}
-            {calendarCells.map((c, i) =>
-              c.other ? (
-                <div className="day" style={{ opacity: 0.35 }} key={i} />
-              ) : (
-                <div
-                  key={c.key}
-                  className={`day${c.v !== undefined ? (c.v > 0 ? " win" : c.v < 0 ? " loss" : "") : ""}`
-                    + `${c.key === hoyISO ? " hoy" : ""}`
-                    + `${c.key === hoverDia ? " senalado" : ""}`}
-                  onMouseEnter={() => setHoverDia(c.key)}
-                >
-                  <div className="d">{c.dayNum}</div>
-                  {c.v !== undefined && <div className="p">{c.v > 0 ? "+" : ""}{fmtMoney(c.v)}</div>}
-                </div>
-              )
+            <div className="dow cal-dow-wk">{t("cal.weekColumn")}</div>
+
+            {filas.length === 0 && (
+              <p className="mini-note cal-vacio">{t("weekly.empty")}</p>
             )}
+
+            {filas.map((f) => (
+              <RowSemana
+                key={f.lunes}
+                fila={f}
+                rango={rangoSemana(f.lunes, f.domingo)}
+                setHoverDia={setHoverDia}
+                hoverDia={hoverDia}
+                hoyISO={hoyISO}
+                fmtMoney={fmtMoney}
+                textos={{
+                  semana: (n) => t("weekly.week", { n }),
+                  dayCount: (n) => t("weekly.dayCount", { n }),
+                  noTrades: t("weekly.noTrades"),
+                }}
+              />
+            ))}
           </div>
 
-          {/* Resumen del mes visible: total, días operados, mejor y peor día.
-              Responde de un vistazo a "¿cómo fue este mes?", que el calendario
-              por sí solo no decía. */}
           {resumenMes && (
             <div className="cal-resumen">
               <span className="cr-item">
@@ -926,40 +1008,6 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
               )}
             </div>
           )}
-        </div>
-
-        <div className="panel">
-          <h2>{t("weekly.title")}</h2>
-          <div className="weeklist">
-            {semanas.length === 0 && <p className="mini-note">{t("weekly.empty")}</p>}
-            {semanas.map((w) => {
-              const sinOperaciones = w.dias === 0;
-              const color = w.suma > 0 ? "var(--green)" : w.suma < 0 ? "var(--red)" : "var(--muted)";
-              /* La clase win/loss dispara el pulso del total, igual que en el
-                 calendario. Sin operaciones, ni pulso ni color. */
-              const clase = sinOperaciones
-                ? "wk vacia"
-                : w.suma > 0 ? "wk win" : w.suma < 0 ? "wk loss" : "wk";
-              return (
-                <div className={clase} key={w.lunes}>
-                  <span className="l">
-                    {t("weekly.week", { n: w.n })}
-                    <span className="wk-range">{rangoSemana(w.lunes, w.domingo)}</span>
-                  </span>
-                  <span className="r">
-                    {sinOperaciones ? (
-                      <i className="wk-sin">{t("weekly.noTrades")}</i>
-                    ) : (
-                      <>
-                        <b style={{ color }}>{fmtMoney(w.suma)}</b>
-                        {t("weekly.dayCount", { n: w.dias })}
-                      </>
-                    )}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
         </div>
       </div>
     </>

@@ -116,6 +116,8 @@ export const es = {
   // ------------------------------------------------------------------
   "cal.noTrades": "sin operaciones este mes",
   "cal.monthTotal": "Total del mes",
+  "cal.title": "Calendario de trading",
+  "cal.weekColumn": "Semana",
   "cal.daysOperated": { one: "{n} día operados", other: "{n} días operados" },
   "cal.bestDay": "Mejor día",
   "cal.worstDay": "Peor día",

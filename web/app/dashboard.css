@@ -97,7 +97,7 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;}
   .bar-split .bar-fill::after{display:none;}
-  .cal.anim-next,.cal.anim-prev{animation:none !important;}
+  .cal-grid.anim-next,.cal-grid.anim-prev{animation:none !important;}
   .day.hoy.win,.day.hoy.loss{animation:none !important;}
   .day.win .p,.day.loss .p,.wk.win .r b,.wk.loss .r b{animation:none !important;}
 }
@@ -189,15 +189,53 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
    El HTML original tenía ese mismo defecto. */
 .cal-nav{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;color:var(--muted);}
 .cal-nav .cal-month{color:var(--text);font-weight:600;text-align:center;min-width:0;white-space:nowrap;}
-.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+/* El calendario ocupa todo el ancho de .grid-main: al fusionarse con el
+   resumen semanal ya no hay panel hermano al que dejarle sitio. */
+.grid-main>.cal-panel{grid-column:1 / -1;}
+/* Rejilla única: 7 columnas de días + 1 de resumen semanal. Cada fila es una
+   semana completa, así que el resumen cae SIEMPRE a la altura de sus días.
+   Antes eran dos rejillas independientes y dependía de que el CSS coincidiera;
+   ahora es imposible que se desalineen. */
+.cal-grid{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr)) minmax(148px,1.05fr);
+  gap:5px;
+}
+.cal-grid.anim-next{animation:calDeslizaNext .34s cubic-bezier(.2,.8,.2,1);}
+.cal-grid.anim-prev{animation:calDeslizaPrev .34s cubic-bezier(.2,.8,.2,1);}
+.cal-dow-wk{grid-column:8;}
+.cal-vacio{grid-column:1 / -1;}
+
+/* Días del mes vecino: se muestran para que la semana sea completa, pero
+   atenuados para que no se confundan con el mes que se está viendo. */
+.day.otro{opacity:.34;}
+.day.otro .d{color:var(--muted2);}
+/* Si hoy cae en un día del mes vecino, el aro turquesa sigue siendo visible:
+   es el indicador de "día de hoy" y no debe perder fuerza por estar atenuado. */
+.day.hoy-otro{opacity:.62;}
+
+/* Resumen de la semana, en la última columna de cada fila. */
+.cal-wk{
+  grid-column:8;
+  display:flex;flex-direction:column;justify-content:center;gap:2px;
+  padding:6px 9px;background:var(--panel2);border:1px solid var(--line);
+  border-radius:8px;min-width:0;
+}
+.cal-wk .l{display:flex;flex-direction:column;gap:1px;font-size:12px;color:var(--muted);}
+.cal-wk .r{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+  font-size:11px;color:var(--muted2);}
+.cal-wk .r b{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;}
+.cal-wk.vacia{opacity:.5;}
+.cal-wk.vacia .l,.cal-wk.vacia .r{opacity:1;}
+/* El total de la semana late igual que los importes del calendario. */
+.cal-wk.win .r b{animation:pnlPulsoGanancia 2.6s ease-in-out infinite;}
+.cal-wk.loss .r b{animation:pnlPulsoPerdida 2.6s ease-in-out infinite;}
 .cal .dow{font-size:11px;color:var(--muted2);text-align:center;padding-bottom:4px;}
 /* Dom y Sáb: en un mercado 24/7 (cripto) el fin de semana es parte de la
    semana, pero conviene verlo de un vistazo. */
 .cal .dow.fin{color:var(--pink);opacity:.62;font-weight:600;}
 
 /* --- Cambio de mes: las celdas entran deslizadas en el sentido del salto --- */
-.cal.anim-next{animation:calDeslizaNext .34s cubic-bezier(.2,.8,.2,1);}
-.cal.anim-prev{animation:calDeslizaPrev .34s cubic-bezier(.2,.8,.2,1);}
 @keyframes calDeslizaNext{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:none;}}
 @keyframes calDeslizaPrev{from{opacity:0;transform:translateX(-30px);}to{opacity:1;transform:none;}}
 
