@@ -276,9 +276,18 @@ function RowSemana({
     ? "cal-wk vacia"
     : fila.suma > 0 ? "cal-wk win" : fila.suma < 0 ? "cal-wk loss" : "cal-wk";
 
+  /* La semana se construye de lunes a domingo, pero las cabeceras están en el
+     orden tradicional domingo-primero. Por eso la última celda (el domingo)
+     se dibuja la primera.
+     Si no se gira, cada día cae una columna a la izquierda de la suya: el
+     lunes 26 de enero se veía bajo "Sun". */
+  const celdasEnPantalla = fila.celdas.length
+    ? [fila.celdas[fila.celdas.length - 1], ...fila.celdas.slice(0, -1)]
+    : [];
+
   return (
     <>
-      {fila.celdas.map((c) => (
+      {celdasEnPantalla.map((c) => (
         <div
           key={c.iso}
           className={`day${c.v !== undefined ? (c.v > 0 ? " win" : c.v < 0 ? " loss" : "") : ""}`
@@ -320,21 +329,6 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
   const mesesCorto = list("months.short");
   const mesesFull = list("months.full");
   const dowNames = list("dow.short");
-
-  /* Cabeceras en orden lunes-primero.
-     Las filas van de lunes a domingo (es lo que hace que el resumen semanal y
-     el calendario cuadren), así que las cabeceras TIENEN que empezar igual.
-     Con las cabeceras en domingo-primero, cada dia caia una columna a la
-     izquierda de la suya: el lunes 26 de enero se veía bajo "Sun".
-
-     La lista del diccionario viene en orden domingo-primero, que es la
-     costumbre estadounidense, pero aquí se rota al vuelo. Se detecta por
-     nombre ("Lun"/"Mon") para que funcione igual en los dos idiomas. */
-  const dowLunesPrimero = useMemo(() => {
-    const iLunes = dowNames.findIndex((d) => /^(lun|mon)/i.test(d.trim()));
-    if (iLunes <= 0) return dowNames;
-    return [...dowNames.slice(iLunes), ...dowNames.slice(0, iLunes)];
-  }, [dowNames]);
 
   /* Fecha completa del tooltip. El orden de las palabras cambia: en español es
      "23 de ene, 2026" y en inglés "Jan 23, 2026". */
@@ -1062,11 +1056,13 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
             key={calAnim}
             onMouseLeave={() => setHoverDia(null)}
           >
-            {/* Índices 5 y 6 = sábado y domingo, porque las cabeceras ya
-                empiezan en lunes. Con el orden antiguo el fin de semana estaba
-                en 0 y 6 y el resaltado se aplicaba a días equivocados. */}
-            {dowLunesPrimero.map((d, i) => (
-              <div className={`dow${i === 5 || i === 6 ? " fin" : ""}`} key={d}>{d}</div>
+            {/* Las cabeceras se mantienen en el orden tradicional
+                domingo-primero, como estaban. El desajuste no se arregla
+                moviendo las cabeceras sino las CELDAS: la semana se construye
+                de lunes a domingo, así que el domingo es el último elemento y
+                se coloca el primero. Ver celdasEnPantalla en RowSemana. */}
+            {dowNames.map((d, i) => (
+              <div className={`dow${i === 0 || i === 6 ? " fin" : ""}`} key={d}>{d}</div>
             ))}
             <div className="dow cal-dow-wk">{t("cal.weekColumn")}</div>
 
