@@ -188,10 +188,54 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
    su ancho variable empujaba a la flecha derecha y al botón "Este mes".
    El HTML original tenía ese mismo defecto. */
 .cal-nav{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;color:var(--muted);}
-.cal-nav .cal-month{color:var(--text);font-weight:600;text-align:center;min-width:0;white-space:nowrap;}
 /* El calendario ocupa todo el ancho de .grid-main: al fusionarse con el
    resumen semanal ya no hay panel hermano al que dejarle sitio. */
 .grid-main>.cal-panel{grid-column:1 / -1;}
+/* Flechas de cambio de mes. Antes eran texto plano sin ningún estado; ahora
+   son botones de verdad con reposo, hover, pulsación y un destello breve que
+   confirma cuál se pulsó. */
+.cal-arrow{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;border-radius:8px;
+  border:1px solid transparent;background:transparent;
+  color:var(--muted);font-size:16px;line-height:1;padding:0;
+  cursor:pointer;font-family:'Space Grotesk',system-ui,sans-serif;
+  transition:background .16s ease,color .16s ease,border-color .16s ease,
+             transform .13s ease,box-shadow .16s ease;
+}
+.cal-arrow:hover{
+  background:rgba(47,216,200,.13);border-color:rgba(47,216,200,.42);
+  color:var(--teal);transform:scale(1.14);
+  box-shadow:0 0 14px -4px rgba(47,216,200,.55);
+}
+.cal-arrow:active{transform:scale(.88);}
+/* Destello tras pulsarla: 380ms, el tiempo que tarda en terminar el deslizamiento. */
+.cal-arrow.destello{
+  background:rgba(47,216,200,.3);border-color:var(--teal);color:var(--teal);
+  box-shadow:0 0 18px -2px rgba(47,216,200,.75);
+}
+/* Flecha con foco de teclado: sin esto no se ve por dónde estás. */
+.cal-arrow:focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
+
+/* Nombre del mes: a 18px, con el año en tono apagado para que se lea de un
+   vistazo qué parte es el mes y cuál el año. */
+.cal-nav .cal-month{
+  font-size:18px;font-weight:600;color:var(--text);
+  text-align:center;letter-spacing:-.012em;min-width:0;white-space:nowrap;
+}
+.cal-nav .cal-year{color:var(--muted);font-weight:500;margin-left:5px;}
+
+/* Título del panel con icono
+   Antes usaba el h2 genérico de todos los paneles: pequeño, gris y sin
+   ninguna identidad. La línea divisoria de abajo lo separa de la barra de
+   meses, que es contenido interactivo. */
+.cal-title{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:600;color:var(--text);}
+.cal-title svg{width:15px;height:15px;color:var(--teal);flex-shrink:0;}
+.cal-panel .cal-nav{border-top:1px solid var(--line);padding-top:12px;}
+
+/* Filas de relleno: no se pintan, solo mantienen el alto del panel. */
+.cal-relleno{grid-column:1 / -1;min-height:58px;}
+
 /* Rejilla única: 7 columnas de días + 1 de resumen semanal. Cada fila es una
    semana completa, así que el resumen cae SIEMPRE a la altura de sus días.
    Antes eran dos rejillas independientes y dependía de que el CSS coincidiera;
@@ -199,11 +243,21 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
 .cal-grid{
   display:grid;
   grid-template-columns:repeat(7,minmax(0,1fr)) minmax(148px,1.05fr);
-  gap:5px;
+  column-gap:5px;row-gap:5px;
 }
 .cal-grid.anim-next{animation:calDeslizaNext .34s cubic-bezier(.2,.8,.2,1);}
 .cal-grid.anim-prev{animation:calDeslizaPrev .34s cubic-bezier(.2,.8,.2,1);}
 .cal-dow-wk{grid-column:8;}
+/* Separación entre la columna de sábado y el resumen semanal. Con el mismo
+   hueco de 5px que entre días, el resumen parecía una celda más. Ahora hay
+   margen, una línea vertical continua que marca el final del calendario, y
+   las esquinas del lado derecho se quedan redondas para que respire. */
+.cal-dow-wk,.cal-wk{margin-left:14px;}
+.cal-dow-wk{color:var(--muted2);}
+.cal-wk{
+  border-left:1px solid var(--line);border-radius:0 8px 8px 0;
+  padding-left:14px;
+}
 .cal-vacio{grid-column:1 / -1;}
 
 /* Días del mes vecino: se muestran para que la semana sea completa, pero

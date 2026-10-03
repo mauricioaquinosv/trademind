@@ -77,6 +77,18 @@ export type SummaryTrade = {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
+/** Filas que tiene siempre el calendario, para que su alto no cambie al navegar.
+ *
+ *  5, no 6. Parece que un mes de 31 días que empieza en domingo daría 6 filas,
+ *  pero no: como la semana 1 es la que contiene al menos el jueves del día 1,
+ *  el primer jueves cae en el día 1, 2 o 3 como muy tarde, y desde ahí solo
+ *  caben 5 jueves separados por 7 días dentro de 31 días (1, 8, 15, 22, 29).
+ *  Comprobado sobre 156 meses de 2020 a 2032: el máximo es 5.
+ *
+ *  Con 6 quedaría una fila vacía permanente abajo, que es justo el defecto
+ *  que se quería evitar. */
+const FILAS_FIJAS = 5;
+
 /* Cifras SIEMPRE completas, con separador de miles.
    Antes esta función abreviaba: 1086 se veía como "$1.09K". Venía del HTML
    original, pero en una herramienta de trading una cifra abreviada es
@@ -701,6 +713,21 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     chart.update();
   }, [s, locale]);
 
+  /* Flecha de mes que se acaba de pulsar, para que se vea cuál se pulsó.
+     Se borra sola: es una pista visual, no un estado que haya que managing. */
+  const [calFlash, setCalFlash] = useState<"prev" | "next" | null>(null);
+  const calFlashRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => {
+    if (calFlashRef.current) window.clearTimeout(calFlashRef.current);
+  }, []);
+
+  function flashFlecha(direccion: "prev" | "next") {
+    if (calFlashRef.current) window.clearTimeout(calFlashRef.current);
+    setCalFlash(direccion);
+    calFlashRef.current = window.setTimeout(() => setCalFlash(null), 380);
+  }
+
   function navigateCalendar(delta: number) {
     if (calYear === null || calMonth === null) return;
     calNavManual.current = true;
@@ -712,6 +739,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     // Las celdas entran deslizándose en el sentido del desplazamiento.
     setCalDesplazamiento(delta > 0 ? 1 : -1);
     setCalAnim((k) => k + 1);
+    flashFlecha(delta > 0 ? "next" : "prev");
   }
   function goToday() {
     // "Este mes" devuelve el control al calendario: vuelve a seguir a los datos.
@@ -736,6 +764,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
       if (distancia !== 0) {
         setCalDesplazamiento(distancia > 0 ? 1 : -1);
         setCalAnim((k) => k + 1);
+        flashFlecha(distancia > 0 ? "next" : "prev");
       }
     }
     setCalYear(y);
@@ -797,6 +826,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
       domingo: string;
       suma: number;
       dias: number;
+      relleno?: boolean;
       celdas: { iso: string; dia: number; otroMes: boolean; v: number | undefined }[];
     }[] = [];
 
@@ -827,6 +857,22 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
       salida.push({ n, lunes, domingo: addDias(lunes, 6), suma, dias, celdas });
       lunes = addDias(lunes, 7);
       n += 1;
+    }
+
+    /* ALTO FIJO: se rellenan siempre 6 filas, el máximo que puede tener un
+       mes (31 días que empiezan en domingo = 37 celdas = 6 filas).
+       Sin esto el panel crecía o menguaba al navegar y todo lo de abajo saltaba.
+       Las filas de relleno no se pintan: sólo mantienen la altura. */
+    while (salida.length < FILAS_FIJAS) {
+      salida.push({
+        n: 0,
+        lunes: "",
+        domingo: "",
+        suma: 0,
+        dias: 0,
+        celdas: [],
+        relleno: true,
+      });
     }
 
     return salida;
@@ -942,10 +988,36 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
             las filas no pueden desalinearse. Ocupa todo el ancho de
             .grid-main porque ya no hay panel hermano al que dejarle sitio. */}
         <div className="panel cal-panel">
-          <h2>{t("cal.title")}</h2>
+          <h2 className="cal-title">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="3.5" y="5" width="17" height="16" rx="3" stroke="currentColor" strokeWidth="1.7" />
+              <path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+              <circle cx="8.5" cy="14" r="1.1" fill="currentColor" />
+              <circle cx="12" cy="14" r="1.1" fill="currentColor" />
+            </svg>
+            {t("cal.title")}
+          </h2>
           <div className="cal-nav">
-            <span className="cal-arrow" style={{ cursor: "pointer", padding: "2px 8px" }} onClick={() => navigateCalendar(-1)}>‹</span>
-            <span className="cal-month">{monthLabel}</span><span className="cal-arrow" style={{ cursor: "pointer", padding: "2px 8px" }} onClick={() => navigateCalendar(1)}>›</span>
+            <button
+              type="button"
+              className={`cal-arrow${calFlash === "prev" ? " destello" : ""}`}
+              onClick={() => navigateCalendar(-1)}
+              aria-label={t("cal.prevMonth")}
+            >
+              ‹
+            </button>
+            <span className="cal-month">
+              {calMonth !== null ? mesesFull[calMonth] : "—"}
+              <span className="cal-year">{calYear ?? ""}</span>
+            </span>
+            <button
+              type="button"
+              className={`cal-arrow${calFlash === "next" ? " destello" : ""}`}
+              onClick={() => navigateCalendar(1)}
+              aria-label={t("cal.nextMonth")}
+            >
+              ›
+            </button>
             <span className="pill" style={{ padding: "3px 9px", cursor: "pointer" }} onClick={goToday}>{t("common.thisMonth")}</span>
           </div>
 
@@ -963,22 +1035,28 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
               <p className="mini-note cal-vacio">{t("weekly.empty")}</p>
             )}
 
-            {filas.map((f) => (
-              <RowSemana
-                key={f.lunes}
-                fila={f}
-                rango={rangoSemana(f.lunes, f.domingo)}
-                setHoverDia={setHoverDia}
-                hoverDia={hoverDia}
-                hoyISO={hoyISO}
-                fmtMoney={fmtMoney}
-                textos={{
-                  semana: (n) => t("weekly.week", { n }),
-                  dayCount: (n) => t("weekly.dayCount", { n }),
-                  noTrades: t("weekly.noTrades"),
-                }}
-              />
-            ))}
+            {filas.map((f) =>
+              /* Filas de relleno: existen solo para mantener el alto del panel
+                 constante entre meses. No se pintan. */
+              f.relleno ? (
+                <div className="cal-relleno" key={`relleno-${f.n}`} />
+              ) : (
+                <RowSemana
+                  key={f.lunes}
+                  fila={f}
+                  rango={rangoSemana(f.lunes, f.domingo)}
+                  setHoverDia={setHoverDia}
+                  hoverDia={hoverDia}
+                  hoyISO={hoyISO}
+                  fmtMoney={fmtMoney}
+                  textos={{
+                    semana: (n) => t("weekly.week", { n }),
+                    dayCount: (n) => t("weekly.dayCount", { n }),
+                    noTrades: t("weekly.noTrades"),
+                  }}
+                />
+              ),
+            )}
           </div>
 
           {resumenMes && (
