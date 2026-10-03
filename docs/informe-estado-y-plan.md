@@ -31,15 +31,16 @@ SaaS de diario de trading. El usuario sube el historial de operaciones de su bro
 |---|---|---|
 | Commits | 25 | `git log` |
 | **Commits sin subir** | **19** | `git status -sb` → `ahead 19` |
-| Tests | **98, todos pasan** (9,22 s) | `pytest` |
+| Tests (backend) | **145, todos pasan** | `pytest` |
 | Backend | 11 ficheros, 924 líneas | recuento |
-| Tests (backend) | 4 ficheros, 1069 líneas | recuento |
+| Tests (backend) | 5 ficheros, 1754 líneas | recuento |
 | Frontend | 12 ficheros TS/TSX, 4109 líneas | recuento |
 | CSS | 830 líneas | recuento |
 | Claves i18n | **213 por idioma, equilibradas** | `es.ts` / `en.ts` |
 | Migraciones | 5, todas aplicadas | `alembic/versions` |
 | Endpoints | 12 | routers |
-| Ficheros versionados | 72 | `git ls-files` |
+| Tests (frontend) | **34, todos pasan** | `npm test` |
+| Ficheros versionados | 75 | `git ls-files` |
 | Peso del repo | 3,5 MB | `.git` |
 
 ### 2.2 Reparto de los tests
@@ -48,6 +49,8 @@ SaaS de diario de trading. El usuario sube el historial de operaciones de su bro
 |---|---|---|
 | `test_accounts.py` | 43 | CRUD de cuentas, `trade_count`, borrado protegido |
 | `test_trades.py` | 28 | Alta, listado, filtros, detalle, borrado |
+| `test_auth.py` | **26** | Registro, login, JWT, bcrypt, endpoints protegidos |
+| `test_upload.py` | **21** | Los dos parsers y el endpoint de subida |
 | `test_fifo_engine.py` | 27 | Motor FIFO: cierre simple, scale-in, scale-out, reversión |
 
 Base de datos de tests separada: `trademind_test`.
@@ -189,23 +192,53 @@ Verificado en `SummaryView.tsx`: solo `filas` (resumen semanal, L818) y `resumen
 
 **Esto es una decisión de diseño, no un error de código.** Pero está sin responder desde que se señaló: ¿los KPIs son "de la cuenta" o "del mes que estás viendo"?
 
-### 🟠 D3 — El frontend no tiene ni un test
+### ✅ D3 — El frontend no tenía ni un test — **RESUELTO**
 
-Cero tests en `web/`. Los 98 tests cubren el backend. Todo el navegador —cálculo de KPIs, filtros, paginación, calendario, resumen semanal— no tiene red.
+**Lo que era.** Cero tests en `web/`. Los 98 tests cubrían solo el backend. La lógica de la vista Resumen estaba dentro de `SummaryView.tsx` —1.041 líneas con React dentro— y no había forma de probarla sin montar el navegador. Los scripts de verificación que se usaron vivían en la carpeta temporal y **no se quedaban**.
 
-Lo que sí se hizo, en su lugar, son scripts de verificación de un solo uso en la carpeta temporal: se extrae el `useMemo` real del archivo y se ejecuta (1.463 días de 48 meses comprobados para el calendario). Sirven para verificar en el momento, pero **no se quedan** en el repositorio.
+**Lo que se hizo.** La lógica pura se movió a `web/lib/resumen.ts`: `pad`, `addDias`, `lunesDe`, `diasDelMes`, `filasDelMes`, `celdasEnPantalla`, `resumenDelMes` y `computeStats`. Sin React y sin estado. El componente la importa.
 
-### 🟠 D4 — Huecos en los tests del backend
+**34 tests** en `web/tests/resumen.test.mjs`, con el runner que ya trae Node (`npm test`), sin instalar nada.
 
-| Módulo | Tests |
-|---|---|
-| `fifo_engine` | 27 |
-| `accounts` | 43 |
-| `trades` | 28 |
-| **`auth`** (registro, login, JWT, bcrypt) | **0** |
-| **`trades.py::upload`** (los 3 parsers) | **0** |
+**Por qué importa.** El calendario lleva **tres correcciones** en su historia: dos veces se rompió la alineación de los días de la semana y una vez el alto del panel. Todo eso se podía haber cazado con estos tests, y no había forma.
 
-El motor FIFO está protegido. El login y los parsers —que es donde un fallo se traduce en "no puedo entrar" o "no me cargó el archivo"— no.
+Los que más cubren:
+- Todos los días caen bajo su día de la semana real — 48 meses, 1.463 días
+- El giro de celdas es una permutación: no pierde ni duplica días
+- La semana pertenece al mes de su jueves y se numera desde 1
+- Ningún mes de 2020 a 2032 necesita más de las 5 filas fijas
+- Febrero bisiesto: 2028 y 2000 con 29 días, 1900 con 28
+- Todo se calcula en UTC, no en el huso del navegador
+- El radar se queda entre 0 y 100 en los cuatro casos extremos
+
+### ✅ D4 — Huecos en los tests del backend — **RESUELTO**
+
+| Módulo | Antes | Ahora |
+|---|---|---|
+| `fifo_engine` | 27 | 27 |
+| `accounts` | 43 | 43 |
+| `trades` | 28 | 28 |
+| **`auth`** | **0** | **26** |
+| **`trades.py::upload`** | **0** | **21** |
+| | 98 | **145** |
+
+**Los tests de auth** necesitan un cliente distinto: hasta ahora la dependencia `get_current_user` estaba parcheada en todos los tests, así que **el código real de validación del JWT no se ejecutaba nunca**. Se añadió el fixture `client_anonimo`, que sustituye solo la sesión de base de datos y deja intacta la cadena del token.
+
+Cubren: registro con bcrypt, emails inválidos, login correcto e incorrecto, el id dentro del token, tokens con otra clave / caducados / de usuario borrado / basura, y el rechazo de los endpoints protegidos.
+
+Cubren también dos comportamientos que **no son errores pero conviene conocer**: el login no normaliza mayúsculas (`USER@X.COM` no encuentra al usuario registrado como `user@x.com`), y `UserCreate` **no exige longitud mínima de contraseña**, así que una contraseña vacía permite registrarse e iniciar sesión.
+
+**Los tests de upload** suben un fichero real de cada clase —el reporte de MT5 y la plantilla de TradeMind— y comprueban las cifras concretas, no solo que no reviente: el reporte da **20 trades con una suma de P&L neta de −93,60**, y la plantilla da **1 trade con 59,20**.
+
+### 🔴 D11 — Bugs que aparecieron al escribir esos tests
+
+Tres fallos reales que nadie había visto porque no había tests que los miraran:
+
+**1. Un `.xlsx` vacío tumbaba el servidor con un 500.** `_pick_parser()` leía el archivo y estaba **fuera** del `try/except ValueError`, así que un archivo sin tablas lanzaba `pandas.EmptyDataError` sin capturar. El usuario veía "la app se cayó" en vez de "tu archivo no vale". Ahora `_pick_parser` va dentro del `try`, y se comprueba que el DataFrame no esté vacío antes de leer la primera celda — porque `.iloc[0, 0]` sobre un dataframe sin filas lanza `IndexError`.
+
+**2. Fuga de ficheros temporales.** El temporal se creaba con `delete=False` porque el parser lo lee por ruta, y nunca se borraba: uno por cada subida, para siempre. **Se llegaron a contar 45 huérfanos**, todos de pruebas de esa misma sesión. Ahora se borra en un `finally`, con tests para el camino bueno y el de error.
+
+**3. Los mensajes del backend están en español fijo.** Los errores de `/auth` y de `upload` no pasan por el diccionario de idiomas. Con la app en inglés, un contraseña incorrecta responde "Email o contraseña incorrectos". **Pendiente**: los errores del backend no están traducidos.
 
 ### 🟡 D5 — Imagen duplicada: 2,7 MB de más
 
@@ -250,11 +283,11 @@ El orden está pensado para **minimizar retrabajo**: primero lo barato que evita
 
 | Trabajo | Deuda | Esfuerzo |
 |---|---|---|
-| 3.8a · Poner las 28 cadenas en el diccionario | D1 | 30 min |
+| ~~3.8a · Poner las 28 cadenas en el diccionario~~ **Hecho** | D1 ✅ | — |
 | 3.8b · Resolver el filtrado por mes de KPIs y gráfico | D2 | depende de la decisión |
 | 3.8c · Borrar la imagen duplicada y arreglar `.gitignore` | D5, D6 | 10 min |
-| 3.8d · Llevar al repositorio los tests del calendario y del resumen semanal | D3 | 20 min |
-| 3.8e · Tests de `auth` y de `upload` | D4 | 1 h |
+| ~~3.8d · Llevar al repositorio los tests del calendario y del resumen semanal~~ **Hecho** | D3 ✅ | — |
+| ~~3.8e · Tests de `auth` y de `upload`~~ **Hecho** | D4 ✅ | — |
 | 3.8f · Retirar los scripts de depuración | D8 | 5 min |
 | 3.8g · **Subir los 19 commits** | D9 | 5 min |
 
