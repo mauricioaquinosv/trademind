@@ -763,9 +763,8 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
         <div className="panel">
           <div className="cal-nav">
             <span className="cal-arrow" style={{ cursor: "pointer", padding: "2px 8px" }} onClick={() => navigateCalendar(-1)}>‹</span>
-            &nbsp;<b>{monthLabel}</b>&nbsp;
-            <span className="cal-arrow" style={{ cursor: "pointer", padding: "2px 8px" }} onClick={() => navigateCalendar(1)}>›</span>
-            &nbsp;<span className="pill" style={{ padding: "3px 9px", cursor: "pointer" }} onClick={goToday}>{t("common.thisMonth")}</span>
+            <span className="cal-month">{monthLabel}</span><span className="cal-arrow" style={{ cursor: "pointer", padding: "2px 8px" }} onClick={() => navigateCalendar(1)}>›</span>
+            <span className="pill" style={{ padding: "3px 9px", cursor: "pointer" }} onClick={goToday}>{t("common.thisMonth")}</span>
           </div>
           <div className="cal">
             {dowNames.map((d) => (

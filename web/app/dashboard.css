@@ -178,8 +178,14 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
 @keyframes glowFloat{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(18px,14px) scale(1.08);}}
 .panel h2 span{color:var(--muted);font-weight:500;font-size:12.5px;}
 
-.cal-nav{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;color:var(--muted);}
-.cal-nav b{color:var(--text);font-weight:600;}
+/* Rejilla de 4 columnas: flecha | mes | flecha | botón.
+   El mes se lleva todo el espacio sobrante (1fr) y se centra dentro, así los
+   botones NO se mueven aunque cambie la longitud del nombre ("Enero" vs
+   "Septiembre", o el idioma ES/EN). Antes el nombre iba como <b> en línea y
+   su ancho variable empujaba a la flecha derecha y al botón "Este mes".
+   El HTML original tenía ese mismo defecto. */
+.cal-nav{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;color:var(--muted);}
+.cal-nav .cal-month{color:var(--text);font-weight:600;text-align:center;min-width:0;white-space:nowrap;}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
 .cal .dow{font-size:11px;color:var(--muted2);text-align:center;padding-bottom:4px;}
 .day{
