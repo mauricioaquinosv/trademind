@@ -165,9 +165,7 @@ export const es = {
   "accounts.deleteWarn": "Esta acción no se puede deshacer.",
   "accounts.deleteConfirm": "¿Seguro que quieres eliminar la cuenta",
   "accounts.deleteHasTrades":
-    "Esta cuenta tiene {n} operación(es). Si la eliminas también se borrarán.",
-  "accounts.deleteKeep": "Conservar operaciones",
-  "accounts.deleteAll": "Eliminar cuenta y operaciones",
+    "Esta cuenta tiene {n} operación(es). También se borrarán.",
   "accounts.wasDeleted": "La cuenta se eliminó.",
   "accounts.wasUpdated": "La cuenta se actualizó.",
 

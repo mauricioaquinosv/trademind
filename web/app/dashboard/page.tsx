@@ -483,7 +483,6 @@ export default function DashboardPage() {
 
   // Modal de borrado de cuenta
   const [accDeleteId, setAccDeleteId] = useState<string | null>(null);
-  const [accDeleteTrades, setAccDeleteTrades] = useState(false);
   const [accDeleteError, setAccDeleteError] = useState("");
   const [accNotice, setAccNotice] = useState("");
 
@@ -539,23 +538,23 @@ export default function DashboardPage() {
 
   function openAccDelete(id: string) {
     setAccDeleteId(id);
-    setAccDeleteTrades(false);
     setAccDeleteError("");
   }
 
   async function handleAccDelete() {
     if (!accDeleteId) return;
     try {
-      const res = await authedFetch(
-        `/accounts/${accDeleteId}${accDeleteTrades ? "?delete_trades=true" : ""}`,
-        { method: "DELETE" },
-      );
+      /* Se borra con las operaciones y ya. El modal de arriba ES la
+         confirmacion: pedir una casilla ademas era un cerrojo de mas.
+         delete_trades=true sigue siendo obligatorio en el backend (ahi si es
+         una proteccion real, porque cualquiera puede llamar a la API), pero
+         desde la interfaz se acepta con un clic. */
+      const res = await authedFetch(`/accounts/${accDeleteId}?delete_trades=true`, {
+        method: "DELETE",
+      });
 
       if (!res.ok) {
-        /* Mostrar lo que dice el backend en vez de un mensaje generico: es el
-           que sabe por que fallo (409 con operaciones, 404, etc.). Antes se
-           tragaba su explicacion y el usuario veia 'intenta de nuevo' sin
-           pista de que hacer. */
+        /* Mostrar lo que dice el backend en vez de un mensaje generico. */
         const cuerpo = await res.json().catch(() => null);
         setAccDeleteError(
           (cuerpo && typeof cuerpo.detail === "string" && cuerpo.detail) ||
@@ -1422,30 +1421,19 @@ export default function DashboardPage() {
             <p style={{ marginBottom: 10 }}>
               {t("accounts.deleteConfirm")} <b>{accEnBorrado?.name}</b>?
             </p>
-            <p className="mini-note">{t("accounts.deleteWarn")}</p>
 
-            {/* Si tiene operaciones, avisar ANTES de confirmar. El backend
-                devuelve 409 si se intenta borrar sin delete_trades, asi que
-                esto no es solo informativo: evita un rechazo. */}
+            {/* Aviso informative, no un cerrojo: el modal ya es la
+                confirmacion y con un clic en el boton rojo se borra. */}
             {tradesDeAccEnBorrado > 0 && (
-              <div className="tm-field full" style={{ marginTop: 14, marginBottom: 4 }}>
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-                  <input
-                    type="checkbox"
-                    id="accDeleteTrades"
-                    checked={accDeleteTrades}
-                    onChange={(e) => setAccDeleteTrades(e.target.checked)}
-                    style={{ marginTop: 2 }}
-                  />
-                  <label htmlFor="accDeleteTrades" style={{ cursor: "pointer" }}>
-                    <b>{t("accounts.deleteAll")}</b>
-                    <div className="mini-note" style={{ marginTop: 2 }}>
-                      {t("accounts.deleteHasTrades", { n: tradesDeAccEnBorrado })}
-                    </div>
-                  </label>
-                </div>
-              </div>
+              <p
+                className="mini-note"
+                style={{ color: "var(--red)", marginTop: 0 }}
+              >
+                {t("accounts.deleteHasTrades", { n: tradesDeAccEnBorrado })}
+              </p>
             )}
+
+            <p className="mini-note">{t("accounts.deleteWarn")}</p>
           </div>
           <div className="tm-error">{accDeleteError}</div>
           <div className="tm-actions">
@@ -1453,8 +1441,7 @@ export default function DashboardPage() {
             <button
               type="button"
               className="pill"
-              disabled={tradesDeAccEnBorrado > 0 && !accDeleteTrades}
-              style={{ background: "var(--red)", color: "#fff", borderColor: "var(--red)", fontWeight: 700, flex: 2, opacity: tradesDeAccEnBorrado > 0 && !accDeleteTrades ? 0.45 : 1, cursor: tradesDeAccEnBorrado > 0 && !accDeleteTrades ? "not-allowed" : "pointer" }}
+              style={{ background: "var(--red)", color: "#fff", borderColor: "var(--red)", fontWeight: 700, flex: 2 }}
               onClick={handleAccDelete}
             >
               {t("accounts.delete")}

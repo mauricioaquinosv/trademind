@@ -166,9 +166,7 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "accounts.deleteWarn": "This action cannot be undone.",
   "accounts.deleteConfirm": "Are you sure you want to delete the account",
   "accounts.deleteHasTrades":
-    "This account has {n} trade(s). Deleting it will delete them too.",
-  "accounts.deleteKeep": "Keep trades",
-  "accounts.deleteAll": "Delete account and trades",
+    "This account has {n} trade(s). They will be deleted too.",
   "accounts.wasDeleted": "The account was deleted.",
   "accounts.wasUpdated": "The account was updated.",
 
