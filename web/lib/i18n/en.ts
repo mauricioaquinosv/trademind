@@ -116,6 +116,7 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   // Resumen del mes bajo el calendario
   // ------------------------------------------------------------------
   "cal.noTrades": "no trades this month",
+  "cal.monthTotal": "Month total",
   "cal.daysOperated": { one: "{n} day traded", other: "{n} days traded" },
   "cal.bestDay": "Best day",
   "cal.worstDay": "Worst day",

@@ -77,13 +77,11 @@ export type SummaryTrade = {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
+/* Cifras SIEMPRE completas, con separador de miles.
+   Antes esta función abreviaba: 1086 se veía como "$1.09K". Venía del HTML
+   original, pero en una herramienta de trading una cifra abreviada es
+   ambigua ($1.09K podría ser 1.090 o 1.094), así que se eliminó. */
 function fmtMoney(n: number) {
-  const sign = n < 0 ? "-" : "";
-  const abs = Math.abs(n);
-  const val = abs >= 1000 ? (abs / 1000).toFixed(2).replace(/\.00$/, "") + "K" : abs.toFixed(2).replace(/\.00$/, "");
-  return sign + "$" + val;
-}
-function fmtMoneyFull(n: number) {
   const sign = n < 0 ? "-" : "";
   const abs = Math.abs(n);
   return sign + "$" + abs.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -480,7 +478,15 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
           },
           scales: {
             x: { grid: { display: false }, ticks: { maxTicksLimit: 6, font: { size: 10 } } },
-            y: { grid: { color: "rgba(255,255,255,.09)" }, ticks: { callback: (v) => "$" + v, font: { size: 10 } } },
+            y: {
+              grid: { color: "rgba(255,255,255,.09)" },
+              /* Separador de miles también en el eje: si no, 1200 aparece como
+                 "$1200" junto a "$200", y no se lee de un vistazo. */
+              ticks: {
+                callback: (v) => "$" + Number(v).toLocaleString("en-US"),
+                font: { size: 10 },
+              },
+            },
           },
         },
         plugins: [pnlGlowPlugin, pnlWavePlugin],
@@ -792,11 +798,11 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
       <div className="stats">
         <div className="card">
           <div className="label">{t("kpi.balance")}</div>
-          <div className={`value num ${balancePositive ? "pos" : "neg"}`}>{fmtMoneyFull(animBalance)}</div>
+          <div className={`value num ${balancePositive ? "pos" : "neg"}`}>{fmtMoney(animBalance)}</div>
         </div>
         <div className="card">
           <div className="label">{t("kpi.netPnl")}</div>
-          <div className={`value num ${s.netPnl >= 0 ? "pos" : "neg"}`}>{fmtMoneyFull(animNetPnl)}</div>
+          <div className={`value num ${s.netPnl >= 0 ? "pos" : "neg"}`}>{fmtMoney(animNetPnl)}</div>
         </div>
         <div className="card">
           <div className="label">{t("kpi.winrate")}</div>
@@ -826,7 +832,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
               ⓘ
             </span>
           </div>
-          <div className={`value num ${expectedValue >= 0 ? "pos" : "neg"}`}>{fmtMoneyFull(animExpectedValue)}</div>
+          <div className={`value num ${expectedValue >= 0 ? "pos" : "neg"}`}>{fmtMoney(animExpectedValue)}</div>
         </div>
         <div className="card">
           <div className="label">{t("kpi.avgTradeTime")}</div>
@@ -895,7 +901,8 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
               por sí solo no decía. */}
           {resumenMes && (
             <div className="cal-resumen">
-              <span className="cr-total">
+              <span className="cr-item">
+                <span className="cr-label">{t("cal.monthTotal")}</span>
                 <b className={resumenMes.suma >= 0 ? "pos" : "neg"}>{fmtMoney(resumenMes.suma)}</b>
               </span>
               {resumenMes.dias === 0 ? (
@@ -928,8 +935,13 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
             {semanas.map((w) => {
               const sinOperaciones = w.dias === 0;
               const color = w.suma > 0 ? "var(--green)" : w.suma < 0 ? "var(--red)" : "var(--muted)";
+              /* La clase win/loss dispara el pulso del total, igual que en el
+                 calendario. Sin operaciones, ni pulso ni color. */
+              const clase = sinOperaciones
+                ? "wk vacia"
+                : w.suma > 0 ? "wk win" : w.suma < 0 ? "wk loss" : "wk";
               return (
-                <div className={`wk${sinOperaciones ? " vacia" : ""}`} key={w.lunes}>
+                <div className={clase} key={w.lunes}>
                   <span className="l">
                     {t("weekly.week", { n: w.n })}
                     <span className="wk-range">{rangoSemana(w.lunes, w.domingo)}</span>

@@ -99,6 +99,7 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
   .bar-split .bar-fill::after{display:none;}
   .cal.anim-next,.cal.anim-prev{animation:none !important;}
   .day.hoy.win,.day.hoy.loss{animation:none !important;}
+  .day.win .p,.day.loss .p,.wk.win .r b,.wk.loss .r b{animation:none !important;}
 }
 .card::after{
   content:"";position:absolute;top:-60%;left:-35%;width:55%;height:220%;z-index:0;
@@ -228,6 +229,10 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
 .cal-resumen b.pos{color:var(--green);} .cal-resumen b.neg{color:var(--red);}
 .day{
   position:relative;isolation:isolate;overflow:hidden;min-height:58px;border-radius:9px;padding:6px 7px;font-size:11px;color:var(--muted2);
+  /* El número de día arriba a la izquierda y el importe abajo a la izquierda,
+     con space-between. Antes el importe caía justo debajo del número y en las
+     celdas sin operación quedaba un hueco raro al medio. */
+  display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;
   background:
     radial-gradient(120% 140% at 20% -10%, rgba(255,255,255,.08), transparent 55%),
     linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,.01) 55%);
@@ -248,9 +253,30 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
   background-color:var(--red-bg);border-color:rgba(255,77,109,.35);color:var(--text);}
 .day.win:hover{border-color:rgba(47,216,184,.55);box-shadow:0 1px 0 rgba(255,255,255,.08) inset,0 12px 26px -14px rgba(47,216,184,.35);}
 .day.loss:hover{border-color:rgba(255,77,109,.55);box-shadow:0 1px 0 rgba(255,255,255,.08) inset,0 12px 26px -14px rgba(255,77,109,.35);}
-.day .d{font-size:11px;color:var(--muted);margin-bottom:4px;}
-.day .p{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;}
+.day .d{font-size:11px;color:var(--muted);}
+/* El importe va abajo a la izquierda. nowrap porque las cifras ya no se
+   abrevian y "−$11,308.95" no debe partirse en dos líneas. */
+.day .p{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:11.5px;
+  white-space:nowrap;letter-spacing:-.01em;align-self:flex-start;}
 .day.win .p{color:var(--green);} .day.loss .p{color:var(--red);}
+
+/* Pulso del importe según el signo. Todos laten al mismo ritmo para que la
+   vista no parezca un guarderín de movimiento: verde y rojo pulsan igual, solo
+   cambia el color. */
+.day.win .p{animation:pnlPulsoGanancia 2.6s ease-in-out infinite;}
+.day.loss .p{animation:pnlPulsoPerdida 2.6s ease-in-out infinite;}
+/* El mismo pulso en los totales del resumen semanal, para que el número grande
+   de cada semana lata igual que los importes del calendario. */
+.wk.win .r b{animation:pnlPulsoGanancia 2.6s ease-in-out infinite;}
+.wk.loss .r b{animation:pnlPulsoPerdida 2.6s ease-in-out infinite;}
+@keyframes pnlPulsoGanancia{
+  0%,100%{text-shadow:0 0 0 rgba(47,216,184,0);opacity:.82;}
+  50%{text-shadow:0 0 9px rgba(47,216,184,.75);opacity:1;}
+}
+@keyframes pnlPulsoPerdida{
+  0%,100%{text-shadow:0 0 0 rgba(255,77,109,0);opacity:.82;}
+  50%{text-shadow:0 0 9px rgba(255,77,109,.75);opacity:1;}
+}
 
 .score-panel{display:flex;flex-direction:column;overflow:hidden;height:380px;}
 .score-panel::before{content:"";position:absolute;z-index:0;width:60%;height:200px;left:-10%;top:-60px;background:radial-gradient(circle,rgba(226,47,160,.22),transparent 70%);filter:blur(6px);animation:glowFloat 10s ease-in-out infinite;pointer-events:none;}
@@ -274,9 +300,18 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
 @keyframes scoreMarkerPulse{0%,100%{box-shadow:0 0 6px 2px rgba(255,255,255,.5),0 0 14px 4px rgba(255,196,0,.4);}50%{box-shadow:0 0 10px 4px rgba(255,255,255,.85),0 0 24px 9px rgba(255,196,0,.65);}}
 
 .weeklist{display:flex;flex-direction:column;gap:8px;}
-.wk{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;font-size:12.5px;}
-.wk .l{color:var(--muted);}
-.wk .r{text-align:right;}
+/* Las filas usan la MISMA rejilla de 7 columnas que el calendario de arriba,
+   así "Semana 1" arranca en la misma columna que "Dom" y el importe termina en
+   la misma que "Sáb". Antes cada fila era una barra de ancho completo y los
+   bordes no coincidían con los de las celdas. */
+.wk{
+  display:grid;grid-template-columns:repeat(7,1fr);align-items:center;
+  column-gap:5px; /* el mismo hueco que .cal */
+  padding:10px 12px;background:var(--panel2);border:1px solid var(--line);
+  border-radius:8px;font-size:12.5px;
+}
+.wk .l{grid-column:1;color:var(--muted);display:flex;align-items:baseline;flex-wrap:wrap;}
+.wk .r{grid-column:7;justify-self:end;text-align:right;}
 .wk .r b{display:block;font-family:'IBM Plex Mono',monospace;font-size:13px;}
 
 .nav{

@@ -115,6 +115,7 @@ export const es = {
   // Resumen del mes bajo el calendario
   // ------------------------------------------------------------------
   "cal.noTrades": "sin operaciones este mes",
+  "cal.monthTotal": "Total del mes",
   "cal.daysOperated": { one: "{n} día operados", other: "{n} días operados" },
   "cal.bestDay": "Mejor día",
   "cal.worstDay": "Peor día",
