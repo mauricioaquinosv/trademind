@@ -5,7 +5,12 @@ import "./globals.css";
 // (tarjetas de cristal, degradados, sombras y animaciones) prevaillezcan
 // sobre el preflight de Tailwind.
 import "./dashboard.css";
-import { LocaleProvider, LOCALE_COOKIE, LOCALES, type Locale } from "../lib/i18n/LocaleProvider";
+// Las constantes y la normalizacion se importan de ./config y NO de
+// LocaleProvider: LocaleProvider es un modulo de cliente, y desde el
+// servidor Next solo devuelve un proxy de referencia (y LOCALES.includes
+// fallaria con "is not a function").
+import { LOCALE_COOKIE, normalizarLocale } from "../lib/i18n/config";
+import { LocaleProvider } from "../lib/i18n/LocaleProvider";
 
 export const metadata: Metadata = {
   title: "TradeMind",
@@ -16,10 +21,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   // El idioma se lee AQUÍ, en el servidor, y no en el navegador. Por eso la
   // primera pintura ya sale en el idioma correcto: sin destello a español
   // cuando el usuario está en inglés.
-  const guardado = (await cookies()).get(LOCALE_COOKIE)?.value;
-  const locale: Locale = LOCALES.includes(guardado as Locale)
-    ? (guardado as Locale)
-    : "es";
+  const locale = normalizarLocale((await cookies()).get(LOCALE_COOKIE)?.value);
 
   return (
     <html lang={locale} className="h-full">

@@ -1,7 +1,10 @@
 "use client";
 
 /**
- * Sistema de idioma ES/EN.
+ * Proveedor de idioma para el árbol de componentes de cliente.
+ *
+ * Toda la lógica y las constantes viven en ./config, que NO es un módulo de
+ * cliente. Aquí solo vive lo que necesita React.
  *
  * Decisiones de diseño:
  *
@@ -14,66 +17,21 @@
  *    primera pintura siempre sería en español y luego saltaría al inglés.
  *    Por eso layout.tsx lee una COOKIE en el servidor y se la pasa como
  *    `initial`. La cookie se escribe junto con localStorage al cambiar.
- *
- * 3. Las traducciones faltantes se detectan al compilar, no en pantalla.
- *    `en.ts` está tipado contra las claves de `es.ts`.
  */
 
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { es, type TranslationKey } from "./es";
-import { en } from "./en";
+  LOCALE_COOKIE,
+  LOCALE_STORAGE,
+  LOCALES,
+  listar,
+  traducir,
+  type Locale,
+  type TranslationKey,
+} from "./config";
 
-export type Locale = "es" | "en";
-
-export const LOCALE_COOKIE = "trademind_locale";
-export const LOCALE_STORAGE = "trademind_locale";
-
-export const LOCALES: Locale[] = ["es", "en"];
-
-const DICCIONARIOS = { es, en } as const;
-
-/** Sustituye {nombre} y {n} por los valores recibidos. */
-function interpolar(plantilla: string, vars?: Record<string, string | number>) {
-  if (!vars) return plantilla;
-  return plantilla.replace(/\{(\w+)\}/g, (original, clave) =>
-    clave in vars ? String(vars[clave]) : original,
-  );
-}
-
-/**
- * Traduce una clave. Si el valor es { one, other }, elige la forma correcta
- * según vars.n (singular exactamente cuando vale 1).
- */
-export function traducir(
-  locale: Locale,
-  clave: TranslationKey,
-  vars?: Record<string, string | number>,
-): string {
-  const valor: unknown = (DICCIONARIOS[locale] as Record<string, unknown>)[clave];
-
-  if (valor === undefined || valor === null) {
-    // Que se note en desarrollo, pero sin romper la pantalla en producción.
-    if (process.env.NODE_ENV !== "production") {
-      console.warn(`[i18n] falta la clave "${clave}" en el diccionario ${locale}`);
-    }
-    return clave;
-  }
-
-  if (typeof valor === "object" && "one" in (valor as object)) {
-    const par = valor as { one: string; other: string };
-    const n = Number(vars?.n ?? 0);
-    return interpolar(n === 1 ? par.one : par.other, vars);
-  }
-
-  return interpolar(String(valor), vars);
-}
+export type { Locale };
+export { LOCALE_COOKIE, LOCALES };
 
 type I18nValue = {
   locale: Locale;
@@ -113,7 +71,7 @@ export function LocaleProvider({
   }, []);
 
   // Red de seguridad: si el navegador tiene un idioma guardado pero la cookie
-  // se perdió (por ejemplo,EDD), se recupera.
+  // se perdió, se recupera.
   useEffect(() => {
     try {
       const guardado = localStorage.getItem(LOCALE_STORAGE) as Locale | null;
@@ -131,10 +89,7 @@ export function LocaleProvider({
       locale,
       setLocale,
       t: (clave, vars) => traducir(locale, clave, vars),
-      list: (clave) => {
-        const bruto = (DICCIONARIOS[locale] as Record<string, unknown>)[clave];
-        return Array.isArray(bruto) ? (bruto as string[]) : [];
-      },
+      list: (clave) => listar(locale, clave),
     }),
     [locale, setLocale],
   );
