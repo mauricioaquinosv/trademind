@@ -97,6 +97,8 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;}
   .bar-split .bar-fill::after{display:none;}
+  .cal.anim-next,.cal.anim-prev{animation:none !important;}
+  .day.hoy.win,.day.hoy.loss{animation:none !important;}
 }
 .card::after{
   content:"";position:absolute;top:-60%;left:-35%;width:55%;height:220%;z-index:0;
@@ -188,6 +190,42 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
 .cal-nav .cal-month{color:var(--text);font-weight:600;text-align:center;min-width:0;white-space:nowrap;}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
 .cal .dow{font-size:11px;color:var(--muted2);text-align:center;padding-bottom:4px;}
+/* Dom y Sáb: en un mercado 24/7 (cripto) el fin de semana es parte de la
+   semana, pero conviene verlo de un vistazo. */
+.cal .dow.fin{color:var(--pink);opacity:.62;font-weight:600;}
+
+/* --- Cambio de mes: las celdas entran deslizadas en el sentido del salto --- */
+.cal.anim-next{animation:calDeslizaNext .34s cubic-bezier(.2,.8,.2,1);}
+.cal.anim-prev{animation:calDeslizaPrev .34s cubic-bezier(.2,.8,.2,1);}
+@keyframes calDeslizaNext{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:none;}}
+@keyframes calDeslizaPrev{from{opacity:0;transform:translateX(-30px);}to{opacity:1;transform:none;}}
+
+/* --- Día de hoy: aro turquesa siempre, y pulso si además tiene operaciones.
+       El aro se distingue del fondo de la celda incluso sin operación, que es
+       justo cuando más cuesta localizar el día. --- */
+.day.hoy{box-shadow:0 0 0 1px var(--teal) inset,0 1px 0 rgba(255,255,255,.06) inset;}
+.day.hoy.win{animation:calHoyPulso 3.2s ease-in-out infinite;}
+.day.hoy.loss{animation:calHoyPulsoPerdida 3.2s ease-in-out infinite;}
+@keyframes calHoyPulso{
+  0%,100%{box-shadow:0 0 0 1px var(--teal) inset,0 0 0 0 rgba(47,216,200,.42),0 1px 0 rgba(255,255,255,.06) inset;}
+  50%{box-shadow:0 0 0 1px var(--teal) inset,0 0 0 5px rgba(47,216,200,0),0 1px 0 rgba(255,255,255,.06) inset;}
+}
+@keyframes calHoyPulsoPerdida{
+  0%,100%{box-shadow:0 0 0 1px var(--teal) inset,0 0 0 0 rgba(255,77,109,.42),0 1px 0 rgba(255,255,255,.06) inset;}
+  50%{box-shadow:0 0 0 1px var(--teal) inset,0 0 0 5px rgba(255,77,109,0),0 1px 0 rgba(255,255,255,.06) inset;}
+}
+
+/* --- Día señalado desde la línea de PnL (o al revés): se destaca del resto. --- */
+.day.senalado{transform:translateY(-2px) scale(1.04);border-color:rgba(255,255,255,.4);z-index:2;
+  box-shadow:0 0 0 1px rgba(255,255,255,.28),0 14px 30px -14px rgba(0,0,0,.7);}
+
+/* --- Resumen del mes --- */
+.cal-resumen{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+  margin-top:12px;padding-top:11px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);}
+.cal-resumen .cr-total{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;}
+.cal-resumen .cr-item{display:inline-flex;align-items:baseline;gap:5px;}
+.cal-resumen b{font-family:'IBM Plex Mono',monospace;font-weight:600;}
+.cal-resumen b.pos{color:var(--green);} .cal-resumen b.neg{color:var(--red);}
 .day{
   position:relative;isolation:isolate;overflow:hidden;min-height:58px;border-radius:9px;padding:6px 7px;font-size:11px;color:var(--muted2);
   background:

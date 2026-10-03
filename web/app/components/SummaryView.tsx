@@ -262,6 +262,14 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
 
   const [calYear, setCalYear] = useState<number | null>(null);
   const [calMonth, setCalMonth] = useState<number | null>(null);
+  /* Dirección y contador de la animación de cambio de mes. El contador se usa
+     como `key` de la rejilla: al cambiar, React remonta las celdas y la
+     animación CSS vuelve a empezar. */
+  const [calAnim, setCalAnim] = useState(0);
+  const [calDesplazamiento, setCalDesplazamiento] = useState<1 | -1>(1);
+  /* Día señalado con el ratón, en cualquiera de los dos sitios: pasar por una
+     celda del calendario resalta su punto en la línea de PnL, y al revés. */
+  const [hoverDia, setHoverDia] = useState<string | null>(null);
   // true cuando el usuario navega el calendario a mano; entonces ya no se
   // auto-ajusta al mes de los datos.
   const calNavManual = useRef(false);
@@ -419,6 +427,21 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
           responsive: true,
           maintainAspectRatio: false,
           interaction: { intersect: false, mode: "index" },
+          /* Ratón sobre la línea -> resalta la celda de ese día en el
+             calendario. La otra mitad del enlace (celda -> línea) está en el
+             efecto de más abajo, que mueve el tooltip del gráfico. */
+          onHover: (evt, _els, chart) => {
+            /* Chart.js entrega un ChartEvent; getElementsAtEventForMode pide el
+               Event nativo, que viene en .native. */
+            const pts = chart.getElementsAtEventForMode(
+              (evt.native ?? evt) as Event,
+              "index",
+              { intersect: false },
+              true,
+            );
+            const fecha = pts.length ? s.cumSeries[pts[0].index]?.date : undefined;
+            setHoverDia(fecha ?? null);
+          },
           plugins: {
             legend: { display: false },
             tooltip: {
@@ -482,6 +505,31 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     // locale entra en las dependencias porque el tooltip se reconstruye al
     // cambiar de idioma ("23 de ene, 2026" <-> "Jan 23, 2026").
   }, [s, locale]);
+
+  /* Celda del calendario -> línea de PnL.
+     Chart.js no tiene forma de "marcar" un punto desde fuera salvo activando
+     sus elementos, así que se activan a mano y se le da la posición real del
+     punto para que el tooltip aparezca encima y no en la esquina.
+     update('none') es importante: sin modo, Chart.js animaría el movimiento. */
+  useEffect(() => {
+    const chart = pnlChartRef.current;
+    if (!chart) return;
+
+    const idx = hoverDia ? s.cumSeries.findIndex((p) => p.date === hoverDia) : -1;
+
+    if (idx >= 0) {
+      const punto = chart.getDatasetMeta(0).data[idx];
+      chart.setActiveElements([{ datasetIndex: 0, index: idx }]);
+      chart.tooltip?.setActiveElements([{ datasetIndex: 0, index: idx }], {
+        x: punto?.x ?? 0,
+        y: punto?.y ?? 0,
+      });
+    } else {
+      chart.setActiveElements([]);
+      chart.tooltip?.setActiveElements([], { x: 0, y: 0 });
+    }
+    chart.update("none");
+  }, [hoverDia, s.cumSeries]);
 
   // Loop de animación de la onda: incrementa la fase y fuerza el redibujado.
   useEffect(() => {
@@ -569,19 +617,37 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     if (m < 0) { m = 11; y--; } else if (m > 11) { m = 0; y++; }
     setCalYear(y);
     setCalMonth(m);
+    // Las celdas entran deslizándose en el sentido del desplazamiento.
+    setCalDesplazamiento(delta > 0 ? 1 : -1);
+    setCalAnim((k) => k + 1);
   }
   function goToday() {
     // "Este mes" devuelve el control al calendario: vuelve a seguir a los datos.
     calNavManual.current = false;
+
+    let y: number;
+    let m: number;
     if (s.dailyEntries.length) {
       const d = new Date(`${s.dailyEntries[s.dailyEntries.length - 1][0]}T00:00:00Z`);
-      setCalYear(d.getUTCFullYear());
-      setCalMonth(d.getUTCMonth());
+      y = d.getUTCFullYear();
+      m = d.getUTCMonth();
     } else {
       const now = new Date();
-      setCalYear(now.getFullYear());
-      setCalMonth(now.getMonth());
+      y = now.getFullYear();
+      m = now.getMonth();
     }
+
+    // Desliza en el sentido del salto, para que el botón "Este mes" se sienta
+    // parte de la navegación y no un salto brusco.
+    if (calYear !== null && calMonth !== null) {
+      const distancia = (y - calYear) * 12 + (m - calMonth);
+      if (distancia !== 0) {
+        setCalDesplazamiento(distancia > 0 ? 1 : -1);
+        setCalAnim((k) => k + 1);
+      }
+    }
+    setCalYear(y);
+    setCalMonth(m);
   }
 
   const balance = initialBalance != null && isFinite(initialBalance) ? initialBalance + s.netPnl : s.netPnl;
@@ -689,6 +755,38 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     return cells;
   }, [calYear, calMonth, dailyMap]);
 
+  /* Día de hoy en la zona horaria del navegador, que es la del usuario.
+     Las celdas del calendario se numeran en UTC, así que comparar con
+     toISOString() daría un desfase de un día en buena parte del mundo. */
+  const hoyISO = useMemo(() => {
+    const a = new Date();
+    return `${a.getFullYear()}-${pad(a.getMonth() + 1)}-${pad(a.getDate())}`;
+  }, []);
+
+  /* Resumen del mes que se está viendo: total, días operados, mejor y peor
+     día. Se calcula sobre el mes del calendario, no sobre todo el histórico,
+     para que responda a "¿cómo fue este mes?". */
+  const resumenMes = useMemo(() => {
+    if (calYear === null || calMonth === null) return null;
+    const prefijo = `${calYear}-${pad(calMonth + 1)}`;
+    let suma = 0;
+    let dias = 0;
+    let mejor: { key: string; v: number } | null = null;
+    let peor: { key: string; v: number } | null = null;
+
+    const ultimoDia = new Date(Date.UTC(calYear, calMonth + 1, 0)).getUTCDate();
+    for (let dia = 1; dia <= ultimoDia; dia++) {
+      const key = `${prefijo}-${pad(dia)}`;
+      const v = dailyMap[key];
+      if (v === undefined) continue;
+      suma += v;
+      dias += 1;
+      if (!mejor || v > mejor.v) mejor = { key, v };
+      if (!peor || v < peor.v) peor = { key, v };
+    }
+    return { suma, dias, mejor, peor };
+  }, [calYear, calMonth, dailyMap]);
+
   return (
     <>
       <div className="stats">
@@ -766,21 +864,61 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
             <span className="cal-month">{monthLabel}</span><span className="cal-arrow" style={{ cursor: "pointer", padding: "2px 8px" }} onClick={() => navigateCalendar(1)}>›</span>
             <span className="pill" style={{ padding: "3px 9px", cursor: "pointer" }} onClick={goToday}>{t("common.thisMonth")}</span>
           </div>
-          <div className="cal">
-            {dowNames.map((d) => (
-              <div className="dow" key={d}>{d}</div>
+          <div
+            className={`cal anim-${calDesplazamiento > 0 ? "next" : "prev"}`}
+            key={calAnim}
+            onMouseLeave={() => setHoverDia(null)}
+          >
+            {dowNames.map((d, i) => (
+              <div className={`dow${i === 0 || i === 6 ? " fin" : ""}`} key={d}>{d}</div>
             ))}
             {calendarCells.map((c, i) =>
               c.other ? (
                 <div className="day" style={{ opacity: 0.35 }} key={i} />
               ) : (
-                <div className={`day${c.v !== undefined ? (c.v > 0 ? " win" : c.v < 0 ? " loss" : "") : ""}`} key={i}>
+                <div
+                  key={c.key}
+                  className={`day${c.v !== undefined ? (c.v > 0 ? " win" : c.v < 0 ? " loss" : "") : ""}`
+                    + `${c.key === hoyISO ? " hoy" : ""}`
+                    + `${c.key === hoverDia ? " senalado" : ""}`}
+                  onMouseEnter={() => setHoverDia(c.key)}
+                >
                   <div className="d">{c.dayNum}</div>
                   {c.v !== undefined && <div className="p">{c.v > 0 ? "+" : ""}{fmtMoney(c.v)}</div>}
                 </div>
               )
             )}
           </div>
+
+          {/* Resumen del mes visible: total, días operados, mejor y peor día.
+              Responde de un vistazo a "¿cómo fue este mes?", que el calendario
+              por sí solo no decía. */}
+          {resumenMes && (
+            <div className="cal-resumen">
+              <span className="cr-total">
+                <b className={resumenMes.suma >= 0 ? "pos" : "neg"}>{fmtMoney(resumenMes.suma)}</b>
+              </span>
+              {resumenMes.dias === 0 ? (
+                <span className="cr-item">{t("cal.noTrades")}</span>
+              ) : (
+                <>
+                  <span className="cr-item">{t("cal.daysOperated", { n: resumenMes.dias })}</span>
+                  {resumenMes.mejor && (
+                    <span className="cr-item">
+                      {t("cal.bestDay")} {Number(resumenMes.mejor.key.slice(8, 10))}{" "}
+                      <b className={resumenMes.mejor.v >= 0 ? "pos" : "neg"}>{fmtMoney(resumenMes.mejor.v)}</b>
+                    </span>
+                  )}
+                  {resumenMes.peor && resumenMes.peor.v < 0 && (
+                    <span className="cr-item">
+                      {t("cal.worstDay")} {Number(resumenMes.peor.key.slice(8, 10))}{" "}
+                      <b className="neg">{fmtMoney(resumenMes.peor.v)}</b>
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="panel">

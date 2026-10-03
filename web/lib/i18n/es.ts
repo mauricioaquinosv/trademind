@@ -112,6 +112,14 @@ export const es = {
   "weekly.noTrades": "sin operaciones",
 
   // ------------------------------------------------------------------
+  // Resumen del mes bajo el calendario
+  // ------------------------------------------------------------------
+  "cal.noTrades": "sin operaciones este mes",
+  "cal.daysOperated": { one: "{n} día operados", other: "{n} días operados" },
+  "cal.bestDay": "Mejor día",
+  "cal.worstDay": "Peor día",
+
+  // ------------------------------------------------------------------
   // Vista Analytics
   // ------------------------------------------------------------------
   "analytics.empty": "Aún no hay operaciones para mostrar en Analytics.",
