@@ -27,6 +27,10 @@ class Execution:
     commission: float = 0.0
     swap: float = 0.0
     profit: float = 0.0  # PnL ya calculado por el broker para esta ejecución
+    # Datos descriptivos que se conservan al cerrar el trade.
+    sl: Optional[float] = None
+    tp: Optional[float] = None
+    position: Optional[str] = None  # ID de posición/ticket del broker
 
     def __post_init__(self):
         if self.side not in ("buy", "sell"):
@@ -45,6 +49,9 @@ class Lot:
     commission_per_unit: float = 0.0
     swap_per_unit: float = 0.0
     profit_per_unit: float = 0.0
+    sl: Optional[float] = None
+    tp: Optional[float] = None
+    position: Optional[str] = None
 
 
 @dataclass
@@ -105,6 +112,7 @@ class FifoEngine:
                 side=ex.side, quantity=remaining, price=ex.price, timestamp=ex.timestamp,
                 commission_per_unit=ex_commission_per_unit, swap_per_unit=ex_swap_per_unit,
                 profit_per_unit=ex_profit_per_unit,
+                sl=ex.sl, tp=ex.tp, position=ex.position,
             ))
             return closed
 
@@ -130,6 +138,11 @@ class FifoEngine:
                 commission=round(entry_commission + exit_commission, 8),
                 swap=round(entry_swap + exit_swap, 8),
                 pnl_bruto=round(entry_profit + exit_profit, 8),
+                # SL/TP/ticket vienen de la ejecución de ENTRADA (el lot); si la
+                # salida los trae y la entrada no, se usan los de la salida.
+                sl=lot.sl if lot.sl is not None else ex.sl,
+                tp=lot.tp if lot.tp is not None else ex.tp,
+                position=lot.position or ex.position,
             ))
 
             lot.quantity -= match_qty
@@ -142,6 +155,7 @@ class FifoEngine:
                 side=ex.side, quantity=remaining, price=ex.price, timestamp=ex.timestamp,
                 commission_per_unit=ex_commission_per_unit, swap_per_unit=ex_swap_per_unit,
                 profit_per_unit=ex_profit_per_unit,
+                sl=ex.sl, tp=ex.tp, position=ex.position,
             ))
 
         return closed
