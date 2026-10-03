@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties, RefObject } from "react";
+import { useI18n } from "../../lib/i18n/LocaleProvider";
 
 /* Cierra el desplegable si se hace clic fuera de su contenedor.
    (Equivale al document.addEventListener('click') del HTML original.) */
@@ -19,11 +20,10 @@ function useOutsideClose(boxRef: RefObject<HTMLDivElement | null>, onClose: () =
 const pad = (n: number) => String(n).padStart(2, "0");
 const fmtDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-const DOWS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
+/* Los nombres de mes y de día se leen del diccionario de idioma dentro de cada
+   componente (con useI18n), no desde aquí. Antes eran constantes fijas:
+   MONTH_NAMES estaba en inglés y DOWS venía mezclado ("Su","Mo","Tu","We",
+   "Th","Fr","Sa"), lo que se veía mal en una pantalla en español. */
 
 /* Celdas del calendario de un mes (días del mes anterior/siguiente marcados como "other") */
 function buildCells(viewDate: Date) {
@@ -54,7 +54,7 @@ export function CfSelect({
   options,
   value,
   onChange,
-  placeholder = "Seleccionar",
+  placeholder,
   style,
 }: {
   options: CfOption[];
@@ -65,6 +65,7 @@ export function CfSelect({
      en los selectores de Analytics). */
   style?: CSSProperties;
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
   useOutsideClose(boxRef, () => setOpen(false));
@@ -81,7 +82,7 @@ export function CfSelect({
           setOpen((v) => !v);
         }}
       >
-        <span className="cf-select-label">{selected ? selected.label : placeholder}</span>
+        <span className="cf-select-label">{selected ? selected.label : (placeholder ?? t("common.select"))}</span>
         <Chev />
       </button>
       <div className="cf-select-list" style={{ display: open ? "block" : "none" }}>
@@ -110,12 +111,15 @@ function displayDate(d: Date) {
 export function CfDate({
   value,
   onChange,
-  placeholder = "Seleccionar",
+  placeholder,
 }: {
   value: string; // 'YYYY-MM-DD' o ''
   onChange: (value: string) => void;
   placeholder?: string;
 }) {
+  const { t, list } = useI18n();
+  const MONTH_NAMES = list("months.full");
+  const DOWS = list("dow.short");
   const [open, setOpen] = useState(false);
   const [viewDate, setViewDate] = useState<Date>(() => (value ? new Date(`${value}T00:00:00`) : new Date()));
   const boxRef = useRef<HTMLDivElement>(null);
@@ -142,7 +146,7 @@ export function CfDate({
         }}
       >
         <span className={`cf-date-label${value ? "" : " ph"}`}>
-          {value ? displayDate(new Date(`${value}T00:00:00`)) : placeholder}
+          {value ? displayDate(new Date(`${value}T00:00:00`)) : (placeholder ?? t("common.select"))}
         </span>
         <Chev />
       </button>
@@ -209,12 +213,15 @@ function displayLabel(d: Date) {
 export function CfDateTime({
   value,
   onChange,
-  placeholder = "Seleccionar",
+  placeholder,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
 }) {
+  const { t, list } = useI18n();
+  const MONTH_NAMES = list("months.full");
+  const DOWS = list("dow.short");
   const [open, setOpen] = useState(false);
   const [viewDate, setViewDate] = useState<Date>(() => new Date());
   const boxRef = useRef<HTMLDivElement>(null);
@@ -280,7 +287,7 @@ export function CfDateTime({
         }}
       >
         <span className={`cf-date-label${curDate ? "" : " ph"}`}>
-          {curDate ? displayLabel(curDate) : placeholder}
+          {curDate ? displayLabel(curDate) : (placeholder ?? t("common.select"))}
         </span>
         <Chev />
       </button>

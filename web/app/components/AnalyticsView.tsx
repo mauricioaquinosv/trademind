@@ -11,6 +11,7 @@ import {
 } from "chart.js";
 import type { ChartTypeRegistry, TooltipItem } from "chart.js";
 import { CfSelect } from "./CfControls";
+import { useI18n } from "../../lib/i18n/LocaleProvider";
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip);
 
@@ -59,10 +60,13 @@ function fmtMoney(v: number) {
   return sign + "$" + Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-const METRIC_META: Record<MetricKey, { label: string; format: (v: number) => string }> = {
-  pnl: { label: "PNL", format: (v) => "$" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
-  winrate: { label: "Winrate", format: (v) => v.toFixed(1) + "%" },
-  count: { label: "Number of Trades", format: (v) => String(v) },
+/* Solo el formato numérico: los rótulos visibles salen del diccionario de
+   idioma (analytics.metric.*), no de aquí. Antesvivían aquí en inglés fijo y
+   se veían traducidos en un sitio y no en otro. */
+const METRIC_META: Record<MetricKey, { format: (v: number) => string }> = {
+  pnl: { format: (v) => "$" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
+  winrate: { format: (v) => v.toFixed(1) + "%" },
+  count: { format: (v) => String(v) },
 };
 
 function setSymbolCard(
@@ -88,6 +92,7 @@ function setSymbolCard(
 }
 
 export default function AnalyticsView({ trades }: { trades: AnalyticsTrade[] }) {
+  const { t, locale } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
   const [metric, setMetric] = useState<MetricKey>("winrate");
@@ -182,9 +187,9 @@ export default function AnalyticsView({ trades }: { trades: AnalyticsTrade[] }) 
             /* min-width:140px como en el HTML original (#anMetricSelect) */
             style={{ minWidth: 140 }}
             options={[
-              { value: "pnl", label: "PNL" },
-              { value: "winrate", label: "Winrate" },
-              { value: "count", label: "Number of Trades" },
+              { value: "pnl", label: t("analytics.metric.pnl") },
+              { value: "winrate", label: t("analytics.metric.winrate") },
+              { value: "count", label: t("analytics.metric.count") },
             ]}
           />
           <CfSelect
@@ -193,8 +198,8 @@ export default function AnalyticsView({ trades }: { trades: AnalyticsTrade[] }) 
             /* min-width:140px como en el HTML original (#anOrderSelect) */
             style={{ minWidth: 140 }}
             options={[
-              { value: "asc", label: "Increasing" },
-              { value: "desc", label: "Decreasing" },
+              { value: "asc", label: t("analytics.order.asc") },
+              { value: "desc", label: t("analytics.order.desc") },
             ]}
           />
         </div>
@@ -206,15 +211,15 @@ export default function AnalyticsView({ trades }: { trades: AnalyticsTrade[] }) 
 
       {rows.length === 0 && (
         <p className="mini-note" style={{ display: "block", marginTop: 14 }}>
-          Aún no hay operaciones para mostrar en Analytics.
+          {t("analytics.empty")}
         </p>
       )}
 
       <div className="stats an-stats">
         <div className="card">
           <div className="label">
-            Best Symbol Sum{" "}
-            <span title="Símbolo con la suma de P&L más alta entre todas sus operaciones.">ⓘ</span>
+            {t("analytics.bestSum")}{" "}
+            <span title={t("analytics.bestSumHelp")}>ⓘ</span>
           </div>
           <div className="an-symbol-row">
             <div className="an-symbol-badge" id="acBestSumBadge">—</div>
@@ -224,8 +229,8 @@ export default function AnalyticsView({ trades }: { trades: AnalyticsTrade[] }) 
         </div>
         <div className="card">
           <div className="label">
-            Worst Symbol Sum{" "}
-            <span title="Símbolo con la suma de P&L más baja entre todas sus operaciones.">ⓘ</span>
+            {t("analytics.worstSum")}{" "}
+            <span title={t("analytics.worstSumHelp")}>ⓘ</span>
           </div>
           <div className="an-symbol-row">
             <div className="an-symbol-badge" id="acWorstSumBadge">—</div>
@@ -235,8 +240,8 @@ export default function AnalyticsView({ trades }: { trades: AnalyticsTrade[] }) 
         </div>
         <div className="card">
           <div className="label">
-            Best Symbol Avg{" "}
-            <span title="Símbolo con el P&L promedio por operación más alto.">ⓘ</span>
+            {t("analytics.bestAvg")}{" "}
+            <span title={t("analytics.bestAvgHelp")}>ⓘ</span>
           </div>
           <div className="an-symbol-row">
             <div className="an-symbol-badge" id="acBestAvgBadge">—</div>
@@ -246,8 +251,8 @@ export default function AnalyticsView({ trades }: { trades: AnalyticsTrade[] }) 
         </div>
         <div className="card">
           <div className="label">
-            Worst Symbol Avg{" "}
-            <span title="Símbolo con el P&L promedio por operación más bajo.">ⓘ</span>
+            {t("analytics.worstAvg")}{" "}
+            <span title={t("analytics.worstAvgHelp")}>ⓘ</span>
           </div>
           <div className="an-symbol-row">
             <div className="an-symbol-badge" id="acWorstAvgBadge">—</div>
@@ -257,8 +262,8 @@ export default function AnalyticsView({ trades }: { trades: AnalyticsTrade[] }) 
         </div>
         <div className="card">
           <div className="label">
-            Number of Symbols{" "}
-            <span title="Cantidad de símbolos distintos operados.">ⓘ</span>
+            {t("analytics.numSymbols")}{" "}
+            <span title={t("analytics.numSymbolsHelp")}>ⓘ</span>
           </div>
           <div className="value pos num" id="acNumSymbols">0</div>
         </div>

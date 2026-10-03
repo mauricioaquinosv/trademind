@@ -67,6 +67,212 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "errors.fileProcessing": "Error processing the file.",
 
   // ------------------------------------------------------------------
+  // Tarjetas de indicadores (vista Resumen)
+  // ------------------------------------------------------------------
+  "kpi.balance": "Balance",
+  "kpi.netPnl": "Net P&L",
+  "kpi.winrate": "Win rate",
+  "kpi.riskReward": "Risk/reward ratio",
+  "kpi.profitFactor": "Profit Factor",
+  "kpi.totalTrades": "Total Trades",
+  "kpi.tradesWon": { one: "{n} won", other: "{n} won" },
+  "kpi.tradesLost": { one: "{n} lost", other: "{n} lost" },
+  "kpi.expectedValue": "Expected Value",
+  "kpi.expectedValueHelp":
+    "Average expected profit/loss per trade: (win rate × average win) + (loss rate × average loss). Equivalent to net P&L ÷ total trades.",
+  "kpi.avgTradeTime": "Average Trade Time",
+
+  // ------------------------------------------------------------------
+  // Gráfico de PnL acumulado
+  // ------------------------------------------------------------------
+  "chart.cumulativePnl": "Daily cumulative P&L",
+  "chart.tradeCount": { one: "{n} trade", other: "{n} trades" },
+  "chart.profit": "Profit: {pnl}",
+
+  // ------------------------------------------------------------------
+  // Radar "Puntaje del trader"
+  // ------------------------------------------------------------------
+  "score.title": "Trader score",
+  "radar.winRate": "% Win rate",
+  "radar.profitFactor": "Profit factor",
+  "radar.wlRatio": "Win/loss ratio",
+  "radar.recovery": "Recovery",
+  "radar.maxDrawdown": "Max drawdown",
+  "radar.consistency": "Consistency",
+
+  // ------------------------------------------------------------------
+  // Resumen semanal
+  // ------------------------------------------------------------------
+  "weekly.title": "Weekly summary",
+  "weekly.empty": "No trades yet.",
+  "weekly.week": "Week {n}",
+  "weekly.dayCount": { one: "{n} day", other: "{n} days" },
+
+  // ------------------------------------------------------------------
+  // Vista Analytics
+  // ------------------------------------------------------------------
+  "analytics.empty": "No trades to show in Analytics yet.",
+  "analytics.metric.pnl": "P&L",
+  "analytics.metric.winrate": "Win rate",
+  "analytics.metric.count": "Number of Trades",
+  "analytics.order.asc": "Increasing",
+  "analytics.order.desc": "Decreasing",
+  "analytics.bestSum": "Best Symbol Sum",
+  "analytics.bestSumHelp":
+    "Symbol with the highest total P&L across all its trades.",
+  "analytics.worstSum": "Worst Symbol Sum",
+  "analytics.worstSumHelp":
+    "Symbol with the lowest total P&L across all its trades.",
+  "analytics.bestAvg": "Best Symbol Avg",
+  "analytics.bestAvgHelp":
+    "Symbol with the highest average P&L per trade.",
+  "analytics.worstAvg": "Worst Symbol Avg",
+  "analytics.worstAvgHelp":
+    "Symbol with the lowest average P&L per trade.",
+  "analytics.numSymbols": "Number of Symbols",
+  "analytics.numSymbolsHelp": "Number of distinct symbols traded.",
+
+  // ------------------------------------------------------------------
+  // Cuentas
+  // ------------------------------------------------------------------
+  "accounts.title": "Accounts",
+  "accounts.count": { one: "{n} account", other: "{n} accounts" },
+  "accounts.new": "New account",
+  "accounts.myAccount": "My account",
+  "accounts.myAccountMT5": "My MT5 account",
+  "accounts.imported": "Imported account",
+  "accounts.createManual": "Create account manually",
+  "accounts.nameLabel": "Account name",
+  "accounts.balanceLabel": "Initial balance",
+  "accounts.create": "Create account",
+  "accounts.currency": "Currency",
+  "accounts.headerAccount": "Account",
+  "accounts.hint":
+    "You can keep several accounts (for example, manual and MT5 imported) and switch between them at any time. Each account's trades are stored separately.",
+  "accounts.empty": "You have no accounts yet.",
+  "accounts.current": "Current",
+  "accounts.initialDeposit": "Initial deposit ${amount}",
+  "accounts.useThis": "Use this account",
+  "accounts.importInstead": "Would you rather import it from MT5 instead of creating it manually?",
+  "accounts.importInsteadLink": "Import CSV as a new account",
+
+  // ------------------------------------------------------------------
+  // Trades
+  // ------------------------------------------------------------------
+  "trades.title": "Trade history",
+  "trades.count": { one: "{n} trade", other: "{n} trades" },
+  "trades.countOf": "{shown} of {total} trades",
+  "trades.add": "Add trade",
+  "trades.importManual": "Import manually",
+  "trades.addEditTitle": "Add / Edit trade",
+  "trades.addTitle": "Add trade",
+  "trades.editTitle": "Edit trade",
+  "trades.deleteTitle": "Delete trade",
+  "trades.deleteConfirm":
+    "Are you sure you want to delete this trade{details}? This action cannot be undone.",
+  "trades.deleteAllConfirm":
+    "Are you sure you want to delete ALL trades ({n}) from this account? This action cannot be undone.",
+  "trades.deleteAll": "Delete all trades",
+  "trades.deleteAllWarn": "Deletes all trades from this account",
+  "trades.viewDetail": "View details",
+  "trades.detailTitle": "Trade details",
+  "trades.close": "Close",
+  "trades.resetView": "Resets filters, rows shown and columns",
+  "trades.startWeek": "Start my week",
+  "trades.dateFrom": "Date from",
+  "trades.dateTo": "Date to",
+  "trades.pageSize": "Show",
+  "trades.pageSizeAll": "All",
+  "trades.pageSizeN": "{n} Trades",
+  "trades.columns": "Columns",
+  "trades.apply": "Apply",
+  "trades.clear": "Clear",
+  "trades.clearFilters": "Clear filters",
+  "trades.deleteTradesBtn": "Delete trades",
+  "trades.empty": "No trades to show.",
+  "trades.prev": "‹ Previous",
+  "trades.next": "Next ›",
+  "trades.pageOf": "Page {page} of {total}",
+  "trades.results": "results",
+
+  // Columnas de la tabla
+  "col.openTime": "Open",
+  "col.position": "Position",
+  "col.symbol": "Symbol",
+  "col.type": "Type",
+  "col.volume": "Volume",
+  "col.openPrice": "Open price",
+  "col.sl": "S/L",
+  "col.tp": "T/P",
+  "col.closeTime": "Close",
+  "col.closePrice": "Close price",
+  "col.commission": "Commission",
+  "col.swap": "Swap",
+  "col.profit": "Profit",
+  "col.pnl": "Net",
+
+  // Campos del formulario de trade
+  "field.position": "Position",
+  "field.symbol": "Symbol",
+  "field.volume": "Volume",
+  "field.openPrice": "Open price",
+  "field.closePrice": "Close price",
+  "field.commission": "Commission",
+  "field.swap": "Swap",
+  "field.profit": "Profit",
+  "field.pnl": "Net",
+
+  // ------------------------------------------------------------------
+  // Importar
+  // ------------------------------------------------------------------
+  "import.mt5": "Import MT5 report",
+  "import.manual": "Import trades manually",
+  "import.fromFile": "Import from CSV/Excel",
+  "import.title": "Import",
+  "import.balanceLabel": "Initial balance",
+  "import.startWeek": "Start my week",
+  "import.success": { one: "{n} trade loaded successfully.", other: "{n} trades loaded successfully." },
+  "import.hint":
+    'Export your "Trade History Report" from MetaTrader 5 (right-click the history → Report → Save as CSV or Save as .xlsx) and upload it here.',
+  "import.hintTemplateLink": "Download the TradeMind template",
+  "import.hintTemplateNote":
+    "You can also upload it already filled in: I detect it automatically and add those trades to your account.",
+  "import.balanceForAccount": "Account initial balance",
+  "import.dropHere": "Click to choose a file or drag it here",
+  "import.formats": "Format .csv, .xlsx or .xls",
+
+  // ------------------------------------------------------------------
+  // Onboarding
+  // ------------------------------------------------------------------
+  "onboarding.configure": "Set up your account to get started",
+  "onboarding.choose": "Choose how you want to start seeing your trading statistics.",
+  "onboarding.loading": "Loading...",
+  "onboarding.importTitle": "Import from CSV/Excel",
+  "onboarding.importDesc":
+    "Upload your MT5 report (.csv or .xlsx) and we will calculate your statistics automatically.",
+  "onboarding.manualTitle": "Create account manually",
+  "onboarding.manualDesc":
+    "Set an initial balance and start from scratch. You can import your trades later.",
+  "onboarding.back": "Back",
+
+  // ------------------------------------------------------------------
+  // Origen de los datos (pastilla del header)
+  // ------------------------------------------------------------------
+  "datasource.mt5": "MT5 imported",
+  "datasource.manual": "Manual",
+  "datasource.none": "No account",
+
+  // ------------------------------------------------------------------
+  // Header
+  // ------------------------------------------------------------------
+  "header.currency": "Currency",
+  "header.filters": "Filters",
+  "header.dateRange": "Date range",
+  "header.askAI": "Ask the AI",
+  "header.changeTheme": "Change theme",
+  "header.dashboard": "Dashboard",
+
+  // ------------------------------------------------------------------
   // Meses y días
   // ------------------------------------------------------------------
   "months.full": [

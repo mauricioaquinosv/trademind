@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useI18n } from "../../lib/i18n/LocaleProvider";
 import {
   Chart,
   LineController,
@@ -61,8 +62,9 @@ Chart.register(
 Chart.defaults.font.family = "'IBM Plex Mono', monospace";
 Chart.defaults.color = "#8E93A6";
 
-/* Meses abreviados en español para el tooltip del gráfico de PnL. */
-const MESES_CORTO = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+/* Los meses abreviados y los nombres de mes/día vienen del diccionario de
+   idioma (list("months.short"), etc.), para que ES y EN no se desincronicen.
+   Antes estaban duplicados en tres sitios dentro de este archivo. */
 
 export type SummaryTrade = {
   entry_time: string | null;
@@ -175,13 +177,19 @@ function avgTradeDurationLabel(trades: SummaryTrade[]): string {
   return `${s}s`;
 }
 
-const MONTH_NAMES = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
-];
-const DOW_NAMES = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-
 export default function SummaryView({ trades, initialBalance }: { trades: SummaryTrade[]; initialBalance: number | null }) {
+  const { t, list, locale } = useI18n();
+  const mesesCorto = list("months.short");
+  const mesesFull = list("months.full");
+  const dowNames = list("dow.short");
+
+  /* Fecha completa del tooltip. El orden de las palabras cambia: en español es
+     "23 de ene, 2026" y en inglés "Jan 23, 2026". */
+  const fechaLarga = (d: Date) =>
+    locale === "es"
+      ? `${d.getUTCDate()} de ${mesesCorto[d.getUTCMonth()] ?? ""}, ${d.getUTCFullYear()}`
+      : `${mesesCorto[d.getUTCMonth()] ?? ""} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+
   const pnlCanvasRef = useRef<HTMLCanvasElement>(null);
   const radarCanvasRef = useRef<HTMLCanvasElement>(null);
   const pnlChartRef = useRef<Chart | null>(null);
@@ -361,8 +369,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
                   const ds = it.chart.data.datasets[0] as unknown as { fullDates?: string[] };
                   const dateStr = ds.fullDates && ds.fullDates[it.dataIndex];
                   if (!dateStr) return it.label;
-                  const d = new Date(dateStr + "T00:00:00Z");
-                  return d.getUTCDate() + " de " + MESES_CORTO[d.getUTCMonth()] + ", " + d.getUTCFullYear();
+                  return fechaLarga(new Date(dateStr + "T00:00:00Z"));
                 },
                 label: (ctx) => {
                   const ds = ctx.chart.data.datasets[0] as unknown as { dailyCount: number[]; dailyPnl: number[] };
@@ -370,7 +377,10 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
                   const pnl = ds.dailyPnl ? ds.dailyPnl[ctx.dataIndex] : 0;
                   const sign = pnl >= 0 ? "+" : "-";
                   const pnlTxt = "$" + Math.abs(pnl).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                  return [count + (count === 1 ? " Trade" : " Trades"), "Profit: " + sign + pnlTxt];
+                  return [
+                    t("chart.tradeCount", { n: count }),
+                    t("chart.profit", { pnl: sign + pnlTxt }),
+                  ];
                 },
               },
             },
@@ -392,7 +402,9 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     // El eje X solo muestra el número de día; el tooltip usa fullDates para la fecha completa.
     (chart.data.datasets[0] as unknown as { fullDates: string[] }).fullDates = s.cumSeries.map((p) => p.date);
     chart.update();
-  }, [s]);
+    // locale entra en las dependencias porque el tooltip se reconstruye al
+    // cambiar de idioma ("23 de ene, 2026" <-> "Jan 23, 2026").
+  }, [s, locale]);
 
   // Loop de animación de la onda: incrementa la fase y fuerza el redibujado.
   useEffect(() => {
@@ -416,7 +428,10 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
       radarChartRef.current = new Chart(radarCanvasRef.current, {
         type: "radar",
         data: {
-          labels: ["% Acierto", "Factor beneficio", "Ganancia/pérdida", "Recuperación", "Drawdown máx.", "Consistencia"],
+          labels: [
+            t("radar.winRate"), t("radar.profitFactor"), t("radar.wlRatio"),
+            t("radar.recovery"), t("radar.maxDrawdown"), t("radar.consistency"),
+          ],
           datasets: [{ data: [0, 0, 0, 0, 0, 0], borderColor: "#E22FA0", backgroundColor: (c) => {
             const { ctx, chartArea } = c.chart;
             if (!chartArea) return "rgba(226,47,160,.25)";
@@ -460,8 +475,14 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     }
     const chart = radarChartRef.current;
     chart.data.datasets[0].data = [s.radar.winRate, s.radar.profitFactor, s.radar.wlRatio, s.radar.recovery, s.radar.ddScore, s.radar.consistency].map((v) => Math.round(v));
+    // locale: las etiquetas del radar se fijan al crear el chart, así que hay
+    // que reconstruirlas al cambiar de idioma.
+    chart.data.labels = [
+      t("radar.winRate"), t("radar.profitFactor"), t("radar.wlRatio"),
+      t("radar.recovery"), t("radar.maxDrawdown"), t("radar.consistency"),
+    ];
     chart.update();
-  }, [s]);
+  }, [s, locale]);
 
   function navigateCalendar(delta: number) {
     if (calYear === null || calMonth === null) return;
@@ -498,7 +519,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
   const animExpectedValue = useAnimatedNumber(expectedValue);
   const animScore = useAnimatedNumber(s.score);
 
-  const monthLabel = calYear !== null && calMonth !== null ? `${MONTH_NAMES[calMonth]} ${calYear}` : "—";
+  const monthLabel = calYear !== null && calMonth !== null ? `${mesesFull[calMonth]} ${calYear}` : "—";
 
   const calendarCells = useMemo(() => {
     if (calYear === null || calMonth === null) return [];
@@ -522,45 +543,45 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     <>
       <div className="stats">
         <div className="card">
-          <div className="label">Balance</div>
+          <div className="label">{t("kpi.balance")}</div>
           <div className={`value num ${balancePositive ? "pos" : "neg"}`}>{fmtMoneyFull(animBalance)}</div>
         </div>
         <div className="card">
-          <div className="label">P&amp;L neto</div>
+          <div className="label">{t("kpi.netPnl")}</div>
           <div className={`value num ${s.netPnl >= 0 ? "pos" : "neg"}`}>{fmtMoneyFull(animNetPnl)}</div>
         </div>
         <div className="card">
-          <div className="label">Winrate</div>
+          <div className="label">{t("kpi.winrate")}</div>
           <div className="value num">{animWinRate.toFixed(2)}%</div>
           <div className="bar-split"><div style={{ width: `${Math.min(100, s.winRate)}%` }} /></div>
         </div>
         <div className="card">
-          <div className="label">Ratio riesgo/beneficio</div>
+          <div className="label">{t("kpi.riskReward")}</div>
           <div className="value num">{s.avgLoss ? Math.abs(s.avgWin / s.avgLoss).toFixed(2) : "—"}</div>
         </div>
         <div className="card">
-          <div className="label">Profit Factor</div>
+          <div className="label">{t("kpi.profitFactor")}</div>
           <div className="value num">{isFinite(s.profitFactor) && s.profitFactor < 99 ? s.profitFactor.toFixed(2) : "∞"}</div>
         </div>
         <div className="card">
-          <div className="label">Total Trades</div>
+          <div className="label">{t("kpi.totalTrades")}</div>
           <div className="value num">{s.total}</div>
           <div className="mini-note">
-            <span style={{ color: "var(--green)" }}>{s.wins.length} ganadas</span> ·{" "}
-            <span style={{ color: "var(--red)" }}>{s.losses.length} perdidas</span>
+            <span style={{ color: "var(--green)" }}>{t("kpi.tradesWon", { n: s.wins.length })}</span> ·{" "}
+            <span style={{ color: "var(--red)" }}>{t("kpi.tradesLost", { n: s.losses.length })}</span>
           </div>
         </div>
         <div className="card">
           <div className="label">
-            Expected Value{" "}
-            <span title="Ganancia/pérdida promedio esperada por trade: (% acierto × ganancia promedio) + (% pérdida × pérdida promedio). Equivale a P&L neto ÷ total de trades.">
+            {t("kpi.expectedValue")}{" "}
+            <span title={t("kpi.expectedValueHelp")}>
               ⓘ
             </span>
           </div>
           <div className={`value num ${expectedValue >= 0 ? "pos" : "neg"}`}>{fmtMoneyFull(animExpectedValue)}</div>
         </div>
         <div className="card">
-          <div className="label">Average Trade Time</div>
+          <div className="label">{t("kpi.avgTradeTime")}</div>
           <div className="value num">{avgTradeDurationLabel(trades)}</div>
         </div>
       </div>
@@ -568,7 +589,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
       <div className="grid-main">
         <div className="panel chart-panel">
           <h2>
-            P&amp;L acumulado diario <span>{monthLabel}</span>
+            {t("chart.cumulativePnl")} <span>{monthLabel}</span>
           </h2>
           <div className="pnl-canvas-wrap">
             <canvas ref={pnlCanvasRef} height={150} />
@@ -576,7 +597,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
         </div>
 
         <div className="panel score-panel">
-          <h2>Puntaje del trader</h2>
+          <h2>{t("score.title")}</h2>
           <div className="score-wrap">
             <div className="radar-canvas-wrap">
               <canvas ref={radarCanvasRef} width={230} height={200} />
@@ -594,10 +615,10 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
             <span className="cal-arrow" style={{ cursor: "pointer", padding: "2px 8px" }} onClick={() => navigateCalendar(-1)}>‹</span>
             &nbsp;<b>{monthLabel}</b>&nbsp;
             <span className="cal-arrow" style={{ cursor: "pointer", padding: "2px 8px" }} onClick={() => navigateCalendar(1)}>›</span>
-            &nbsp; <span className="pill" style={{ padding: "3px 9px", cursor: "pointer" }} onClick={goToday}>Este mes</span>
+            &nbsp;<span className="pill" style={{ padding: "3px 9px", cursor: "pointer" }} onClick={goToday}>{t("common.thisMonth")}</span>
           </div>
           <div className="cal">
-            {DOW_NAMES.map((d) => (
+            {dowNames.map((d) => (
               <div className="dow" key={d}>{d}</div>
             ))}
             {calendarCells.map((c, i) =>
@@ -614,9 +635,9 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
         </div>
 
         <div className="panel">
-          <h2>Resumen semanal</h2>
+          <h2>{t("weekly.title")}</h2>
           <div className="weeklist">
-            {Object.keys(s.weekMap).length === 0 && <p className="mini-note">Sin operaciones todavía.</p>}
+            {Object.keys(s.weekMap).length === 0 && <p className="mini-note">{t("weekly.empty")}</p>}
             {Object.keys(s.weekMap)
               .map(Number)
               .sort((a, b) => a - b)
@@ -625,10 +646,10 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
                 const color = w.sum > 0 ? "var(--green)" : w.sum < 0 ? "var(--red)" : "var(--muted)";
                 return (
                   <div className="wk" key={wk}>
-                    <span className="l">Semana {wk}</span>
+                    <span className="l">{t("weekly.week", { n: wk })}</span>
                     <span className="r">
                       <b style={{ color }}>{fmtMoney(w.sum)}</b>
-                      {w.days.size} día{w.days.size === 1 ? "" : "s"}
+                      {t("weekly.dayCount", { n: w.days.size })}
                     </span>
                   </div>
                 );
