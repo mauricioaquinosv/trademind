@@ -177,6 +177,31 @@ function avgTradeDurationLabel(trades: SummaryTrade[]): string {
   return `${s}s`;
 }
 
+/**
+ * Barra de Winrate: se rellena al cargar y luego un brillo la recorre.
+ *
+ * El width arranca en 0 y se sube en el frame siguiente. Sin ese frame
+ * intermedio la transición CSS no tiene desde dónde arrancar: React pinta el
+ * ancho final en el primer render y la barra aparecería de golpe, sin
+ * animarse. El HTML original lo resolvía poniendo style="width:0%" en el
+ * markup y fijando después el ancho desde JavaScript.
+ */
+function WinRateBar({ value }: { value: number }) {
+  const objetivo = Math.min(100, Math.max(0, value));
+  const [ancho, setAncho] = useState(0);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setAncho(objetivo));
+    return () => cancelAnimationFrame(id);
+  }, [objetivo]);
+
+  return (
+    <div className="bar-split">
+      <div className="bar-fill" style={{ width: `${ancho}%` }} />
+    </div>
+  );
+}
+
 export default function SummaryView({ trades, initialBalance }: { trades: SummaryTrade[]; initialBalance: number | null }) {
   const { t, list, locale } = useI18n();
   const mesesCorto = list("months.short");
@@ -334,10 +359,19 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
   // ---- Gráfico de PnL acumulado ----
   useEffect(() => {
     if (!pnlCanvasRef.current) return;
+
+    /* Puntos en los días. El HTML original los tenía ocultos (pointRadius:0)
+       y solo aparecían al pasar el ratón; ahora se ven siempre, que es lo que
+       permite leer dónde están los saltos de la curva.
+
+       Con muchos días los puntos se solaparían y quedarían ilegibles, así que
+       por encima de 45 se ocultan: una mancha de puntos no informa de nada. */
+    const demasiadosPuntos = s.cumSeries.length > 45;
+
     if (!pnlChartRef.current) {
       pnlChartRef.current = new Chart(pnlCanvasRef.current, {
         type: "line",
-        data: { labels: [], datasets: [{ data: [], borderColor: "#2FD8C8", borderWidth: 2.5, tension: 0.4, pointRadius: 0, pointHitRadius: 12, pointHoverRadius: 5, pointHoverBackgroundColor: "#2FD8C8", pointHoverBorderColor: "#0a0c14", pointHoverBorderWidth: 2, fill: true, backgroundColor: (c: { chart: Chart }) => {
+        data: { labels: [], datasets: [{ data: [], borderColor: "#2FD8C8", borderWidth: 2.5, tension: 0.4, pointRadius: demasiadosPuntos ? 0 : 2.4, pointHitRadius: 12, pointHoverRadius: 5.5, pointBackgroundColor: "#2FD8C8", pointBorderColor: "#0a0c14", pointBorderWidth: 1, pointHoverBackgroundColor: "#8CFFE6", pointHoverBorderColor: "#0a0c14", pointHoverBorderWidth: 2, fill: true, backgroundColor: (c: { chart: Chart }) => {
           const { ctx } = c.chart;
           const g = ctx.createLinearGradient(0, 0, 0, 220);
           g.addColorStop(0, "rgba(47,216,200,.45)");
@@ -401,6 +435,13 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     (chart.data.datasets[0] as unknown as { dailyCount: number[] }).dailyCount = s.cumSeries.map((p) => p.count);
     // El eje X solo muestra el número de día; el tooltip usa fullDates para la fecha completa.
     (chart.data.datasets[0] as unknown as { fullDates: string[] }).fullDates = s.cumSeries.map((p) => p.date);
+    // Cambiar de cuenta cambia el número de días, así que el radio de los
+    // puntos hay que recalcularlo: si no, se quedarían pegados al cambiar a
+    // una cuenta con muchos más días.
+    // El cast es necesario: Chart.js tipa datasets[0] como una unión de todos
+    // los tipos de gráfico, y pointRadius no existe en todos ellos.
+    (chart.data.datasets[0] as unknown as { pointRadius: number }).pointRadius =
+      demasiadosPuntos ? 0 : 2.4;
     chart.update();
     // locale entra en las dependencias porque el tooltip se reconstruye al
     // cambiar de idioma ("23 de ene, 2026" <-> "Jan 23, 2026").
@@ -553,7 +594,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
         <div className="card">
           <div className="label">{t("kpi.winrate")}</div>
           <div className="value num">{animWinRate.toFixed(2)}%</div>
-          <div className="bar-split"><div style={{ width: `${Math.min(100, s.winRate)}%` }} /></div>
+          <WinRateBar value={s.winRate} />
         </div>
         <div className="card">
           <div className="label">{t("kpi.riskReward")}</div>
