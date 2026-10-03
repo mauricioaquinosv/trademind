@@ -144,6 +144,31 @@ def client_otro_usuario(make_client, otro_usuario):
 
 
 @pytest.fixture
+def client_anonimo(db_session):
+    """
+    Cliente SIN la dependencia de usuario sustituida.
+
+    `make_client` reemplaza `get_current_user`, asi que con el nunca se ejecuta
+    el codigo real de validacion del JWT. Este cliente deja la dependencia
+    intacta y solo sustituye la sesion de base de datos, que es lo necesario
+    para probar /auth y el rechazo a los endpoints protegidos.
+    """
+    from fastapi.testclient import TestClient
+
+    def _get_db():
+        yield db_session
+
+    app.dependency_overrides[get_db] = _get_db
+
+    cliente = TestClient(app)
+
+    yield cliente
+
+    app.dependency_overrides.clear()
+    cliente.close()
+
+
+@pytest.fixture
 def cuenta(usuario, db_session):
     """Una cuenta creada por el usuario de prueba."""
     from app.models import Account

@@ -1,3 +1,4 @@
+import os
 import shutil
 import tempfile
 from uuid import UUID
@@ -35,6 +36,14 @@ def _pick_parser(file_path: str):
     el archivo es .xlsx real, una tabla HTML disfrazada, o CSV.
     """
     raw = read_any_table(file_path)
+
+    # Un archivo que se lee pero viene sin filas o sin columnas no tiene ni una
+    # celda de la que sacar la primera palabra. Sin este chequeo, .iloc[0, 0]
+    # lanza IndexError y el usuario ve un 500 (la app se cayó) en vez de un 400
+    # (el archivo no sirve).
+    if raw.empty or raw.shape[0] == 0 or raw.shape[1] == 0:
+        raise ValueError("El archivo está vacío: no se encontró ninguna tabla dentro.")
+
     first_cell = str(raw.iloc[0, 0]).strip()
 
     if first_cell.startswith("Fecha apertura"):
@@ -62,12 +71,23 @@ def upload_trades(
         shutil.copyfileobj(file.file, tmp)
         tmp_path = tmp.name
 
-    parser = _pick_parser(tmp_path)
-
     try:
+        # `_pick_parser` también lee el archivo, así que va DENTRO del try: si
+        # se queda fuera, un .xlsx vacío revienta con un 500 en vez de un 400.
+        # pandas.EmptyDataError y ParserError heredan de ValueError, así que el
+        # except de abajo ya los cubre.
+        parser = _pick_parser(tmp_path)
         closed_trades = parser.parse(tmp_path)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        # El temporal se crea con delete=False porque el parser lo lee por ruta,
+        # así que hay que borrarlo a mano. Sin esto se acumulaba uno por cada
+        # subida, para siempre: se llegaron a contar 45 huérfanos en TEMP.
+        try:
+            os.remove(tmp_path)
+        except OSError:
+            pass
 
     saved = 0
     for t in closed_trades:
