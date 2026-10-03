@@ -997,35 +997,40 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
             </svg>
             {t("cal.title")}
           </h2>
-          <div className="cal-nav">
-            <button
-              type="button"
-              className={`cal-arrow${calFlash === "prev" ? " destello" : ""}`}
-              onClick={() => navigateCalendar(-1)}
-              aria-label={t("cal.prevMonth")}
-            >
-              ‹
-            </button>
-            <span className="cal-month">
-              {calMonth !== null ? mesesFull[calMonth] : "—"}
-              <span className="cal-year">{calYear ?? ""}</span>
-            </span>
-            <button
-              type="button"
-              className={`cal-arrow${calFlash === "next" ? " destello" : ""}`}
-              onClick={() => navigateCalendar(1)}
-              aria-label={t("cal.nextMonth")}
-            >
-              ›
-            </button>
-            <span className="pill" style={{ padding: "3px 9px", cursor: "pointer" }} onClick={goToday}>{t("common.thisMonth")}</span>
-          </div>
-
           <div
             className={`cal-grid anim-${calDesplazamiento > 0 ? "next" : "prev"}`}
             key={calAnim}
             onMouseLeave={() => setHoverDia(null)}
           >
+            {/* La barra de navegación vive DENTRO de la rejilla y ocupa solo
+                las 7 columnas de los días (1 / 8). Por eso la flecha derecha y
+                el botón "Este mes" terminan exactamente donde termina el
+                sábado, y la columna 8 queda libre entera para el resumen
+                semanal, que necesita ese ancho para su título. */}
+            <div className="cal-nav">
+              <button
+                type="button"
+                className={`cal-arrow${calFlash === "prev" ? " destello" : ""}`}
+                onClick={() => navigateCalendar(-1)}
+                aria-label={t("cal.prevMonth")}
+              >
+                ‹
+              </button>
+              <span className="cal-month">
+                {calMonth !== null ? mesesFull[calMonth] : "—"}
+                <span className="cal-year">{calYear ?? ""}</span>
+              </span>
+              <button
+                type="button"
+                className={`cal-arrow${calFlash === "next" ? " destello" : ""}`}
+                onClick={() => navigateCalendar(1)}
+                aria-label={t("cal.nextMonth")}
+              >
+                ›
+              </button>
+              <span className="pill" style={{ padding: "3px 9px", cursor: "pointer" }} onClick={goToday}>{t("common.thisMonth")}</span>
+            </div>
+
             {dowNames.map((d, i) => (
               <div className={`dow${i === 0 || i === 6 ? " fin" : ""}`} key={d}>{d}</div>
             ))}
