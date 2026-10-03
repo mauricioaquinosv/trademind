@@ -1,0 +1,641 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Chart,
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Filler,
+  Tooltip,
+  RadarController,
+  RadialLinearScale,
+} from "chart.js";
+
+// Hook para animar números (count up)
+function useAnimatedNumber(value: number, duration = 900): number {
+  const [display, setDisplay] = useState(value);
+  const prevRef = useRef(value);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const from = prevRef.current;
+    const to = value;
+    if (from === to) return;
+
+    const start = performance.now();
+    function step(now: number) {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setDisplay(from + (to - from) * eased);
+      if (p < 1) {
+        rafRef.current = requestAnimationFrame(step);
+      } else {
+        prevRef.current = to;
+      }
+    }
+    rafRef.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [value, duration]);
+
+  return display;
+}
+
+Chart.register(
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Filler,
+  Tooltip,
+  RadarController,
+  RadialLinearScale
+);
+
+/* El HTML original hace esto en initCharts(): fija la fuente y el color por defecto
+   de TODOS los gráficos. Sin esto, Chart.js usa Helvetica/#666 y las etiquetas de
+   los ejes y del radar se ven distintas al original. */
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.color = "#8E93A6";
+
+/* Meses abreviados en español para el tooltip del gráfico de PnL. */
+const MESES_CORTO = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+export type SummaryTrade = {
+  entry_time: string | null;
+  exit_time: string | null;
+  commission: number;
+  swap: number;
+  pnl_bruto: number;
+  pnl_neto: number | null;
+};
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+function fmtMoney(n: number) {
+  const sign = n < 0 ? "-" : "";
+  const abs = Math.abs(n);
+  const val = abs >= 1000 ? (abs / 1000).toFixed(2).replace(/\.00$/, "") + "K" : abs.toFixed(2).replace(/\.00$/, "");
+  return sign + "$" + val;
+}
+function fmtMoneyFull(n: number) {
+  const sign = n < 0 ? "-" : "";
+  const abs = Math.abs(n);
+  return sign + "$" + abs.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+type StatInput = { date: string; pnl: number };
+
+function computeStats(items: StatInput[]) {
+  const sorted = [...items].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const total = sorted.length;
+  const wins = sorted.filter((t) => t.pnl > 0);
+  const losses = sorted.filter((t) => t.pnl < 0);
+  const netPnl = sorted.reduce((s, t) => s + t.pnl, 0);
+  const winRate = total ? (wins.length / total) * 100 : 0;
+  const avgWin = wins.length ? wins.reduce((s, t) => s + t.pnl, 0) / wins.length : 0;
+  const avgLoss = losses.length ? losses.reduce((s, t) => s + t.pnl, 0) / losses.length : 0;
+  const grossWin = wins.reduce((s, t) => s + t.pnl, 0);
+  const grossLoss = Math.abs(losses.reduce((s, t) => s + t.pnl, 0));
+  const profitFactor = grossLoss ? grossWin / grossLoss : grossWin > 0 ? 99 : 0;
+
+  const dailyMap: Record<string, number> = {};
+  const dailyCountMap: Record<string, number> = {};
+  sorted.forEach((t) => {
+    dailyMap[t.date] = (dailyMap[t.date] || 0) + t.pnl;
+    dailyCountMap[t.date] = (dailyCountMap[t.date] || 0) + 1;
+  });
+  const dailyEntries = Object.entries(dailyMap).sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime());
+
+  let cum = 0;
+  const cumSeries = dailyEntries.map(([d, v]) => {
+    cum += v;
+    return { date: d, cum, pnl: v, count: dailyCountMap[d] || 0 };
+  });
+
+  const weekMap: Record<number, { sum: number; days: Set<string> }> = {};
+  dailyEntries.forEach(([d, v]) => {
+    const dayNum = new Date(`${d}T00:00:00Z`).getUTCDate();
+    const wk = Math.floor((dayNum - 1) / 7) + 1;
+    if (!weekMap[wk]) weekMap[wk] = { sum: 0, days: new Set() };
+    weekMap[wk].sum += v;
+    weekMap[wk].days.add(d);
+  });
+
+  let peak = -Infinity;
+  let maxDD = 0;
+  cumSeries.forEach((p) => {
+    peak = Math.max(peak, p.cum);
+    maxDD = Math.max(maxDD, peak - p.cum);
+  });
+  const dailyVals = dailyEntries.map((e) => e[1]);
+  const mean = dailyVals.reduce((a, b) => a + b, 0) / (dailyVals.length || 1);
+  const variance = dailyVals.reduce((s, v) => s + (v - mean) ** 2, 0) / (dailyVals.length || 1);
+  const stdev = Math.sqrt(variance);
+  const consistency = mean ? Math.max(0, Math.min(100, 100 - (stdev / Math.abs(mean)) * 20)) : 50;
+  const recovery = maxDD ? Math.max(0, Math.min(100, (netPnl / maxDD) * 15)) : netPnl > 0 ? 100 : 0;
+  const ddScore = netPnl !== 0 ? Math.max(0, Math.min(100, 100 - (maxDD / Math.abs(netPnl || 1)) * 40)) : 50;
+  const wlRatio = avgLoss ? Math.abs(avgWin / avgLoss) : avgWin > 0 ? 5 : 0;
+
+  const radar = {
+    winRate: Math.min(100, winRate),
+    profitFactor: Math.min(100, profitFactor * 33),
+    wlRatio: Math.min(100, wlRatio * 30),
+    recovery,
+    ddScore,
+    consistency,
+  };
+  const score = (radar.winRate + radar.profitFactor + radar.wlRatio + radar.recovery + radar.ddScore + radar.consistency) / 6;
+
+  return { total, wins, losses, netPnl, winRate, avgWin, avgLoss, profitFactor, dailyEntries, cumSeries, weekMap, radar, score };
+}
+
+function avgTradeDurationLabel(trades: SummaryTrade[]): string {
+  const durations = trades
+    .map((t) => {
+      if (!t.entry_time || !t.exit_time) return null;
+      const open = new Date(t.entry_time.replace(" ", "T"));
+      const close = new Date(t.exit_time.replace(" ", "T"));
+      const ms = close.getTime() - open.getTime();
+      return ms >= 0 ? ms : null;
+    })
+    .filter((ms): ms is number => ms != null);
+
+  if (!durations.length) return "—";
+  const avgMs = durations.reduce((a, b) => a + b, 0) / durations.length;
+  const totalSec = Math.round(avgMs / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}h ${pad(m)}m`;
+  if (m > 0) return `${m}m ${pad(s)}s`;
+  return `${s}s`;
+}
+
+const MONTH_NAMES = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+];
+const DOW_NAMES = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+export default function SummaryView({ trades, initialBalance }: { trades: SummaryTrade[]; initialBalance: number | null }) {
+  const pnlCanvasRef = useRef<HTMLCanvasElement>(null);
+  const radarCanvasRef = useRef<HTMLCanvasElement>(null);
+  const pnlChartRef = useRef<Chart | null>(null);
+  const radarChartRef = useRef<Chart | null>(null);
+  // Estado compartido del plugin "onda" del gráfico de PnL (ver pnlWavePlugin).
+  const pnlWavePhaseRef = useRef(0);
+  const pnlSweepStartRef = useRef<number | null>(null);
+  if (pnlSweepStartRef.current === null) pnlSweepStartRef.current = performance.now();
+
+  const [calYear, setCalYear] = useState<number | null>(null);
+  const [calMonth, setCalMonth] = useState<number | null>(null);
+  // true cuando el usuario navega el calendario a mano; entonces ya no se
+  // auto-ajusta al mes de los datos.
+  const calNavManual = useRef(false);
+
+  const items: StatInput[] = useMemo(
+    () =>
+      trades
+        .filter((t) => !!t.exit_time)
+        .map((t) => ({
+          date: (t.exit_time as string).slice(0, 10),
+          pnl: t.pnl_neto !== null && t.pnl_neto !== undefined ? t.pnl_neto : t.pnl_bruto + t.commission + t.swap,
+        })),
+    [trades]
+  );
+
+  const s = useMemo(() => computeStats(items), [items]);
+
+  const dailyMap = useMemo(() => {
+    const m: Record<string, number> = {};
+    s.dailyEntries.forEach(([d, v]) => (m[d] = v));
+    return m;
+  }, [s]);
+
+  /* Mes de referencia = el del último día con datos.
+     OJO: antes esto se fijaba solo en el primer render (guard `calYear !== null`),
+     pero en ese primer render `trades` todavía viene vacío, así que el calendario
+     se quedaba pegado al mes actual y nunca mostraba los días con operaciones.
+     Ahora sigue al mes de los datos mientras el usuario no navegue a mano. */
+  const dataRefMonth = useMemo(() => {
+    if (!s.dailyEntries.length) return null;
+    const d = new Date(`${s.dailyEntries[s.dailyEntries.length - 1][0]}T00:00:00Z`);
+    return d.getUTCFullYear() * 12 + d.getUTCMonth();
+  }, [s]);
+
+  useEffect(() => {
+    if (dataRefMonth === null || calNavManual.current) return;
+    const d = new Date(`${s.dailyEntries[s.dailyEntries.length - 1][0]}T00:00:00Z`);
+    setCalYear(d.getUTCFullYear());
+    setCalMonth(d.getUTCMonth());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataRefMonth]);
+
+  // Sin trades todavía: mostrar el mes actual (igual que el HTML original).
+  useEffect(() => {
+    if (calYear !== null || calNavManual.current) return;
+    const now = new Date();
+    setCalYear(now.getFullYear());
+    setCalMonth(now.getMonth());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ---- Plugins de animación para el gráfico PnL ----
+  const pnlGlowPlugin = {
+    id: "pnlGlow",
+    beforeDatasetsDraw(chart: Chart) {
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.shadowColor = "rgba(47,216,200,.65)";
+      ctx.shadowBlur = 16;
+      ctx.shadowOffsetY = 3;
+    },
+    afterDatasetsDraw(chart: Chart) {
+      chart.ctx.restore();
+    },
+  };
+
+  // Plugin "onda": dibuja, sobre la línea ya trazada, un brillo que se desliza
+  // de izquierda a derecha (en loop) para dar sensación de energía fluyendo por la línea.
+  // pnlWavePhase y pnlSweepStart van en refs para que el plugin (que Chart.js solo
+  // registra una vez, al crear el chart) y el requestAnimationFrame que la incrementa
+  // compartan siempre la MISMA variable.
+  const PNL_SWEEP_EVERY = 8000;
+  const PNL_SWEEP_DURATION = 1600;
+  const PNL_SWEEP_BAND = 0.24;
+  const pnlWavePlugin = {
+    id: "pnlWave",
+    afterDatasetsDraw(chart: Chart) {
+      const meta = chart.getDatasetMeta(0);
+      if (!meta || !meta.data || meta.data.length < 2) return;
+      const pts = meta.data.map((p) => ({ x: p.x, y: p.y }));
+      const { left, right } = chart.chartArea;
+      if (!isFinite(left) || !isFinite(right) || right <= left) return;
+      const ctx = chart.ctx;
+      const grad = ctx.createLinearGradient(left, 0, right, 0);
+      const bandWidth = 0.16;
+      const stops = 32;
+      // Barrido brillante que recorre toda la línea cada PNL_SWEEP_EVERY ms
+      const elapsed = (performance.now() - (pnlSweepStartRef.current as number)) % PNL_SWEEP_EVERY;
+      let sweepPos: number | null = null;
+      if (elapsed < PNL_SWEEP_DURATION) {
+        const t = elapsed / PNL_SWEEP_DURATION;
+        sweepPos = -PNL_SWEEP_BAND + t * (1 + 2 * PNL_SWEEP_BAND);
+      }
+      for (let i = 0; i <= stops; i++) {
+        const t = i / stops;
+        let d = Math.abs(t - pnlWavePhaseRef.current);
+        d = Math.min(d, 1 - d);
+        const wave = Math.max(0, 1 - d / bandWidth) * 0.5;
+        let sweep = 0;
+        if (sweepPos !== null) {
+          const d2 = Math.abs(t - sweepPos);
+          sweep = Math.max(0, 1 - d2 / PNL_SWEEP_BAND);
+        }
+        const intensity = Math.min(1, wave + sweep);
+        const alpha = (0.04 + intensity * 0.9).toFixed(3);
+        grad.addColorStop(t, `rgba(160,255,238,${alpha})`);
+      }
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 3;
+      ctx.shadowColor = "rgba(160,255,238,.9)";
+      ctx.shadowBlur = 18;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) {
+        const prev = pts[i - 1];
+        const cur = pts[i];
+        const midX = (prev.x + cur.x) / 2;
+        const midY = (prev.y + cur.y) / 2;
+        ctx.quadraticCurveTo(prev.x, prev.y, midX, midY);
+      }
+      ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+      ctx.stroke();
+      ctx.restore();
+    },
+  };
+
+  // ---- Gráfico de PnL acumulado ----
+  useEffect(() => {
+    if (!pnlCanvasRef.current) return;
+    if (!pnlChartRef.current) {
+      pnlChartRef.current = new Chart(pnlCanvasRef.current, {
+        type: "line",
+        data: { labels: [], datasets: [{ data: [], borderColor: "#2FD8C8", borderWidth: 2.5, tension: 0.4, pointRadius: 0, pointHitRadius: 12, pointHoverRadius: 5, pointHoverBackgroundColor: "#2FD8C8", pointHoverBorderColor: "#0a0c14", pointHoverBorderWidth: 2, fill: true, backgroundColor: (c: { chart: Chart }) => {
+          const { ctx } = c.chart;
+          const g = ctx.createLinearGradient(0, 0, 0, 220);
+          g.addColorStop(0, "rgba(47,216,200,.45)");
+          g.addColorStop(0.6, "rgba(47,216,200,.10)");
+          g.addColorStop(1, "rgba(47,216,200,0)");
+          return g;
+        } }] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { intersect: false, mode: "index" },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "rgba(10,12,20,.92)",
+              borderColor: "rgba(47,216,200,.4)",
+              borderWidth: 1,
+              padding: 10,
+              cornerRadius: 8,
+              titleFont: { size: 11.5, weight: 600 },
+              bodyFont: { size: 12, family: "'IBM Plex Mono', monospace" },
+              bodySpacing: 4,
+              callbacks: {
+                /* Mismo callback del HTML original: las etiquetas del eje X son solo
+                   el número de día, así que el título del tooltip se reconstruye con
+                   la fecha completa desde `fullDates` ("23 de ene, 2026"). */
+                title: (items) => {
+                  const it = items[0];
+                  const ds = it.chart.data.datasets[0] as unknown as { fullDates?: string[] };
+                  const dateStr = ds.fullDates && ds.fullDates[it.dataIndex];
+                  if (!dateStr) return it.label;
+                  const d = new Date(dateStr + "T00:00:00Z");
+                  return d.getUTCDate() + " de " + MESES_CORTO[d.getUTCMonth()] + ", " + d.getUTCFullYear();
+                },
+                label: (ctx) => {
+                  const ds = ctx.chart.data.datasets[0] as unknown as { dailyCount: number[]; dailyPnl: number[] };
+                  const count = ds.dailyCount ? ds.dailyCount[ctx.dataIndex] : 0;
+                  const pnl = ds.dailyPnl ? ds.dailyPnl[ctx.dataIndex] : 0;
+                  const sign = pnl >= 0 ? "+" : "-";
+                  const pnlTxt = "$" + Math.abs(pnl).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  return [count + (count === 1 ? " Trade" : " Trades"), "Profit: " + sign + pnlTxt];
+                },
+              },
+            },
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { maxTicksLimit: 6, font: { size: 10 } } },
+            y: { grid: { color: "rgba(255,255,255,.09)" }, ticks: { callback: (v) => "$" + v, font: { size: 10 } } },
+          },
+        },
+        plugins: [pnlGlowPlugin, pnlWavePlugin],
+      });
+    }
+
+    const chart = pnlChartRef.current;
+    chart.data.labels = s.cumSeries.map((p) => `${new Date(`${p.date}T00:00:00Z`).getUTCDate()}`);
+    chart.data.datasets[0].data = s.cumSeries.map((p) => Math.round(p.cum * 100) / 100);
+    (chart.data.datasets[0] as unknown as { dailyPnl: number[] }).dailyPnl = s.cumSeries.map((p) => p.pnl);
+    (chart.data.datasets[0] as unknown as { dailyCount: number[] }).dailyCount = s.cumSeries.map((p) => p.count);
+    // El eje X solo muestra el número de día; el tooltip usa fullDates para la fecha completa.
+    (chart.data.datasets[0] as unknown as { fullDates: string[] }).fullDates = s.cumSeries.map((p) => p.date);
+    chart.update();
+  }, [s]);
+
+  // Loop de animación de la onda: incrementa la fase y fuerza el redibujado.
+  useEffect(() => {
+    let raf = 0;
+    function waveLoop() {
+      pnlWavePhaseRef.current = (pnlWavePhaseRef.current + 0.0035) % 1;
+      const chart = pnlChartRef.current;
+      if (chart && chart.canvas.isConnected && document.visibilityState === "visible") {
+        chart.draw();
+      }
+      raf = requestAnimationFrame(waveLoop);
+    }
+    raf = requestAnimationFrame(waveLoop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // ---- Radar "Puntaje del trader" ----
+  useEffect(() => {
+    if (!radarCanvasRef.current) return;
+    if (!radarChartRef.current) {
+      radarChartRef.current = new Chart(radarCanvasRef.current, {
+        type: "radar",
+        data: {
+          labels: ["% Acierto", "Factor beneficio", "Ganancia/pérdida", "Recuperación", "Drawdown máx.", "Consistencia"],
+          datasets: [{ data: [0, 0, 0, 0, 0, 0], borderColor: "#E22FA0", backgroundColor: (c) => {
+            const { ctx, chartArea } = c.chart;
+            if (!chartArea) return "rgba(226,47,160,.25)";
+            const cx = (chartArea.left + chartArea.right) / 2;
+            const cy = (chartArea.top + chartArea.bottom) / 2;
+            const r = Math.max(chartArea.right - chartArea.left, chartArea.bottom - chartArea.top) / 2;
+            const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+            g.addColorStop(0, "rgba(226,47,160,.5)");
+            g.addColorStop(0.7, "rgba(226,47,160,.22)");
+            g.addColorStop(1, "rgba(226,47,160,.04)");
+            return g;
+          }, borderWidth: 2.5, pointRadius: 3, pointBackgroundColor: "#E22FA0", pointBorderColor: "#fff", pointBorderWidth: 1.5, pointHoverRadius: 6, pointHoverBackgroundColor: "#fff", pointHoverBorderColor: "#E22FA0", pointHoverBorderWidth: 2.5, fill: true }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          elements: { line: { tension: 0.08 } },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "rgba(10,12,20,.92)",
+              borderColor: "rgba(226,47,160,.4)",
+              borderWidth: 1,
+              padding: 9,
+              cornerRadius: 8,
+              titleFont: { size: 11.5, weight: 600 },
+              bodyFont: { size: 12, family: "'IBM Plex Mono', monospace" },
+              callbacks: { label: (ctx) => (ctx.raw as number).toFixed(0) + " / 100" },
+            },
+          },
+          scales: {
+            r: {
+              grid: { color: "rgba(255,255,255,.09)" },
+              angleLines: { color: "rgba(255,255,255,.09)" },
+              pointLabels: { font: { size: 9.5 } },
+              ticks: { display: false },
+            },
+          },
+        },
+      });
+    }
+    const chart = radarChartRef.current;
+    chart.data.datasets[0].data = [s.radar.winRate, s.radar.profitFactor, s.radar.wlRatio, s.radar.recovery, s.radar.ddScore, s.radar.consistency].map((v) => Math.round(v));
+    chart.update();
+  }, [s]);
+
+  function navigateCalendar(delta: number) {
+    if (calYear === null || calMonth === null) return;
+    calNavManual.current = true;
+    let y = calYear;
+    let m = calMonth + delta;
+    if (m < 0) { m = 11; y--; } else if (m > 11) { m = 0; y++; }
+    setCalYear(y);
+    setCalMonth(m);
+  }
+  function goToday() {
+    // "Este mes" devuelve el control al calendario: vuelve a seguir a los datos.
+    calNavManual.current = false;
+    if (s.dailyEntries.length) {
+      const d = new Date(`${s.dailyEntries[s.dailyEntries.length - 1][0]}T00:00:00Z`);
+      setCalYear(d.getUTCFullYear());
+      setCalMonth(d.getUTCMonth());
+    } else {
+      const now = new Date();
+      setCalYear(now.getFullYear());
+      setCalMonth(now.getMonth());
+    }
+  }
+
+  const balance = initialBalance != null && isFinite(initialBalance) ? initialBalance + s.netPnl : s.netPnl;
+  const balancePositive = initialBalance != null && isFinite(initialBalance) ? balance >= initialBalance : s.netPnl >= 0;
+  const expectedValue = s.total ? s.netPnl / s.total : 0;
+  const scoreTier = s.score < 50 ? "tier-low" : s.score < 75 ? "tier-mid" : "tier-high";
+
+  // Animated numbers
+  const animBalance = useAnimatedNumber(balance);
+  const animNetPnl = useAnimatedNumber(s.netPnl);
+  const animWinRate = useAnimatedNumber(s.winRate);
+  const animExpectedValue = useAnimatedNumber(expectedValue);
+  const animScore = useAnimatedNumber(s.score);
+
+  const monthLabel = calYear !== null && calMonth !== null ? `${MONTH_NAMES[calMonth]} ${calYear}` : "—";
+
+  const calendarCells = useMemo(() => {
+    if (calYear === null || calMonth === null) return [];
+    const startOffset = new Date(Date.UTC(calYear, calMonth, 1)).getUTCDay();
+    const daysInMonth = new Date(Date.UTC(calYear, calMonth + 1, 0)).getUTCDate();
+    const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
+    const cells: { dayNum: number; key: string; v: number | undefined; other: boolean }[] = [];
+    for (let i = 0; i < totalCells; i++) {
+      const dayNum = i - startOffset + 1;
+      if (dayNum < 1 || dayNum > daysInMonth) {
+        cells.push({ dayNum: 0, key: "", v: undefined, other: true });
+        continue;
+      }
+      const key = `${calYear}-${pad(calMonth + 1)}-${pad(dayNum)}`;
+      cells.push({ dayNum, key, v: dailyMap[key], other: false });
+    }
+    return cells;
+  }, [calYear, calMonth, dailyMap]);
+
+  return (
+    <>
+      <div className="stats">
+        <div className="card">
+          <div className="label">Balance</div>
+          <div className={`value num ${balancePositive ? "pos" : "neg"}`}>{fmtMoneyFull(animBalance)}</div>
+        </div>
+        <div className="card">
+          <div className="label">P&amp;L neto</div>
+          <div className={`value num ${s.netPnl >= 0 ? "pos" : "neg"}`}>{fmtMoneyFull(animNetPnl)}</div>
+        </div>
+        <div className="card">
+          <div className="label">Winrate</div>
+          <div className="value num">{animWinRate.toFixed(2)}%</div>
+          <div className="bar-split"><div style={{ width: `${Math.min(100, s.winRate)}%` }} /></div>
+        </div>
+        <div className="card">
+          <div className="label">Ratio riesgo/beneficio</div>
+          <div className="value num">{s.avgLoss ? Math.abs(s.avgWin / s.avgLoss).toFixed(2) : "—"}</div>
+        </div>
+        <div className="card">
+          <div className="label">Profit Factor</div>
+          <div className="value num">{isFinite(s.profitFactor) && s.profitFactor < 99 ? s.profitFactor.toFixed(2) : "∞"}</div>
+        </div>
+        <div className="card">
+          <div className="label">Total Trades</div>
+          <div className="value num">{s.total}</div>
+          <div className="mini-note">
+            <span style={{ color: "var(--green)" }}>{s.wins.length} ganadas</span> ·{" "}
+            <span style={{ color: "var(--red)" }}>{s.losses.length} perdidas</span>
+          </div>
+        </div>
+        <div className="card">
+          <div className="label">
+            Expected Value{" "}
+            <span title="Ganancia/pérdida promedio esperada por trade: (% acierto × ganancia promedio) + (% pérdida × pérdida promedio). Equivale a P&L neto ÷ total de trades.">
+              ⓘ
+            </span>
+          </div>
+          <div className={`value num ${expectedValue >= 0 ? "pos" : "neg"}`}>{fmtMoneyFull(animExpectedValue)}</div>
+        </div>
+        <div className="card">
+          <div className="label">Average Trade Time</div>
+          <div className="value num">{avgTradeDurationLabel(trades)}</div>
+        </div>
+      </div>
+
+      <div className="grid-main">
+        <div className="panel chart-panel">
+          <h2>
+            P&amp;L acumulado diario <span>{monthLabel}</span>
+          </h2>
+          <div className="pnl-canvas-wrap">
+            <canvas ref={pnlCanvasRef} height={150} />
+          </div>
+        </div>
+
+        <div className="panel score-panel">
+          <h2>Puntaje del trader</h2>
+          <div className="score-wrap">
+            <div className="radar-canvas-wrap">
+              <canvas ref={radarCanvasRef} width={230} height={200} />
+            </div>
+            <div className={`score-num num ${scoreTier}`}>{animScore.toFixed(2)}</div>
+            <div className="score-bar" style={{ width: "90%" }}>
+              <div className="score-bar-shine" />
+              <i style={{ left: `${Math.min(100, Math.max(0, s.score))}%` }} />
+            </div>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="cal-nav">
+            <span className="cal-arrow" style={{ cursor: "pointer", padding: "2px 8px" }} onClick={() => navigateCalendar(-1)}>‹</span>
+            &nbsp;<b>{monthLabel}</b>&nbsp;
+            <span className="cal-arrow" style={{ cursor: "pointer", padding: "2px 8px" }} onClick={() => navigateCalendar(1)}>›</span>
+            &nbsp; <span className="pill" style={{ padding: "3px 9px", cursor: "pointer" }} onClick={goToday}>Este mes</span>
+          </div>
+          <div className="cal">
+            {DOW_NAMES.map((d) => (
+              <div className="dow" key={d}>{d}</div>
+            ))}
+            {calendarCells.map((c, i) =>
+              c.other ? (
+                <div className="day" style={{ opacity: 0.35 }} key={i} />
+              ) : (
+                <div className={`day${c.v !== undefined ? (c.v > 0 ? " win" : c.v < 0 ? " loss" : "") : ""}`} key={i}>
+                  <div className="d">{c.dayNum}</div>
+                  {c.v !== undefined && <div className="p">{c.v > 0 ? "+" : ""}{fmtMoney(c.v)}</div>}
+                </div>
+              )
+            )}
+          </div>
+        </div>
+
+        <div className="panel">
+          <h2>Resumen semanal</h2>
+          <div className="weeklist">
+            {Object.keys(s.weekMap).length === 0 && <p className="mini-note">Sin operaciones todavía.</p>}
+            {Object.keys(s.weekMap)
+              .map(Number)
+              .sort((a, b) => a - b)
+              .map((wk) => {
+                const w = s.weekMap[wk];
+                const color = w.sum > 0 ? "var(--green)" : w.sum < 0 ? "var(--red)" : "var(--muted)";
+                return (
+                  <div className="wk" key={wk}>
+                    <span className="l">Semana {wk}</span>
+                    <span className="r">
+                      <b style={{ color }}>{fmtMoney(w.sum)}</b>
+                      {w.days.size} día{w.days.size === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

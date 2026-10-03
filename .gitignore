@@ -1,0 +1,62 @@
+# ============================================================
+# TradeMind — archivos que NO deben entrar al repositorio
+# ============================================================
+
+# --- Secretos (NUNCA subir) ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# --- Python ---
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.pytest_cache
+
+# --- Node / Next.js ---
+node_modules/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+
+# --- Editores / SO ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Logs ---
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# --- Datos locales / artefactos ---
+*.sqlite
+*.sqlite3
+dump.sql
+uploads/
+tmp/
+temp/
+
+# --- Excepciones: archivos que SÍ deben versionarse ---
+# Las plantillas y reportes de ejemplo son fixtures de prueba.
+!sample_data/*.xlsx
+
+# --- Documentos personales que no deben versionarse ---
+!INFORME_ESTADO_Y_PLAN.md
