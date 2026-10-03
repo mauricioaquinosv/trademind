@@ -65,6 +65,21 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
    `revert` devuelve el valor al UA stylesheet. Las clases que sí definen su fuente
    (.pill, .nav button, .tp-btn, .cf-select-btn, ...) ganan por especificidad. */
 button{font-family:revert;font-size:revert;}
+/* La pantalla de login NO viene del HTML original (alli no existe: cero <form>,
+   cero type=password, cero "Entrar"), asi que no tiene por que pagar el `revert`
+   global de arriba, que solo necesita el boton "$" del dashboard. Al no haber
+   referencia de fidelidad, lo correcto es que use la tipografia de la app.
+
+   Se usa `revert-layer` y no `inherit` porque dashboard.css esta SIN capa y
+   Tailwind va en `@layer utilities`: en CSS, una regla sin capa gana SIEMPRE a
+   una regla con capa, y por eso `button{font-size:revert}` estaba pisando el
+   `text-sm` de los botones de Tailwind. `revert-layer` devuelve el valor a la
+   capa, de modo que cada boton recupera el tamano que su clase de Tailwind pide
+   (los de Google y Apple vuelven a 14px, y el de Entrar hereda 16px).
+
+   La clase .login-shell solo existe en el <main> del login, asi que esta regla
+   no puede afectar al dashboard. */
+.login-shell button{font-family:revert-layer;font-size:revert-layer;}
 .icon-btn svg{width:15px;height:15px;}
 .chev{width:9px;height:9px;opacity:.6;}
 main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}

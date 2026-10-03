@@ -794,7 +794,10 @@ export default function DashboardPage() {
   const visibleCols = tradeColumns.filter((c) => columnPrefs[c.key]);
 
   if (loading) {
-    return <div style={{ padding: 40, color: "#8E93A6", fontFamily: "sans-serif" }}>{t("common.loading")}</div>;
+    /* Sin `fontFamily` en linea: es un <div>, la regla global de <button> no le
+       llega, y ese "sans-serif" era un resto que lo dejaba fuera de la
+       tipografia de la app. Al quitarlo hereda Space Grotesk del body. */
+    return <div style={{ padding: 40, color: "#8E93A6" }}>{t("common.loading")}</div>;
   }
 
   const importTitle = currentAccount

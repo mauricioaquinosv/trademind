@@ -34,7 +34,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-end bg-black overflow-hidden">
+    <main className="login-shell relative flex min-h-screen items-center justify-end bg-black overflow-hidden">
       <div className="absolute top-4 right-4 z-20">
         <LanguageSwitcher />
       </div>
