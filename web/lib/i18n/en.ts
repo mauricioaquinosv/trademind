@@ -63,6 +63,9 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
     "Enter a valid initial balance (0 or more) before uploading the file.",
   "errors.accountCreateFailed": "Could not create the account. Please try again.",
   "errors.accountCreateError": "An error occurred while creating the account. Please try again.",
+  "errors.accountUpdateFailed": "Could not save the account. Please try again.",
+  "errors.accountDeleteFailed": "Could not delete the account. Please try again.",
+  "errors.nameRequired": "The account name cannot be empty.",
   "errors.tradeSaveFailed": "Could not save the trade. Please check the data.",
   "errors.fileProcessing": "Error processing the file.",
 
@@ -155,6 +158,18 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "accounts.useThis": "Use this account",
   "accounts.importInstead": "Would you rather import it from MT5 instead of creating it manually?",
   "accounts.importInsteadLink": "Import CSV as a new account",
+  "accounts.edit": "Edit account",
+  "accounts.editTitle": "Edit account",
+  "accounts.saveChanges": "Save changes",
+  "accounts.delete": "Delete account",
+  "accounts.deleteWarn": "This action cannot be undone.",
+  "accounts.deleteConfirm": "Are you sure you want to delete the account",
+  "accounts.deleteHasTrades":
+    "This account has {n} trade(s). Deleting it will delete them too.",
+  "accounts.deleteKeep": "Keep trades",
+  "accounts.deleteAll": "Delete account and trades",
+  "accounts.wasDeleted": "The account was deleted.",
+  "accounts.wasUpdated": "The account was updated.",
 
   // ------------------------------------------------------------------
   // Trades
@@ -234,9 +249,9 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "import.success": { one: "{n} trade loaded successfully.", other: "{n} trades loaded successfully." },
   "import.hint":
     'Export your "Trade History Report" from MetaTrader 5 (right-click the history → Report → Save as CSV or Save as .xlsx) and upload it here.',
-  "import.hintTemplateLink": "Download the TradeMind template",
   "import.hintTemplateNote":
     "You can also upload it already filled in: I detect it automatically and add those trades to your account.",
+  "import.downloadTemplate": "Download Excel template",
   "import.balanceForAccount": "Account initial balance",
   "import.dropHere": "Click to choose a file or drag it here",
   "import.formats": "Format .csv, .xlsx or .xls",

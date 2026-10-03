@@ -62,6 +62,9 @@ export const es = {
     "Ingresa un balance inicial válido (0 o mayor) antes de subir el archivo.",
   "errors.accountCreateFailed": "No se pudo crear la cuenta. Intenta de nuevo.",
   "errors.accountCreateError": "Ocurrió un error creando la cuenta. Intenta de nuevo.",
+  "errors.accountUpdateFailed": "No se pudo guardar la cuenta. Intenta de nuevo.",
+  "errors.accountDeleteFailed": "No se pudo eliminar la cuenta. Intenta de nuevo.",
+  "errors.nameRequired": "El nombre de la cuenta no puede estar vacío.",
   "errors.tradeSaveFailed": "No se pudo guardar el trade. Verifica los datos.",
   "errors.fileProcessing": "Error al procesar el archivo.",
 
@@ -154,6 +157,18 @@ export const es = {
   "accounts.useThis": "Usar esta cuenta",
   "accounts.importInstead": "¿Quieres importarla desde MT5 en vez de crearla manual?",
   "accounts.importInsteadLink": "Importar CSV como cuenta nueva",
+  "accounts.edit": "Editar cuenta",
+  "accounts.editTitle": "Editar cuenta",
+  "accounts.saveChanges": "Guardar cambios",
+  "accounts.delete": "Eliminar cuenta",
+  "accounts.deleteWarn": "Esta acción no se puede deshacer.",
+  "accounts.deleteConfirm": "¿Seguro que quieres eliminar la cuenta",
+  "accounts.deleteHasTrades":
+    "Esta cuenta tiene {n} operación(es). Si la eliminas también se borrarán.",
+  "accounts.deleteKeep": "Conservar operaciones",
+  "accounts.deleteAll": "Eliminar cuenta y operaciones",
+  "accounts.wasDeleted": "La cuenta se eliminó.",
+  "accounts.wasUpdated": "La cuenta se actualizó.",
 
   // ------------------------------------------------------------------
   // Trades
@@ -233,9 +248,9 @@ export const es = {
   "import.success": { one: "{n} operación cargada correctamente.", other: "{n} operaciones cargadas correctamente." },
   "import.hint":
     'Exporta tu "Trade History Report" desde MetaTrader 5 (botón derecho sobre el historial → Report → Save as CSV o Guardar como .xlsx) y súbelo aquí.',
-  "import.hintTemplateLink": "Descargar la plantilla de TradeMind",
   "import.hintTemplateNote":
     "También puedes subirla ya llena: la detecto automáticamente y agrego esos trades a tu cuenta.",
+  "import.downloadTemplate": "Descargar plantilla Excel",
   "import.balanceForAccount": "Balance inicial de la cuenta",
   "import.dropHere": "Haz clic para elegir un archivo o arrástralo aquí",
   "import.formats": "Formato .csv, .xlsx o .xls",

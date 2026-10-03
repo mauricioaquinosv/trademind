@@ -415,6 +415,12 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
 .tm-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;}
 .tm-field{display:flex;flex-direction:column;}
 .tm-field.full{grid-column:1/-1;}
+/* Texto corrido dentro de un modal (confirmaciones, avisos). Los labels de
+   .tm-field se diseñaron para campos de formulario, asi que aqui se anulan
+   ese margen y ese color para que el texto no parezca una etiqueta. */
+.tm-body-text{color:var(--text);font-size:13.5px;line-height:1.5;}
+.tm-body-text .tm-field label{font-size:13.5px;color:var(--text);margin-bottom:0;font-weight:400;}
+.tm-body-text .mini-note{margin-top:0;}
 .tm-field label{font-size:11.5px;color:var(--muted);margin-bottom:6px;}
 .tm-field input,.tm-field select{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:7px;color:var(--text);padding:9px 10px;font-family:inherit;font-size:13.5px;}
 .tm-field input:focus,.tm-field select:focus{outline:none;border-color:var(--teal);}

@@ -471,6 +471,112 @@ export default function DashboardPage() {
     setView("trades");
   }
 
+  // Modal de edición de cuenta
+  const [accEditId, setAccEditId] = useState<string | null>(null);
+  const [accEditName, setAccEditName] = useState("");
+  const [accEditBalance, setAccEditBalance] = useState("");
+  const [accEditError, setAccEditError] = useState("");
+
+  // Modal de borrado de cuenta
+  const [accDeleteId, setAccDeleteId] = useState<string | null>(null);
+  const [accDeleteTrades, setAccDeleteTrades] = useState(false);
+  const [accDeleteError, setAccDeleteError] = useState("");
+  const [accNotice, setAccNotice] = useState("");
+
+  const accEditOpen = accEditId !== null;
+  const accDeleteOpen = accDeleteId !== null;
+  const accEnEdicion = accEditId ? accounts.find((a) => a.id === accEditId) ?? null : null;
+  const accEnBorrado = accDeleteId ? accounts.find((a) => a.id === accDeleteId) ?? null : null;
+  const tradesDeAccEnBorrado = useMemo(
+    () => (accDeleteId ? trades.filter((tr) => tr.account_id === accDeleteId).length : 0),
+    [accDeleteId, trades],
+  );
+
+  function openAccEdit(id: string) {
+    const acc = accounts.find((a) => a.id === id);
+    if (!acc) return;
+    setAccEditId(id);
+    setAccEditName(acc.name);
+    setAccEditBalance(String(acc.initial_balance));
+    setAccEditError("");
+  }
+
+  async function handleAccEditSave() {
+    if (!accEditId) return;
+    const balance = parseFloat(accEditBalance);
+    if (!accEditName.trim()) {
+      setAccEditError(t("errors.nameRequired"));
+      return;
+    }
+    if (accEditBalance === "" || isNaN(balance) || balance < 0) {
+      setAccEditError(t("errors.invalidBalance"));
+      return;
+    }
+    try {
+      const res = await authedFetch(`/accounts/${accEditId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: accEditName.trim(), initial_balance: balance }),
+      });
+      if (!res.ok) throw new Error("fallo");
+      const actualizada: Account = await res.json();
+      setAccounts((prev) => prev.map((a) => (a.id === actualizada.id ? actualizada : a)));
+      setAccEditId(null);
+      setAccNotice(t("accounts.wasUpdated"));
+    } catch {
+      setAccEditError(t("errors.accountUpdateFailed"));
+    }
+  }
+
+  function openAccDelete(id: string) {
+    setAccDeleteId(id);
+    setAccDeleteTrades(false);
+    setAccDeleteError("");
+  }
+
+  async function handleAccDelete() {
+    if (!accDeleteId) return;
+    try {
+      const res = await authedFetch(
+        `/accounts/${accDeleteId}${accDeleteTrades ? "?delete_trades=true" : ""}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) throw new Error("fallo");
+
+      const idBorrada = accDeleteId;
+      const eraActiva = idBorrada === currentAccountId;
+      const nb = accEnBorrado?.name ?? "";
+      setAccounts((prev) => prev.filter((a) => a.id !== idBorrada));
+      setAccDeleteId(null);
+
+      if (eraActiva) {
+        // La cuenta activa ya no existe: hay que cambiar a otra o crear una.
+        setCurrentAccountId(null);
+        localStorage.removeItem("trademind_current_account");
+        setTrades([]);
+        setTradesLoaded(false);
+        setView("accounts");
+        setShowOnboarding(accounts.length <= 1);
+        setAccNotice(`${t("accounts.wasDeleted")} ${nb}`.trim());
+      } else {
+        setAccNotice(t("accounts.wasDeleted"));
+      }
+    } catch {
+      setAccDeleteError(t("errors.accountDeleteFailed"));
+    }
+  }
+
+  /* Descarga la plantilla de Excel. El archivo vive en web/public/, asi que
+     Next lo sirve como estatico y no hace falta ninguna ruta en el backend. */
+  function descargarPlantilla() {
+    const a = document.createElement("a");
+    a.href = "/plantilla_trademind.xlsx";
+    a.download = "plantilla_trademind.xlsx";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
   function tmResetForm() {
     setTmEditingId(null);
     setTmPosition("");
@@ -1011,6 +1117,9 @@ export default function DashboardPage() {
                 <p className="mini-note" style={{ marginBottom: 14, fontSize: "12.5px" }}>
                   {t("accounts.hint")}
                 </p>
+                {accNotice && (
+                  <div className="status ok" style={{ marginBottom: 12 }}>{accNotice}</div>
+                )}
                 <div className="acc-list">
                   {accounts.length === 0 && <div className="mini-note">{t("accounts.empty")}</div>}
                   {accounts.map((a) => {
@@ -1024,9 +1133,30 @@ export default function DashboardPage() {
                           </div>
                           <div className="acc-sub">{a.source === "csv" ? t("datasource.mt5") : t("datasource.manual")} · {t("accounts.initialDeposit", { amount: a.initial_balance.toFixed(2) })}</div>
                         </div>
-                        {!active && (
-                          <button type="button" className="pill acc-switch-btn" onClick={() => switchAccount(a.id)}>{t("accounts.useThis")}</button>
-                        )}
+                        <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                          {!active && (
+                            <button type="button" className="pill acc-switch-btn" onClick={() => switchAccount(a.id)}>{t("accounts.useThis")}</button>
+                          )}
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            title={t("accounts.edit")}
+                            aria-label={`${t("accounts.edit")}: ${a.name}`}
+                            onClick={() => openAccEdit(a.id)}
+                          >
+                            <PencilIcon />
+                          </button>
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            title={t("accounts.delete")}
+                            aria-label={`${t("accounts.delete")}: ${a.name}`}
+                            style={{ color: "var(--red)" }}
+                            onClick={() => openAccDelete(a.id)}
+                          >
+                            <DeleteIcon />
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -1047,23 +1177,8 @@ export default function DashboardPage() {
             <div className={`view ${view === "import" ? "active" : ""}`}>
               <div className="panel" style={{ maxWidth: 640, margin: "0 auto" }}>
                 <h2>{importTitle}</h2>
-                <p className="mini-note" style={{ marginBottom: 8, fontSize: "12.5px" }}>
-                  {t("import.hint")}
-                </p>
                 <p className="mini-note" style={{ marginBottom: 14, fontSize: "12.5px" }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const a = document.createElement("a");
-                      a.href = "/plantilla_trademind.xlsx";
-                      a.download = "plantilla_trademind.xlsx";
-                      a.click();
-                    }}
-                    style={{ color: "var(--teal)", textDecoration: "underline", background: "none", border: "none", cursor: "pointer", padding: 0, font: "inherit" }}
-                  >
-                    {t("import.hintTemplateLink")}
-                  </button>{" "}
-                  {t("import.hintTemplateNote")}
+                  {t("import.hint")}
                 </p>
 
                 {!currentAccount && (
@@ -1086,6 +1201,17 @@ export default function DashboardPage() {
                   <p>{t("import.formats")}</p>
                 </label>
                 <input type="file" ref={fileInputRef} accept=".csv,.xlsx,.xls" style={{ position: "absolute", width: 1, height: 1, opacity: 0, overflow: "hidden" }} onChange={(e) => handleFile(e.target.files?.[0])} />
+
+                {/* Botón de descarga de la plantilla. Antes solo había un enlace
+                    de texto metido dentro de un párrafo, muy fácil de no ver. */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
+                  <button type="button" className="pill" onClick={descargarPlantilla}>
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12M12 15l-4-4M12 15l4-4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>
+                    {t("import.downloadTemplate")}
+                  </button>
+                  <span className="mini-note">{t("import.hintTemplateNote")}</span>
+                </div>
+
                 {importStatus.text && <div className={`status ${importStatus.kind}`} style={{ marginTop: 12 }}>{importStatus.text}</div>}
               </div>
             </div>
@@ -1225,6 +1351,87 @@ export default function DashboardPage() {
             <button type="button" className="pill" onClick={() => setTmOpen(false)}>{t("common.cancel")}</button>
             <button type="button" className="pill" style={{ background: "var(--teal)", color: "#05060B", borderColor: "var(--teal)", fontWeight: 700 }} onClick={handleTmSave}>
               {t("common.save")}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ---------- Modal "Editar cuenta" ---------- */}
+      <div className={`tm-overlay${accEditOpen ? " open" : ""}`}>
+        <div className="tm-modal" style={{ maxWidth: 400 }}>
+          <div className="tm-head">
+            <h3>{t("accounts.editTitle")}</h3>
+            <button type="button" className="tm-close" aria-label={t("trades.close")} onClick={() => setAccEditId(null)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </button>
+          </div>
+          <div className="tm-field full" style={{ marginBottom: 14 }}>
+            <label htmlFor="accEditName">{t("accounts.nameLabel")}</label>
+            <input type="text" id="accEditName" maxLength={60} value={accEditName} onChange={(e) => setAccEditName(e.target.value)} />
+          </div>
+          <div className="tm-field full">
+            <label htmlFor="accEditBalance">{t("accounts.balanceLabel")}</label>
+            <input type="number" id="accEditBalance" min={0} step="0.01" value={accEditBalance} onChange={(e) => setAccEditBalance(e.target.value)} />
+          </div>
+          <div className="tm-error">{accEditError}</div>
+          <div className="tm-actions">
+            <button type="button" className="pill" onClick={() => setAccEditId(null)}>{t("common.cancel")}</button>
+            <button type="button" className="pill" style={{ background: "var(--teal)", color: "#05060B", borderColor: "var(--teal)", fontWeight: 700, flex: 2 }} onClick={handleAccEditSave}>
+              {t("accounts.saveChanges")}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ---------- Modal "Eliminar cuenta" ---------- */}
+      <div className={`tm-overlay${accDeleteOpen ? " open" : ""}`}>
+        <div className="tm-modal" style={{ maxWidth: 420 }}>
+          <div className="tm-head">
+            <h3>{t("accounts.delete")}</h3>
+            <button type="button" className="tm-close" aria-label={t("trades.close")} onClick={() => setAccDeleteId(null)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </button>
+          </div>
+          <div className="tm-body-text">
+            <p style={{ marginBottom: 10 }}>
+              {t("accounts.deleteConfirm")} <b>{accEnBorrado?.name}</b>?
+            </p>
+            <p className="mini-note">{t("accounts.deleteWarn")}</p>
+
+            {/* Si tiene operaciones, avisar ANTES de confirmar. El backend
+                devuelve 409 si se intenta borrar sin delete_trades, asi que
+                esto no es solo informativo: evita un rechazo. */}
+            {tradesDeAccEnBorrado > 0 && (
+              <div className="tm-field full" style={{ marginTop: 14, marginBottom: 4 }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                  <input
+                    type="checkbox"
+                    id="accDeleteTrades"
+                    checked={accDeleteTrades}
+                    onChange={(e) => setAccDeleteTrades(e.target.checked)}
+                    style={{ marginTop: 2 }}
+                  />
+                  <label htmlFor="accDeleteTrades" style={{ cursor: "pointer" }}>
+                    <b>{t("accounts.deleteAll")}</b>
+                    <div className="mini-note" style={{ marginTop: 2 }}>
+                      {t("accounts.deleteHasTrades", { n: tradesDeAccEnBorrado })}
+                    </div>
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="tm-error">{accDeleteError}</div>
+          <div className="tm-actions">
+            <button type="button" className="pill" onClick={() => setAccDeleteId(null)}>{t("common.cancel")}</button>
+            <button
+              type="button"
+              className="pill"
+              disabled={tradesDeAccEnBorrado > 0 && !accDeleteTrades}
+              style={{ background: "var(--red)", color: "#fff", borderColor: "var(--red)", fontWeight: 700, flex: 2, opacity: tradesDeAccEnBorrado > 0 && !accDeleteTrades ? 0.45 : 1, cursor: tradesDeAccEnBorrado > 0 && !accDeleteTrades ? "not-allowed" : "pointer" }}
+              onClick={handleAccDelete}
+            >
+              {t("accounts.delete")}
             </button>
           </div>
         </div>
