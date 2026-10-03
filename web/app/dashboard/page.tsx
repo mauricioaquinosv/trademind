@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { CfDate, CfDateTime, CfSelect } from "../components/CfControls";
 import SummaryView from "../components/SummaryView";
 import AnalyticsView from "../components/AnalyticsView";
+import { useI18n } from "../../lib/i18n/LocaleProvider";
+import LanguageSwitcher from "../../lib/i18n/LanguageSwitcher";
 
 const API = "http://127.0.0.1:8000";
 
@@ -184,6 +186,7 @@ export default function DashboardPage() {
   const [currentAccountId, setCurrentAccountId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewName>("dashboard");
+  const { t } = useI18n();
 
   const [trades, setTrades] = useState<Trade[]>([]);
   const [tradesLoaded, setTradesLoaded] = useState(false);
@@ -757,6 +760,9 @@ export default function DashboardPage() {
             </div>
             <div className="hdr-right">
               <button className="pill" style={{ background: "#fff", color: "#0A0B12", borderColor: "#fff", fontWeight: 700 }}>Iniciar mi semana</button>
+              {/* Selector de idioma ES/EN. Va a la izquierda del resto para que los
+                  botones de la derecha conserven su posición respecto al HTML. */}
+              <LanguageSwitcher />
               {/* Toggle de tema. Ocupa el lugar del botón "Ajustes" del HTML original
                   (que no hacía nada) para no alterar el ancho de .hdr-right: el header
                   usa justify-content:space-between, así que cualquier botón extra
@@ -779,21 +785,21 @@ export default function DashboardPage() {
           </header>
 
           <nav className="nav">
-            <button className={view === "dashboard" ? "active" : ""} title="Resumen" onClick={() => setView("dashboard")}>
+            <button className={view === "dashboard" ? "active" : ""} title={t("nav.summary")} onClick={() => setView("dashboard")}>
               <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.7" /><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.7" /><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.7" /><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.7" /></svg>
-              <span>Resumen</span>
+              <span>{t("nav.summary")}</span>
             </button>
-            <button className={view === "trades" ? "active" : ""} title="Trades" onClick={() => setView("trades")}>
+            <button className={view === "trades" ? "active" : ""} title={t("nav.trades")} onClick={() => setView("trades")}>
               <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="7" width="4" height="10" rx="1" stroke="currentColor" strokeWidth="1.6" /><path d="M6 3v4M6 17v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /><rect x="12" y="7" width="4" height="8" rx="1" stroke="currentColor" strokeWidth="1.6" /><path d="M14 2v5M14 15v7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /><rect x="18" y="8" width="4" height="6" rx="1" stroke="currentColor" strokeWidth="1.6" /><path d="M20 5v3M20 14v5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
-              <span>Trades</span>
+              <span>{t("nav.trades")}</span>
             </button>
-            <button className={view === "accounts" ? "active" : ""} title="Cuentas" onClick={() => setView("accounts")}>
+            <button className={view === "accounts" ? "active" : ""} title={t("nav.accounts")} onClick={() => setView("accounts")}>
               <svg viewBox="0 0 24 24" fill="none"><rect x="2.5" y="6" width="19" height="13" rx="2" stroke="currentColor" strokeWidth="1.7" /><path d="M2.5 10h19" stroke="currentColor" strokeWidth="1.7" /><path d="M6 14.5h5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>
-              <span>Cuentas</span>
+              <span>{t("nav.accounts")}</span>
             </button>
-            <button className={view === "analytics" ? "active" : ""} title="Analytics" onClick={() => setView("analytics")}>
+            <button className={view === "analytics" ? "active" : ""} title={t("nav.analytics")} onClick={() => setView("analytics")}>
               <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="12" width="4" height="8" rx="1" stroke="currentColor" strokeWidth="1.7" /><rect x="10" y="6" width="4" height="14" rx="1" stroke="currentColor" strokeWidth="1.7" /><rect x="16" y="9" width="4" height="11" rx="1" stroke="currentColor" strokeWidth="1.7" /></svg>
-              <span>Analytics</span>
+              <span>{t("nav.analytics")}</span>
             </button>
           </nav>
 

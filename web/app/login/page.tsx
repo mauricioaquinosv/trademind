@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useI18n } from "../../lib/i18n/LocaleProvider";
+import LanguageSwitcher from "../../lib/i18n/LanguageSwitcher";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+  const { t } = useI18n();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -21,7 +24,7 @@ export default function LoginPage() {
     });
 
     if (!response.ok) {
-      setError("Email o contraseña incorrectos");
+      setError(t("login.wrongCredentials"));
       return;
     }
 
@@ -32,6 +35,9 @@ export default function LoginPage() {
 
   return (
     <main className="relative flex min-h-screen items-center justify-end bg-black overflow-hidden">
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageSwitcher />
+      </div>
       <Image
         src="/astronaut-login.jpg"
         alt="TradeMind"
@@ -44,13 +50,13 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-sm mr-8 sm:mr-16 md:mr-24 lg:mr-32 flex flex-col gap-4">
         <div className="rounded-2xl bg-zinc-900/90 backdrop-blur-md border border-white/10 p-8 shadow-2xl">
-          <h1 className="text-2xl font-bold text-white mb-1">Welcome Back!</h1>
-          <p className="text-sm text-zinc-400 mb-6">Let&apos;s Get You Signed In</p>
+          <h1 className="text-2xl font-bold text-white mb-1">{t("login.welcome")}</h1>
+          <p className="text-sm text-zinc-400 mb-6">{t("login.subtitle")}</p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <input
               type="email"
-              placeholder="Email"
+              placeholder={t("login.email")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -58,7 +64,7 @@ export default function LoginPage() {
             />
             <input
               type="password"
-              placeholder="Contraseña"
+              placeholder={t("login.password")}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -67,7 +73,7 @@ export default function LoginPage() {
 
             <div className="flex justify-end -mt-2">
               <a href="#" className="text-xs text-zinc-400 hover:text-white transition">
-                Forgot Password?
+                {t("login.forgot")}
               </a>
             </div>
 
@@ -75,14 +81,14 @@ export default function LoginPage() {
               type="submit"
               className="mt-1 w-full rounded-lg bg-white py-3 font-semibold text-black transition hover:bg-zinc-200"
             >
-              Login
+              {t("login.submit")}
             </button>
 
             {error && <p className="text-sm text-red-500 text-center">{error}</p>}
           </form>
 
           <div className="mt-6">
-            <p className="text-center text-xs text-zinc-500 mb-3">Quick login via</p>
+            <p className="text-center text-xs text-zinc-500 mb-3">{t("login.quickLogin")}</p>
             <div className="flex gap-3">
               <button
                 type="button"
@@ -111,9 +117,9 @@ export default function LoginPage() {
 
         <div className="rounded-2xl bg-zinc-900/90 backdrop-blur-md border border-white/10 p-5 shadow-2xl text-center">
           <p className="text-sm text-zinc-300 mb-3">
-            New around here?{" "}
+            {t("login.newHere")}{" "}
             <a href="#" className="text-white font-medium hover:underline">
-              Set up your account
+              {t("login.createAccount")}
             </a>
           </p>
           <div className="flex justify-center gap-3">
