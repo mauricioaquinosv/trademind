@@ -1,10 +1,25 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Column, String, DateTime, Float, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.database import Base
+
+
+def utcnow_naive() -> datetime:
+    """
+    Hora actual en UTC, sin zona horaria (naive).
+
+    Sustituye a datetime.utcnow(), que está deprecado desde Python 3.12 y
+    disappears en una versión futura.
+
+    El .replace(tzinfo=None) es DELIBERADO: las columnas son DateTime sin
+    timezone, y los valores ya guardados en la base son naive. Si se empezaran
+    a guardar con zona horaria, las comparaciones contra los datos antiguos
+    fallarían. Con esto, el valor guardado es idéntico al de siempre.
+    """
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class User(Base):
@@ -13,7 +28,7 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow_naive)
 
 
 class Account(Base):
@@ -27,7 +42,7 @@ class Account(Base):
     currency = Column(String, default="USD")
     source = Column(String, default="manual")  # 'manual' o 'csv'
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow_naive)
 
 
 class Trade(Base):
@@ -56,4 +71,4 @@ class Trade(Base):
     pnl_bruto = Column(Float, nullable=False)
     pnl_neto = Column(Float, nullable=True)  # editable a mano; si es null, se calcula bruto+comisión+swap
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow_naive)

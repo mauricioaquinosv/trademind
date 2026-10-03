@@ -1,7 +1,7 @@
 from uuid import UUID
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class UserCreate(BaseModel):
@@ -10,11 +10,12 @@ class UserCreate(BaseModel):
 
 
 class UserOut(BaseModel):
+    # `model_config` sustituye al antiguo `class Config`, que Pydantic v2
+    # marca como obsoleto. Es el mismo mecanismo con el nombre actual.
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     email: EmailStr
-
-    class Config:
-        from_attributes = True
 
 
 class Token(BaseModel):
@@ -75,5 +76,4 @@ class TradeOut(BaseModel):
     pnl_bruto: float
     pnl_neto: Optional[float]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
