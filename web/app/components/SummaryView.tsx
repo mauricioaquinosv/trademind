@@ -91,6 +91,21 @@ function fmtMoneyFull(n: number) {
 
 type StatInput = { date: string; pnl: number };
 
+/**
+ * Fecha ISO (YYYY-MM-DD) del lunes de la semana a la que pertenece un día.
+ *
+ * Se usa UTC a propósito y no la fecha local: las claves de los trades vienen
+ * en UTC y mezclarlas con el huso del navegador movería los días de una semana
+ * al bordering incorrecto.
+ */
+function lunesDe(fechaISO: string): string {
+  const d = new Date(`${fechaISO}T00:00:00Z`);
+  const dow = d.getUTCDay(); // 0 = domingo ... 6 = sábado
+  const retroceder = (dow + 6) % 7; // lunes = 0, domingo = 6
+  d.setUTCDate(d.getUTCDate() - retroceder);
+  return d.toISOString().slice(0, 10);
+}
+
 function computeStats(items: StatInput[]) {
   const sorted = [...items].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const total = sorted.length;
@@ -118,14 +133,26 @@ function computeStats(items: StatInput[]) {
     return { date: d, cum, pnl: v, count: dailyCountMap[d] || 0 };
   });
 
-  const weekMap: Record<number, { sum: number; days: Set<string> }> = {};
+  /* Semanas reales, de lunes a domingo. La clave es la fecha ISO del lunes:
+     única para cada semana e independiente del mes y del año.
+
+     Antes se agrupaba por día del mes en bloques de 7 (días 1-7 = "Semana 1"),
+     lo que mezclaba semanas que no tienen nada que ver: los días 1-7 de enero
+     y los días 1-7 de febrero acababan sumados en la misma "Semana 1", y la
+     numeración se reiniciaba cada mes. */
+  const weekMap: Record<string, { sum: number; days: Set<string>; first: string; last: string }> = {};
   dailyEntries.forEach(([d, v]) => {
-    const dayNum = new Date(`${d}T00:00:00Z`).getUTCDate();
-    const wk = Math.floor((dayNum - 1) / 7) + 1;
-    if (!weekMap[wk]) weekMap[wk] = { sum: 0, days: new Set() };
-    weekMap[wk].sum += v;
-    weekMap[wk].days.add(d);
+    const key = lunesDe(d);
+    const w = (weekMap[key] ??= { sum: 0, days: new Set(), first: d, last: d });
+    w.sum += v;
+    w.days.add(d);
+    if (d < w.first) w.first = d;
+    if (d > w.last) w.last = d;
   });
+  // Las fechas ISO en formato AAAA-MM-DD ordenan correctamente como texto.
+  const weeks = Object.keys(weekMap)
+    .sort()
+    .map((key) => ({ lunes: key, ...weekMap[key] }));
 
   let peak = -Infinity;
   let maxDD = 0;
@@ -152,7 +179,7 @@ function computeStats(items: StatInput[]) {
   };
   const score = (radar.winRate + radar.profitFactor + radar.wlRatio + radar.recovery + radar.ddScore + radar.consistency) / 6;
 
-  return { total, wins, losses, netPnl, winRate, avgWin, avgLoss, profitFactor, dailyEntries, cumSeries, weekMap, radar, score };
+  return { total, wins, losses, netPnl, winRate, avgWin, avgLoss, profitFactor, dailyEntries, cumSeries, weeks, radar, score };
 }
 
 function avgTradeDurationLabel(trades: SummaryTrade[]): string {
@@ -214,6 +241,25 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     locale === "es"
       ? `${d.getUTCDate()} de ${mesesCorto[d.getUTCMonth()] ?? ""}, ${d.getUTCFullYear()}`
       : `${mesesCorto[d.getUTCMonth()] ?? ""} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+
+  /* Rango de una semana: "19–25 ene" en español, "Jan 19–25" en inglés.
+     Si la semana cae en dos meses distintos se muestran los dos
+     ("29 ene – 4 feb"), porque "29–4" a secas es ambiguo. */
+  const rangoSemana = (primeraISO: string, ultimaISO: string) => {
+    const a = new Date(`${primeraISO}T00:00:00Z`);
+    const b = new Date(`${ultimaISO}T00:00:00Z`);
+    const ma = mesesCorto[a.getUTCMonth()] ?? "";
+    const mb = mesesCorto[b.getUTCMonth()] ?? "";
+    const mismoMes = a.getUTCMonth() === b.getUTCMonth();
+    if (mismoMes) {
+      return locale === "es"
+        ? `${a.getUTCDate()}–${b.getUTCDate()} ${mb}`
+        : `${ma} ${a.getUTCDate()}–${b.getUTCDate()}`;
+    }
+    return locale === "es"
+      ? `${a.getUTCDate()} ${ma} – ${b.getUTCDate()} ${mb}`
+      : `${ma} ${a.getUTCDate()} – ${mb} ${b.getUTCDate()}`;
+  };
 
   const pnlCanvasRef = useRef<HTMLCanvasElement>(null);
   const radarCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -678,23 +724,24 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
         <div className="panel">
           <h2>{t("weekly.title")}</h2>
           <div className="weeklist">
-            {Object.keys(s.weekMap).length === 0 && <p className="mini-note">{t("weekly.empty")}</p>}
-            {Object.keys(s.weekMap)
-              .map(Number)
-              .sort((a, b) => a - b)
-              .map((wk) => {
-                const w = s.weekMap[wk];
-                const color = w.sum > 0 ? "var(--green)" : w.sum < 0 ? "var(--red)" : "var(--muted)";
-                return (
-                  <div className="wk" key={wk}>
-                    <span className="l">{t("weekly.week", { n: wk })}</span>
-                    <span className="r">
-                      <b style={{ color }}>{fmtMoney(w.sum)}</b>
-                      {t("weekly.dayCount", { n: w.days.size })}
-                    </span>
-                  </div>
-                );
-              })}
+            {s.weeks.length === 0 && <p className="mini-note">{t("weekly.empty")}</p>}
+            {s.weeks.map((w, i) => {
+              const color = w.sum > 0 ? "var(--green)" : w.sum < 0 ? "var(--red)" : "var(--muted)";
+              return (
+                <div className="wk" key={w.lunes}>
+                  <span className="l">
+                    {t("weekly.week", { n: i + 1 })}
+                    {/* El rango de fechas deja claro a qué semana corresponde
+                        cada número, que es justo lo que no se veía antes. */}
+                    <span className="wk-range">{rangoSemana(w.first, w.last)}</span>
+                  </span>
+                  <span className="r">
+                    <b style={{ color }}>{fmtMoney(w.sum)}</b>
+                    {t("weekly.dayCount", { n: w.days.size })}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
