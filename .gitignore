@@ -58,5 +58,7 @@ temp/
 # Las plantillas y reportes de ejemplo son fixtures de prueba.
 !sample_data/*.xlsx
 
-# --- Documentos personales que no deben versionarse ---
-!INFORME_ESTADO_Y_PLAN.md
+# La documentación del proyecto SÍ se versiona: es lo que explica el proyecto a
+# quien lo lea dentro de seis meses. Vive en docs/.
+!docs/
+!*.docx

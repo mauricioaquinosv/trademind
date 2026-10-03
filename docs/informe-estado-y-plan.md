@@ -1,6 +1,10 @@
 # TradeMind — Informe de Estado y Plan
 
-*Actualizado el 3 de octubre de 2026, tras cerrar el punto 7 (fuentes). Este documento reemplaza al informe anterior. Cada cifra de aquí está verificada contra el código o contra el navegador el día de la redacción, no heredada de descripciones anteriores.*
+*Actualizado el 3 de octubre de 2026, tras cerrar el punto 7 (fuentes) y organizar la documentación en [`docs/`](./README.md). Este documento reemplaza al informe anterior. Cada cifra de aquí está verificada contra el código o contra el navegador el día de la redacción, no heredada de descripciones anteriores.*
+
+> **Qué consultar y cuándo:** este documento dice lo que el proyecto **es** (medido contra el código). El plan de negocio —precios, arquitectura, sprints— está en
+> [`especificaciones-tecnicas-y-de-negocio.md`](./especificaciones-tecnicas-y-de-negocio.md).
+> Cuando los dos se contradigan, **manda este**, porque se verificó con el código y el otro no.
 
 ---
 
@@ -309,15 +313,20 @@ Conexión en vivo vía MetaApi (MT4/MT5) u Open API de cTrader, en vez de subir 
 
 ---
 
-## 7. Tres decisiones que están esperando
+## 7. Dos decisiones que están esperando
 
-Ninguna bloquea el trabajo técnico de la Fase 3.8, pero las tres llevan semanas abiertas:
+> **Actualización:** la tercera ya no está esperando. El documento de especificaciones
+> (`.docx`, ahora también en [`docs/`](./README.md)) define los tres planes con su
+> precio: **Pro $29,95 · Premium $49,95 · Elite $79,95**, más un gasto fijo de
+> $1.200/mes y el punto de equilibrio calculado. No hace falta decidirlo otra vez,
+> solo adaptarlo a lo que el producto ofrece hoy.
+
+Las otras dos siguen sin responder:
 
 | # | Decisión | Bloquea |
 |---|---|---|
 | 1 | **Hosting:** gratuito (se suspende por inactividad) o de pago | Fase 4 entera |
-| 2 | **Suscripciones:** precio, modelo y qué ve el usuario gratuito | Fase 5 entera |
-| 3 | **KPIs:** ¿de la cuenta entera o del mes que se está viendo? | El D2 |
+| 2 | **KPIs:** ¿de la cuenta entera o del mes que se está viendo? | El D2 |
 
 ---
 
