@@ -121,6 +121,7 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "cal.weekColumn": "Weekly summary",
   "cal.prevMonth": "Previous month",
   "cal.nextMonth": "Next month",
+  "cal.backToCurrent": "Back to current month",
   "cal.daysOperated": { one: "{n} day traded", other: "{n} days traded" },
   "cal.bestDay": "Best day",
   "cal.worstDay": "Worst day",

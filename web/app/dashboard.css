@@ -112,21 +112,20 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
   box-shadow:0 1px 0 rgba(255,255,255,.09) inset,0 18px 40px -16px rgba(47,216,200,.28),0 8px 22px -12px rgba(0,0,0,.6);}
 .card:hover::after{transform:rotate(18deg) translateX(140%);}
 .card>*{position:relative;z-index:1;}
-/* Etiqueta de las tarjetas: 12px en --muted se perdían contra el fondo y
-   dejaban la jerarquía invertida (el dato a 22px parecía un pie de la
-   etiqueta). Ahora la etiqueta va en turquesa, la misma que el título del
-   calendario, y a 13.5px con peso: se lee como cabecera y no como nota.
-   El valor conserva su color de resultado (verde/rojo), así que la tarjeta
-   sigue diciendo si el número es bueno o malo. */
+/* Etiqueta de las tarjetas.
+   Se probó en turquesa con pulso y quedó saturado: ocho etiquetas del mismo
+   color latiendo a la vez saturaban la pantalla y competían con los
+   propios valores.
+
+   La jerarquía se arregla con TAMAÑO y PESO, no con color: gris claro legible,
+   13.5px y peso 600. El color lo deja el valor, que es donde de verdad está la
+   información (verde o rojo). Aquí solo se indica qué es cada número. */
 .card .label{
-  color:var(--teal);font-size:13.5px;font-weight:600;
+  color:var(--text);opacity:.7;
+  font-size:13.5px;font-weight:600;
   display:flex;align-items:center;gap:6px;margin-bottom:10px;
-  animation:etiquetaPulso 3.4s ease-in-out infinite;
 }
-@keyframes etiquetaPulso{
-  0%,100%{text-shadow:0 0 0 rgba(47,216,200,0);}
-  50%{text-shadow:0 0 11px rgba(47,216,200,.34);}
-}
+.card:hover .label{opacity:.95;}
 .card .value{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;display:inline-block;}
 .value.pos{color:var(--green);} .value.neg{color:var(--red);}
 .value.bump{animation:valBump .5s cubic-bezier(.2,.8,.2,1);}
@@ -203,7 +202,6 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
    "Septiembre", o el idioma ES/EN). Antes el nombre iba como <b> en línea y
    su ancho variable empujaba a la flecha derecha y al botón "Este mes".
    El HTML original tenía ese mismo defecto. */
-.cal-nav{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;color:var(--muted);}
 /* El calendario ocupa todo el ancho de .grid-main: al fusionarse con el
    resumen semanal ya no hay panel hermano al que dejarle sitio. */
 .grid-main>.cal-panel{grid-column:1 / -1;}
@@ -240,7 +238,14 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
   font-size:18px;font-weight:600;color:var(--text);
   text-align:center;letter-spacing:-.012em;min-width:0;white-space:nowrap;
   animation:mesPulso 3.4s ease-in-out infinite;
+  /* Al hacer clic vuelve al mes actual. Antes había un botón "Este mes" que
+     ocupaba sitio y no se usaba; esto deja la función sin botonera.
+     cursor:pointer y el title hacen que se descubra. */
+  cursor:pointer;border-radius:6px;padding:2px 8px;
+  transition:background .15s ease;
 }
+.cal-nav .cal-month:hover{background:rgba(255,255,255,.06);}
+.cal-nav .cal-month:focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
 .cal-nav .cal-year{color:var(--muted);font-weight:500;margin-left:5px;}
 @keyframes mesPulso{
   0%,100%{text-shadow:0 0 0 rgba(255,255,255,0);}
@@ -309,7 +314,24 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
    la rejilla, el contenedor se transformaria y la barra se moveria con las
    celdas al cambiar de mes. La animacion va en las celdas, todas con el mismo
    tiempo, asi que el conjunto se ve solido. */
-.cal-nav{grid-column:1 / 8;margin-bottom:8px;}
+/* Barra de navegación: rejilla ESPEJO de la de las semanas, con la octava
+   columna vacía. Así el final de la barra es el final del sábado, por
+   construcción y sin márgenes que mantener a mano.
+   Va fuera de .cal-grid a propósito: dentro, la colocación automática de la
+   rejilla ponyó "Dom" en el primer hueco libre (columna 8, fila 1) y todo el
+   calendario se desplazaba una columna. */
+.cal-nav{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr)) minmax(176px,1.05fr);
+  column-gap:5px;margin-bottom:10px;
+}
+.cal-nav-inner{
+  grid-column:1 / 8;
+  display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;
+}
+@media (max-width:820px){
+  .cal-nav{grid-template-columns:repeat(7,minmax(0,1fr)) minmax(124px,1fr);}
+}
 .cal-dow-wk{grid-column:8;}
 /* Separación entre la columna de sábado y el resumen semanal. Con el mismo
    hueco de 5px que entre días, el resumen parecía una celda más. Ahora hay

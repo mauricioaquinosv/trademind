@@ -120,6 +120,7 @@ export const es = {
   "cal.weekColumn": "Resumen Semanal",
   "cal.prevMonth": "Mes anterior",
   "cal.nextMonth": "Mes siguiente",
+  "cal.backToCurrent": "Volver al mes actual",
   "cal.daysOperated": { one: "{n} día operados", other: "{n} días operados" },
   "cal.bestDay": "Mejor día",
   "cal.worstDay": "Peor día",

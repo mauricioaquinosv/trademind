@@ -997,17 +997,16 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
             </svg>
             {t("cal.title")}
           </h2>
-          <div
-            className={`cal-grid anim-${calDesplazamiento > 0 ? "next" : "prev"}`}
-            key={calAnim}
-            onMouseLeave={() => setHoverDia(null)}
-          >
-            {/* La barra de navegación vive DENTRO de la rejilla y ocupa solo
-                las 7 columnas de los días (1 / 8). Por eso la flecha derecha y
-                el botón "Este mes" terminan exactamente donde termina el
-                sábado, y la columna 8 queda libre entera para el resumen
-                semanal, que necesita ese ancho para su título. */}
-            <div className="cal-nav">
+          {/* La barra de navegación va FUERA de la rejilla de las semanas, pero
+              con la MISMA plantilla de columnas y la octava vacía. Así el final
+              de la barra es el final del sábado por construcción.
+
+              No puede ir dentro de .cal-grid: al ser un elemento más de esa
+              rejilla, la colocación automática dejaba "Dom" en el primer hueco
+              libre, que era la columna 8 de la fila 1, y todo el calendario se
+              desplazaba una columna. */}
+          <div className="cal-nav">
+            <div className="cal-nav-inner">
               <button
                 type="button"
                 className={`cal-arrow${calFlash === "prev" ? " destello" : ""}`}
@@ -1016,7 +1015,19 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
               >
                 ‹
               </button>
-              <span className="cal-month">
+              <span
+                className="cal-month"
+                onClick={goToday}
+                title={t("cal.backToCurrent")}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    goToday();
+                  }
+                }}
+              >
                 {calMonth !== null ? mesesFull[calMonth] : "—"}
                 <span className="cal-year">{calYear ?? ""}</span>
               </span>
@@ -1028,9 +1039,14 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
               >
                 ›
               </button>
-              <span className="pill" style={{ padding: "3px 9px", cursor: "pointer" }} onClick={goToday}>{t("common.thisMonth")}</span>
             </div>
+          </div>
 
+          <div
+            className={`cal-grid anim-${calDesplazamiento > 0 ? "next" : "prev"}`}
+            key={calAnim}
+            onMouseLeave={() => setHoverDia(null)}
+          >
             {dowNames.map((d, i) => (
               <div className={`dow${i === 0 || i === 6 ? " fin" : ""}`} key={d}>{d}</div>
             ))}
