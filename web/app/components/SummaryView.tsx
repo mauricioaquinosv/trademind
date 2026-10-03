@@ -91,6 +91,13 @@ function fmtMoneyFull(n: number) {
 
 type StatInput = { date: string; pnl: number };
 
+/** Suma N días a una fecha ISO y devuelve la nueva fecha ISO. */
+function addDias(fechaISO: string, n: number): string {
+  const d = new Date(`${fechaISO}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
 /**
  * Fecha ISO (YYYY-MM-DD) del lunes de la semana a la que pertenece un día.
  *
@@ -592,20 +599,27 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
   const monthLabel = calYear !== null && calMonth !== null ? `${mesesFull[calMonth]} ${calYear}` : "—";
 
   /**
-   * Semanas del mes que se está viendo en el calendario, de lunes a domingo.
+   * Semanas del mes visible, de lunes a domingo.
    *
-   * Dos decisiones que hacen que los números signifiquen algo:
+   * REGLA: cada semana pertenece al mes que contiene su JUEVES. Con eso los
+   * meses se encajan sin huecos ni solapes: la última semana de enero llega
+   * hasta el 1 de febrero, y la semana 1 de febrero empieza el 2, porque esa
+   * semana ya se.contó en enero.
    *
-   * 1. La semana 1 es la que contiene el día 1 del mes, no la primera semana
-   *    con operaciones. Si no, en enero el día 22 sería "Semana 1" y el trader
-   *    no tiene forma de saber a qué semana corresponde cada número.
+   * Ejemplo con enero de 2026, que empieza en jueves:
+   *   S1   1-4 ene        (la semana empieza a medio mes)
+   *   S2   5-11 ene
+   *   S3   12-18 ene
+   *   S4   19-25 ene
+   *   S5   26 ene - 1 feb   (se pasa del fin de mes)
+   * y febrero empieza de nuevo:
+   *   S1   2-8 feb
+   *   S2   9-15 feb
    *
-   * 2. Solo se cuentan los días DENTRO del mes visible. La semana 1 de enero
-   *    de 2026 empieza el 29 de diciembre de 2025; ese día pertenece a
-   *    diciembre y no debe sumar en la lista de enero.
-   *
-   * Se incluyen también las semanas sin operaciones: saber que no operaste una
-   *    semana es información, no ruido.
+   * La etiqueta se recorta al mes que se está viendo, para no mostrar fechas de
+   * diciembre en la lista de enero. El importe, en cambio, suma la semana
+   * entera: si un día cae fuera del mes sigue contando, y así no se pierde
+   * ninguna operación por un cambio de mes.
    */
   const semanas = useMemo(() => {
     if (calYear === null || calMonth === null) return [];
@@ -615,23 +629,28 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     const ultimoDia = new Date(Date.UTC(calYear, calMonth + 1, 0)).getUTCDate();
     const ultimoISO = `${prefijo}-${pad(ultimoDia)}`;
 
+    // Primera semana cuyo jueves cae dentro del mes. Como mucho hay que
+    // avanzar una semana: el jueves de la semana que contiene el día 1 está
+    // como mucho 3 días antes de él.
+    let lunes = lunesDe(primeroISO);
+    while (addDias(lunes, 3) < primeroISO) {
+      lunes = addDias(lunes, 7);
+    }
+
     const salida: {
       n: number; lunes: string; domingo: string; suma: number; dias: number;
     }[] = [];
 
-    let lunes = lunesDe(primeroISO);
     let n = 1;
+    for (;;) {
+      const jueves = addDias(lunes, 3);
+      if (jueves > ultimoISO) break;
 
-    while (lunes <= ultimoISO) {
-      const d = new Date(`${lunes}T00:00:00Z`);
-      d.setUTCDate(d.getUTCDate() + 6);
-      const domingo = d.toISOString().slice(0, 10);
+      const domingo = addDias(lunes, 6);
 
       let suma = 0;
       let dias = 0;
-      for (let dia = 1; dia <= ultimoDia; dia++) {
-        const iso = `${prefijo}-${pad(dia)}`;
-        if (iso < lunes || iso > domingo) continue;
+      for (let iso = lunes; iso <= domingo; iso = addDias(iso, 1)) {
         const v = dailyMap[iso];
         if (v !== undefined) {
           suma += v;
@@ -639,11 +658,13 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
         }
       }
 
-      salida.push({ n, lunes, domingo, suma, dias });
+      // La etiqueta se recorta al mes visible.
+      const desde = lunes < primeroISO ? primeroISO : lunes;
+      const hasta = domingo > ultimoISO ? ultimoISO : domingo;
 
-      const sig = new Date(`${lunes}T00:00:00Z`);
-      sig.setUTCDate(sig.getUTCDate() + 7);
-      lunes = sig.toISOString().slice(0, 10);
+      salida.push({ n, lunes: desde, domingo: hasta, suma, dias });
+
+      lunes = addDias(lunes, 7);
       n += 1;
     }
 
