@@ -179,7 +179,7 @@ export default function AnalyticsView({ trades }: { trades: AnalyticsTrade[] }) 
   return (
     <div className="panel">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-        <h2 style={{ margin: 0 }}>Symbol Performance</h2>
+        <h2 style={{ margin: 0 }}>{t("analytics.symbolPerformance")}</h2>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <CfSelect
             value={metric}

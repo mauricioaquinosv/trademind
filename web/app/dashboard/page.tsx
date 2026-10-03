@@ -17,9 +17,9 @@ type Account = {
   initial_balance: number;
   currency: string;
   source: string;
-  /* Cuantas operaciones tiene. Lo envia el backend: aquí solo tenemos cargadas
-     las operaciones de la cuenta activa, así que contarlas en el cliente
-     daría 0 para cualquier otra cuenta. */
+  /* Cuantas operaciones tiene. Lo envia el backend: aquÃ­ solo tenemos cargadas
+     las operaciones de la cuenta activa, asÃ­ que contarlas en el cliente
+     darÃ­a 0 para cualquier otra cuenta. */
   trade_count: number;
 };
 
@@ -65,9 +65,9 @@ type ColKey =
   | "openTime" | "position" | "symbol" | "type" | "volume" | "openPrice"
   | "sl" | "tp" | "closeTime" | "closePrice" | "commission" | "swap" | "profit" | "pnl";
 
-/* Las columnas guardan la CLAVE de traducción, no el texto. El texto se
+/* Las columnas guardan la CLAVE de traducciÃ³n, no el texto. El texto se
    resuelve dentro del componente con t(c.labelKey), porque una constante de
-   módulo no puede usar el hook de idioma. */
+   mÃ³dulo no puede usar el hook de idioma. */
 const TRADE_COLUMNS: { key: ColKey; labelKey: TranslationKey; money?: boolean }[] = [
   { key: "openTime", labelKey: "col.openTime" },
   { key: "position", labelKey: "col.position" },
@@ -93,7 +93,7 @@ function fmtMoneyFull(n: number | null | undefined) {
 }
 
 function dashOr<T>(v: T | null | undefined) {
-  return v === undefined || v === null || v === ("" as unknown as T) ? "—" : v;
+  return v === undefined || v === null || v === ("" as unknown as T) ? "â€”" : v;
 }
 
 // Fila de la tabla, en las mismas claves que usa TRADE_COLUMNS (traducidas desde Trade del backend)
@@ -120,15 +120,15 @@ function tradeToRow(t: Trade): Row {
   const pnl = t.pnl_neto !== null && t.pnl_neto !== undefined ? t.pnl_neto : t.pnl_bruto + t.commission + t.swap;
   return {
     id: t.id,
-    openTime: t.entry_time ? t.entry_time.replace("T", " ") : "—",
-    position: t.position || "—",
+    openTime: t.entry_time ? t.entry_time.replace("T", " ") : "â€”",
+    position: t.position || "â€”",
     symbol: t.symbol,
     type: t.direction === "long" ? "buy" : "sell",
     volume: t.quantity,
     openPrice: t.entry_price,
-    sl: t.sl ?? "—",
-    tp: t.tp ?? "—",
-    closeTime: t.exit_time ? t.exit_time.replace("T", " ") : "—",
+    sl: t.sl ?? "â€”",
+    tp: t.tp ?? "â€”",
+    closeTime: t.exit_time ? t.exit_time.replace("T", " ") : "â€”",
     closePrice: t.exit_price,
     commission: t.commission,
     swap: t.swap,
@@ -157,10 +157,10 @@ function loadColumnPrefs(): Record<ColKey, boolean> {
 }
 
 function tradeDurationLabel(t: Row): string {
-  if (t.openTime === "—" || t.closeTime === "—") return "—";
+  if (t.openTime === "â€”" || t.closeTime === "â€”") return "â€”";
   const open = new Date(t.openTime.replace(" ", "T"));
   const close = new Date(t.closeTime.replace(" ", "T"));
-  if (isNaN(open.getTime()) || isNaN(close.getTime())) return "—";
+  if (isNaN(open.getTime()) || isNaN(close.getTime())) return "â€”";
   let ms = close.getTime() - open.getTime();
   if (ms < 0) ms = 0;
   const totalSec = Math.round(ms / 1000);
@@ -248,7 +248,7 @@ export default function DashboardPage() {
   const [tmPnlTouched, setTmPnlTouched] = useState(false);
   const [tmError, setTmError] = useState("");
 
-  // Vista Trades: filtros, columnas, paginación
+  // Vista Trades: filtros, columnas, paginaciÃ³n
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [colsOpen, setColsOpen] = useState(false);
   const [pageSizeOpen, setPageSizeOpen] = useState(false);
@@ -263,7 +263,7 @@ export default function DashboardPage() {
   // Panel de detalle
   const [detailTrade, setDetailTrade] = useState<Row | null>(null);
 
-  // Modal de confirmación genérico
+  // Modal de confirmaciÃ³n genÃ©rico
   const [confirm, setConfirm] = useState<{
     open: boolean;
     title: string;
@@ -475,7 +475,7 @@ export default function DashboardPage() {
     setView("trades");
   }
 
-  // Modal de edición de cuenta
+  // Modal de ediciÃ³n de cuenta
   const [accEditId, setAccEditId] = useState<string | null>(null);
   const [accEditName, setAccEditName] = useState("");
   const [accEditBalance, setAccEditBalance] = useState("");
@@ -717,7 +717,7 @@ export default function DashboardPage() {
   }
 
   async function handleDeleteTrade(trade: Trade) {
-    const parts = [trade.symbol, trade.entry_time || ""].filter(Boolean).join(" · ");
+    const parts = [trade.symbol, trade.entry_time || ""].filter(Boolean).join(" Â· ");
     askConfirm(
       t("trades.deleteConfirm", { details: parts ? ` (${parts})` : "" }),
       t("trades.deleteTitle"),
@@ -763,12 +763,12 @@ export default function DashboardPage() {
     setTradesPage(1);
   }
 
-  // ---- Filas visibles según filtros/paginación ----
+  // ---- Filas visibles segÃºn filtros/paginaciÃ³n ----
   const allRows = useMemo(() => trades.map(tradeToRow), [trades]);
 
   const symbolOptions = useMemo(() => {
     const set = new Set(allRows.map((r) => r.symbol));
-    return [{ value: "", label: "Todos" }, ...Array.from(set).map((s) => ({ value: s, label: s }))];
+    return [{ value: "", label: t("common.all") }, ...Array.from(set).map((s) => ({ value: s, label: s }))];
   }, [allRows]);
 
   const filteredRows = useMemo(() => {
@@ -898,16 +898,16 @@ export default function DashboardPage() {
                 <span id="datasourcePill">{currentAccount ? (currentAccount.source === "csv" ? t("datasource.mt5") : currentAccount.name) : t("datasource.none")}</span>
                 <svg className="chev" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.4" /></svg>
               </button>
-              <span className="pill accent">✦ {t("header.askAI")}</span>
+              <span className="pill accent">âœ¦ {t("header.askAI")}</span>
             </div>
             <div className="hdr-right">
               <button className="pill" style={{ background: "#fff", color: "#0A0B12", borderColor: "#fff", fontWeight: 700 }}>{t("import.startWeek")}</button>
               {/* Selector de idioma ES/EN. Va a la izquierda del resto para que los
-                  botones de la derecha conserven su posición respecto al HTML. */}
+                  botones de la derecha conserven su posiciÃ³n respecto al HTML. */}
               <LanguageSwitcher />
-              {/* Toggle de tema. Ocupa el lugar del botón "Ajustes" del HTML original
-                  (que no hacía nada) para no alterar el ancho de .hdr-right: el header
-                  usa justify-content:space-between, así que cualquier botón extra
+              {/* Toggle de tema. Ocupa el lugar del botÃ³n "Ajustes" del HTML original
+                  (que no hacÃ­a nada) para no alterar el ancho de .hdr-right: el header
+                  usa justify-content:space-between, asÃ­ que cualquier botÃ³n extra
                   desplaza los botones centrales. */}
               <button
                 className="icon-btn"
@@ -1068,7 +1068,7 @@ export default function DashboardPage() {
                   <table className="trades-table">
                     <thead>
                       <tr>
-                        {visibleCols.length ? visibleCols.map((c) => <th key={c.key}>{c.label}</th>) : <th>—</th>}
+                        {visibleCols.length ? visibleCols.map((c) => <th key={c.key}>{c.label}</th>) : <th>â€”</th>}
                         <th className="td-eye-col" />
                       </tr>
                     </thead>
@@ -1127,7 +1127,7 @@ export default function DashboardPage() {
                   <div className="trades-pagination" style={{ display: "flex" }}>
                     <button type="button" className="tp-btn" disabled={safePage <= 1} onClick={() => setTradesPage((p) => p - 1)}>{t("trades.prev")}</button>
                     <span>{t("trades.pageOf", { page: safePage, total: totalPages })}</span>
-                    <button type="button" className="tp-btn" disabled={safePage >= totalPages} onClick={() => setTradesPage((p) => p + 1)}>Siguiente ›</button>
+                    <button type="button" className="tp-btn" disabled={safePage >= totalPages} onClick={() => setTradesPage((p) => p + 1)}>{t("trades.next")}</button>
                   </div>
                 )}
               </div>
@@ -1154,7 +1154,7 @@ export default function DashboardPage() {
                             {a.name}
                             {active && <span className="acc-badge">{t("accounts.current")}</span>}
                           </div>
-                          <div className="acc-sub">{a.source === "csv" ? t("datasource.mt5") : t("datasource.manual")} · {t("accounts.initialDeposit", { amount: a.initial_balance.toFixed(2) })}</div>
+                          <div className="acc-sub">{a.source === "csv" ? t("datasource.mt5") : t("datasource.manual")} Â· {t("accounts.initialDeposit", { amount: a.initial_balance.toFixed(2) })}</div>
                           {a.trade_count > 0 && (
                             <div className="mini-note" style={{ marginTop: 4 }}>
                               {t("accounts.tradesCount", { n: a.trade_count })}
@@ -1230,8 +1230,8 @@ export default function DashboardPage() {
                 </label>
                 <input type="file" ref={fileInputRef} accept=".csv,.xlsx,.xls" style={{ position: "absolute", width: 1, height: 1, opacity: 0, overflow: "hidden" }} onChange={(e) => handleFile(e.target.files?.[0])} />
 
-                {/* Botón de descarga de la plantilla. Antes solo había un enlace
-                    de texto metido dentro de un párrafo, muy fácil de no ver. */}
+                {/* BotÃ³n de descarga de la plantilla. Antes solo habÃ­a un enlace
+                    de texto metido dentro de un pÃ¡rrafo, muy fÃ¡cil de no ver. */}
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
                   <button type="button" className="pill" onClick={descargarPlantilla}>
                     <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12M12 15l-4-4M12 15l4-4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>
@@ -1260,31 +1260,31 @@ export default function DashboardPage() {
           {detailTrade && (
             <>
               <div className="td-section">
-                <div className="td-section-title">Resumen</div>
+                <div className="td-section-title">{t("trades.detailSummary")}</div>
                 <div className="td-card td-grid">
                   <div className="td-field">
-                    <div className="lbl">Símbolo</div>
+                    <div className="lbl">{t("field.symbol")}</div>
                     <div className="val">
                       {detailTrade.symbol}
                       <span className={`type-tag ${detailTrade.type === "sell" ? "sell" : "buy"}`} style={{ marginLeft: 6 }}>{detailTrade.type}</span>
                     </div>
                   </div>
-                  <div className="td-field"><div className="lbl">Volumen</div><div className="val">{dashOr(detailTrade.volume)}</div></div>
-                  <div className="td-field"><div className="lbl">Precio apertura</div><div className="val">{dashOr(detailTrade.openPrice)}</div></div>
-                  <div className="td-field"><div className="lbl">Precio cierre</div><div className="val">{dashOr(detailTrade.closePrice)}</div></div>
-                  <div className="td-field"><div className="lbl">Apertura</div><div className="val">{detailTrade.openTime}</div></div>
-                  <div className="td-field"><div className="lbl">Cierre</div><div className="val">{detailTrade.closeTime}</div></div>
+                  <div className="td-field"><div className="lbl">{t("field.volume")}</div><div className="val">{dashOr(detailTrade.volume)}</div></div>
+                  <div className="td-field"><div className="lbl">{t("field.openPrice")}</div><div className="val">{dashOr(detailTrade.openPrice)}</div></div>
+                  <div className="td-field"><div className="lbl">{t("field.closePrice")}</div><div className="val">{dashOr(detailTrade.closePrice)}</div></div>
+                  <div className="td-field"><div className="lbl">{t("trades.detailOpen")}</div><div className="val">{detailTrade.openTime}</div></div>
+                  <div className="td-field"><div className="lbl">{t("trades.detailClose")}</div><div className="val">{detailTrade.closeTime}</div></div>
                 </div>
               </div>
               <div className="td-section">
-                <div className="td-section-title">Resumen de P&amp;L</div>
+                <div className="td-section-title">{t("trades.detailPnl")}</div>
                 <div className="td-card">
-                  <div className="td-row2"><span className="lbl">Beneficio</span><span className="val">{fmtMoneyFull(detailTrade.profit)}</span></div>
-                  <div className="td-row2"><span className="lbl">Comisión</span><span className="val">{fmtMoneyFull(detailTrade.commission)}</span></div>
-                  <div className="td-row2"><span className="lbl">Swap</span><span className="val">{fmtMoneyFull(detailTrade.swap)}</span></div>
+                  <div className="td-row2"><span className="lbl">{t("field.profit")}</span><span className="val">{fmtMoneyFull(detailTrade.profit)}</span></div>
+                  <div className="td-row2"><span className="lbl">{t("field.commission")}</span><span className="val">{fmtMoneyFull(detailTrade.commission)}</span></div>
+                  <div className="td-row2"><span className="lbl">{t("field.swap")}</span><span className="val">{fmtMoneyFull(detailTrade.swap)}</span></div>
                   <div className="td-divider" />
                   <div className="td-row2 td-net">
-                    <span className="lbl">Neto</span>
+                    <span className="lbl">{t("field.pnl")}</span>
                     <span className="val" style={{ color: detailTrade.pnl > 0 ? "var(--green)" : detailTrade.pnl < 0 ? "var(--red)" : "var(--muted)" }}>
                       {fmtMoneyFull(detailTrade.pnl)}
                     </span>
@@ -1292,10 +1292,10 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="td-section">
-                <div className="td-section-title">Detalles</div>
+                <div className="td-section-title">{t("trades.detailDetails")}</div>
                 <div className="td-card">
-                  <div className="td-row2"><span className="lbl">Posición (Trade ID)</span><span className="val">{detailTrade.position}</span></div>
-                  <div className="td-row2"><span className="lbl">Duración</span><span className="val">{tradeDurationLabel(detailTrade)}</span></div>
+                  <div className="td-row2"><span className="lbl">{t("trades.detailPositionId")}</span><span className="val">{detailTrade.position}</span></div>
+                  <div className="td-row2"><span className="lbl">{t("trades.detailDuration")}</span><span className="val">{tradeDurationLabel(detailTrade)}</span></div>
                 </div>
               </div>
             </>
@@ -1347,7 +1347,7 @@ export default function DashboardPage() {
           </div>
           <div className="tm-grid">
             <div className="tm-field"><label>{t("col.openTime")}</label><CfDateTime value={tmOpenDT} onChange={setTmOpenDT} /></div>
-            <div className="tm-field"><label htmlFor="tmPosition">{t("field.position")}</label><input type="text" id="tmPosition" placeholder="Auto" value={tmPosition} onChange={(e) => setTmPosition(e.target.value)} /></div>
+            <div className="tm-field"><label htmlFor="tmPosition">{t("field.position")}</label><input type="text" id="tmPosition" placeholder={t("field.auto")} value={tmPosition} onChange={(e) => setTmPosition(e.target.value)} /></div>
             <div className="tm-field"><label htmlFor="tmSymbol">{t("field.symbol")}</label><input type="text" id="tmSymbol" placeholder="EURUSD" value={tmSymbol} onChange={(e) => setTmSymbol(e.target.value)} /></div>
             <div className="tm-field"><label>{t("col.type")}</label><CfSelect value={tmType} onChange={setTmType} options={typeTradeOptions(t)} /></div>
             <div className="tm-field"><label htmlFor="tmVolume">{t("field.volume")}</label><input type="number" id="tmVolume" step="0.01" placeholder="0.10" value={tmVolume} onChange={(e) => setTmVolume(e.target.value)} /></div>
@@ -1453,13 +1453,13 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ---------- Modal de confirmación genérico ---------- */}
+      {/* ---------- Modal de confirmaciÃ³n genÃ©rico ---------- */}
       <div className={`tm-overlay${confirm.open ? " open" : ""}`} onClick={(e) => { if (e.target === e.currentTarget) closeConfirm(); }}>
         <div className="tm-modal" style={{ maxWidth: 380 }}>
           <div className="tm-head"><h3>{confirm.title}</h3></div>
           <p className="mini-note" style={{ marginBottom: 16 }}>{confirm.message}</p>
           <div className="tm-actions">
-            <button type="button" className="pill" onClick={closeConfirm}>Cancelar</button>
+            <button type="button" className="pill" onClick={closeConfirm}>{t("common.cancel")}</button>
             <button
               type="button"
               className="pill"

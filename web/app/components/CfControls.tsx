@@ -182,8 +182,8 @@ export function CfDate({
             })}
           </div>
           <div className="cf-date-foot">
-            <span onClick={() => { onChange(""); setOpen(false); }}>Clear</span>
-            <span onClick={() => { onChange(fmtDate(new Date())); setOpen(false); }}>Today</span>
+            <span onClick={() => { onChange(""); setOpen(false); }}>{t("trades.clear")}</span>
+            <span onClick={() => { onChange(fmtDate(new Date())); setOpen(false); }}>{t("common.today")}</span>
           </div>
         </div>
       )}
@@ -329,7 +329,7 @@ export function CfDateTime({
 
             <div className="cf-dt-time">
               <div className="cf-dt-timecol">
-                <div className="cf-dt-collabel">Hr</div>
+                <div className="cf-dt-collabel">{t("common.hourShort")}</div>
                 <div className="cf-dt-col">
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
                     <div
@@ -348,7 +348,7 @@ export function CfDateTime({
                 </div>
               </div>
               <div className="cf-dt-timecol">
-                <div className="cf-dt-collabel">Min</div>
+                <div className="cf-dt-collabel">{t("common.minuteShort")}</div>
                 <div className="cf-dt-col">
                   {Array.from({ length: 60 }, (_, i) => i).map((mm) => (
                     <div
@@ -387,7 +387,7 @@ export function CfDateTime({
           </div>
 
           <div className="cf-date-foot">
-            <span onClick={() => { onChange(""); setOpen(false); }}>Limpiar</span>
+            <span onClick={() => { onChange(""); setOpen(false); }}>{t("trades.clear")}</span>
             <span
               onClick={() => {
                 const now = new Date();
@@ -395,9 +395,9 @@ export function CfDateTime({
                 setViewDate(new Date(now));
               }}
             >
-              Ahora
+              {t("common.now")}
             </span>
-            <span onClick={() => setOpen(false)}>Aplicar</span>
+            <span onClick={() => setOpen(false)}>{t("trades.apply")}</span>
           </div>
         </div>
       )}

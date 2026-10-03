@@ -145,11 +145,28 @@ Resultado tras el arreglo: login de 3 en Arial a **0**, dashboard **sin cambios*
 
 Esta sección es lo que **no** está bien. Todo lo de aquí está comprobado hoy contra el código.
 
-### 🔴 D1 — 28 cadenas de la interfaz fuera del diccionario
+### ✅ D1 — 28 cadenas de la interfaz fuera del diccionario — **RESUELTO**
 
-El idioma está implementado, pero **no cubre el 100%**. Escaneo estático de los 5 ficheros de la interfaz:
+**Lo que era.** El idioma se dio por terminado cuando solo se había comprobado que
+las claves existieran en los dos idiomas y que la app no mostrara errores. Eso es
+cierto, pero **no comprueba que no quede texto suelto en el JSX**, y había 28
+cadenas escritas a mano que se saltaban el diccionario: 15 de ellas eran el modal
+de detalle de trade entero, que se veía en español con la app en inglés.
 
-| Dónde | Cadenas | En |
+**Lo que se hizo.** 10 claves nuevas (de 213 a 223) y sustitución de los 28
+literales. La mayoría ya estaban escritas en el diccionario y simplemente no se
+usaban: `field.symbol`, `field.volume`, `common.cancel`, `trades.next`, `common.all`,
+`field.commission`, `trades.clear`, `trades.apply`, `common.today`... Las 10 nuevas
+son solo las que no existían de ninguna forma.
+
+**Guarda permanente.** `web/scripts/chk_traduccion.py` recorre los 6 ficheros de la
+interfaz y falla si queda algún texto visible fuera del diccionario, o si se usa
+una clave que no existe. Verificado con 4 controles negativos: detecta texto JSX
+suelto, `placeholder` fijo, `label` de opción fija y clave inexistente.
+
+Tabla de lo que había (conservada como registro):
+
+| Dónde (histórico) | Cadenas | En |
 |---|---|---|
 | `page.tsx` L1263–1298 | 15 — **todo el modal de detalle de trade**: Resumen, Símbolo, Volumen, Precio apertura, Precio cierre, Apertura, Cierre, Resumen de P&L, Beneficio, Comisión, Swap, Neto, Detalles, Posición (Trade ID), Duración | español fijo |
 | `page.tsx` L1130 | 1 — `Siguiente ›` (la paginación) | español fijo |
