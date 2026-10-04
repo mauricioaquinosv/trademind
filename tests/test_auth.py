@@ -12,6 +12,8 @@ codigo real de validacion del token no se ejecuta nunca.
 from datetime import datetime, timedelta, timezone
 
 import pytest
+
+from conftest import detalle
 from jose import jwt
 
 from app.security import (
@@ -56,7 +58,7 @@ def test_registro_con_email_repetido_da_400(client_anonimo):
     r = client_anonimo.post("/auth/register", json={"email": EMAIL, "password": "Otra9"})
 
     assert r.status_code == 400
-    assert "ya est" in r.json()["detail"].lower() or "ya est" in r.json()["detail"]
+    assert detalle(r).code == "auth_email_taken"
 
 
 @pytest.mark.parametrize(
@@ -130,11 +132,18 @@ def test_login_es_sensible_a_las_mayusculas_del_email(client_anonimo):
     assert r.status_code == 401
 
 
-def test_idioma_del_error_de_login(client_anonimo):
-    """El backend responde en español fijo; no hay version en ingles todavia."""
+def test_el_error_de_login_devuelve_codigo_y_texto(client_anonimo):
+    """
+    El backend ya no tiene idioma: devuelve un codigo estable y, aparte, el
+    texto en espanol para quien lee la respuesta sin interfaz. Es lo que
+    permite que el frontend traduzca sin que el backend sepa que hay dos
+    idiomas.
+    """
     client_anonimo.post("/auth/register", json={"email": EMAIL, "password": PASSWORD})
     r = client_anonimo.post("/auth/login", json={"email": EMAIL, "password": "mala"})
-    assert "incorrect" in r.json()["detail"].lower()
+    d = detalle(r)
+    assert d.code == "auth_bad_credentials"
+    assert d.text, "el texto en espanol se queda para el que lee sin interfaz"
 
 
 # --- el token -------------------------------------------------------------

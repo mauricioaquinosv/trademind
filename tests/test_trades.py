@@ -10,6 +10,8 @@ import io
 from app.models import Trade
 from app.parsers.manual_template_parser import ManualTemplateParser
 
+from conftest import detalle
+
 
 def nuevo_trade(cuenta_id, **overrides):
     """Payload mínimo válido para crear un trade."""
@@ -83,7 +85,7 @@ def test_crear_trade_rechaza_cuenta_inexistente(client):
     """No se puede colgar un trade de una cuenta que no existe."""
     resp = client.post("/trades/", json=nuevo_trade("00000000-0000-0000-0000-000000000000"))
     assert resp.status_code == 404
-    assert resp.json()["detail"] == "Cuenta no encontrada"
+    assert detalle(resp).code == "account_not_found"
 
 
 def test_crear_trade_rechaza_cuenta_de_otro_usuario(cuenta, make_client, otro_usuario):
@@ -303,7 +305,7 @@ def test_upload_rechaza_extension_no_permitida(client, cuenta):
         files={"file": ("notas.txt", io.BytesIO(b"hola"), "text/plain")},
     )
     assert resp.status_code == 400
-    assert "xlsx" in resp.json()["detail"]
+    assert detalle(resp).code == "file_bad_extension"
 
 
 def test_upload_requiere_cuenta_propia(cuenta, make_client, otro_usuario):

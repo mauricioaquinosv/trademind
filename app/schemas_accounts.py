@@ -3,6 +3,8 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.errors import VALIDATION_EMPTY_NAME, VALIDATION_NEGATIVE_BALANCE
+
 
 class AccountCreate(BaseModel):
     # Antes esta clase no validaba nada: aceptaba nombres en blanco y balances
@@ -18,7 +20,7 @@ class AccountCreate(BaseModel):
     def _nombre_no_vacio(cls, v: str) -> str:
         limpio = v.strip()
         if not limpio:
-            raise ValueError("El nombre de la cuenta no puede estar vacío")
+            raise ValueError(VALIDATION_EMPTY_NAME)
         return limpio
 
     @field_validator("currency")
@@ -49,7 +51,7 @@ class AccountUpdate(BaseModel):
             return v
         limpio = v.strip()
         if not limpio:
-            raise ValueError("El nombre de la cuenta no puede estar vacío")
+            raise ValueError(VALIDATION_EMPTY_NAME)
         return limpio
 
     @field_validator("currency")
@@ -61,7 +63,7 @@ class AccountUpdate(BaseModel):
     @classmethod
     def _balance_no_negativo(cls, v: Optional[float]) -> Optional[float]:
         if v is not None and v < 0:
-            raise ValueError("El balance inicial no puede ser negativo")
+            raise ValueError(VALIDATION_NEGATIVE_BALANCE)
         return v
 
 

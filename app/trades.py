@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app import errors
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models import User, Trade, Account
@@ -24,7 +25,7 @@ def _get_owned_account(db: Session, account_id: UUID, user: User) -> Account:
         .first()
     )
     if not account:
-        raise HTTPException(status_code=404, detail="Cuenta no encontrada")
+        raise errors.error(errors.ACCOUNT_NOT_FOUND, "Cuenta no encontrada", status_code=404)
     return account
 
 
@@ -42,7 +43,9 @@ def _pick_parser(file_path: str):
     # lanza IndexError y el usuario ve un 500 (la app se cayó) en vez de un 400
     # (el archivo no sirve).
     if raw.empty or raw.shape[0] == 0 or raw.shape[1] == 0:
-        raise ValueError("El archivo está vacío: no se encontró ninguna tabla dentro.")
+        raise errors.FileError(
+            errors.FILE_EMPTY, "El archivo está vacío: no se encontró ninguna tabla dentro."
+        )
 
     first_cell = str(raw.iloc[0, 0]).strip()
 
@@ -61,9 +64,11 @@ def upload_trades(
     _get_owned_account(db, account_id, current_user)
 
     if not file.filename.endswith((".xlsx", ".xls", ".csv")):
-        raise HTTPException(
+        raise errors.error(
+            errors.FILE_BAD_EXTENSION,
+            "El archivo debe ser .xlsx, .xls o .csv: "
+            "un reporte de MT5 o la plantilla de TradeMind",
             status_code=400,
-            detail="El archivo debe ser .xlsx, .xls o .csv: un reporte de MT5 o la plantilla de TradeMind",
         )
 
     suffix = "." + file.filename.rsplit(".", 1)[-1]
@@ -78,8 +83,12 @@ def upload_trades(
         # except de abajo ya los cubre.
         parser = _pick_parser(tmp_path)
         closed_trades = parser.parse(tmp_path)
+    except errors.FileError as e:
+        raise errors.error(e.codigo, e.texto, status_code=400)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        # Un error de lectura sin código propio (los de pandas, por ejemplo).
+        # Se devuelve el texto tal cual para no perder el detalle técnico.
+        raise errors.error(errors.FILE_UNREADABLE, str(e), status_code=400)
     finally:
         # El temporal se crea con delete=False porque el parser lo lee por ruta,
         # así que hay que borrarlo a mano. Sin esto se acumulaba uno por cada
@@ -159,7 +168,7 @@ def update_trade(
         .first()
     )
     if not trade:
-        raise HTTPException(status_code=404, detail="Trade no encontrado")
+        raise errors.error(errors.TRADE_NOT_FOUND, "Trade no encontrado", status_code=404)
 
     for field, value in trade_in.model_dump(exclude_unset=True).items():
         setattr(trade, field, value)
@@ -181,7 +190,7 @@ def delete_trade(
         .first()
     )
     if not trade:
-        raise HTTPException(status_code=404, detail="Trade no encontrado")
+        raise errors.error(errors.TRADE_NOT_FOUND, "Trade no encontrado", status_code=404)
 
     db.delete(trade)
     db.commit()

@@ -15,6 +15,8 @@ import os
 
 import pytest
 
+from conftest import detalle
+
 from app.parsers.file_reader import read_any_table
 from app.parsers.manual_template_parser import ManualTemplateParser
 from app.parsers.mt5_parser import MT5Parser
@@ -195,7 +197,7 @@ def test_extension_no_admitida_da_400(client, cuenta, archivo, nombre):
         files={"file": (nombre, b"contenido cualquiera", "application/octet-stream")},
     )
     assert r.status_code == 400
-    assert ".xlsx" in r.json()["detail"]
+    assert detalle(r).code == "file_bad_extension"
 
 
 def test_extension_valida_pero_contenido_basura_no_revienta_el_servidor(client, cuenta):

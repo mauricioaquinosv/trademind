@@ -11,6 +11,7 @@ esto, siguen recibiendo la misma tabla de siempre.
 """
 
 import pandas as pd
+from app.errors import FILE_HTML_NO_TABLE, FileError
 
 
 def read_any_table(file_path: str) -> pd.DataFrame:
@@ -26,7 +27,10 @@ def read_any_table(file_path: str) -> pd.DataFrame:
     if looks_html:
         tables = pd.read_html(file_path, header=None)
         if not tables:
-            raise ValueError("El archivo parece HTML pero no encontré ninguna tabla dentro.")
+            raise FileError(
+            FILE_HTML_NO_TABLE,
+            "El archivo parece HTML pero no encontré ninguna tabla dentro.",
+        )
         return tables[0]
 
     if is_zip_xlsx or is_ole_xls:

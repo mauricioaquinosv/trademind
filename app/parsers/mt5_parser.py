@@ -16,6 +16,7 @@ import pandas as pd
 
 from app.fifo_engine import ClosedTrade
 from app.parsers.file_reader import read_any_table
+from app.errors import FILE_NO_POSITIONS, FileError
 
 
 class MT5Parser:
@@ -59,7 +60,10 @@ class MT5Parser:
         for i, row in raw.iterrows():
             if str(row[0]).strip() == "Time" and str(row[1]).strip() == "Position":
                 return i
-        raise ValueError("No se encontró la sección 'Positions' en el archivo")
+        raise FileError(
+            FILE_NO_POSITIONS,
+            "No se encontró la sección 'Positions' en el archivo",
+        )
 
     @staticmethod
     def _looks_like_datetime(value) -> bool:

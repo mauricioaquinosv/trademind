@@ -6,6 +6,7 @@ import { CfDate, CfDateTime, CfSelect } from "../components/CfControls";
 import SummaryView from "../components/SummaryView";
 import AnalyticsView from "../components/AnalyticsView";
 import { useI18n } from "../../lib/i18n/LocaleProvider";
+import { errorDeApi } from "../../lib/i18n/apiErrors";
 import LanguageSwitcher from "../../lib/i18n/LanguageSwitcher";
 import type { TranslationKey } from "../../lib/i18n/config";
 
@@ -464,8 +465,14 @@ export default function DashboardPage() {
     const res = await authedFetch(`/trades/upload?account_id=${accountId}`, { method: "POST", body: formData });
 
     if (!res.ok) {
-      const body = await res.json().catch(() => ({ detail: t("errors.fileProcessing") }));
-      setImportStatus({ text: body.detail || t("errors.fileProcessing"), kind: "err" });
+      /* El backend manda un codigo, no un texto: se traduce aqui. Si la
+         respuesta no es JSON (el backend cae y devuelve HTML), `.catch` deja
+         `null` y sale el mensaje generico. */
+      const cuerpo = await res.json().catch(() => null);
+      setImportStatus({
+        text: errorDeApi(cuerpo, t, t("errors.fileProcessing")),
+        kind: "err",
+      });
       return;
     }
 
@@ -554,12 +561,10 @@ export default function DashboardPage() {
       });
 
       if (!res.ok) {
-        /* Mostrar lo que dice el backend en vez de un mensaje generico. */
+        /* El 409 de borrar una cuenta con operaciones trae account_has_trades
+           y el numero, que es justo lo que el usuario necesita para decidir. */
         const cuerpo = await res.json().catch(() => null);
-        setAccDeleteError(
-          (cuerpo && typeof cuerpo.detail === "string" && cuerpo.detail) ||
-            t("errors.accountDeleteFailed"),
-        );
+        setAccDeleteError(errorDeApi(cuerpo, t, t("errors.accountDeleteFailed")));
         return;
       }
 

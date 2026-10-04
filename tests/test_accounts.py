@@ -7,6 +7,8 @@ nunca tocan los datos reales del usuario.
 
 from app.models import Account
 
+from conftest import detalle
+
 
 # ====================================================================
 # POST /accounts/
@@ -164,7 +166,7 @@ def test_obtener_cuenta_por_id(client, cuenta):
 def test_obtener_cuenta_inexistente_da_404(client):
     resp = client.get("/accounts/00000000-0000-0000-0000-000000000000")
     assert resp.status_code == 404
-    assert resp.json()["detail"] == "Cuenta no encontrada"
+    assert detalle(resp).code == "account_not_found"
 
 
 def test_no_puede_ver_cuenta_de_otro_usuario(cuenta, make_client, otro_usuario):
@@ -330,8 +332,10 @@ def test_borrar_cuenta_con_operaciones_no_borra_nada_sin_confirmar(client, db_se
     resp = client.delete(f"/accounts/{cuenta.id}")
 
     assert resp.status_code == 409
-    assert "1 operacion" in resp.json()["detail"]
-    assert "delete_trades=true" in resp.json()["detail"]
+    d = detalle(resp)
+    assert d.code == "account_has_trades"
+    assert d.n == 1, "el 409 tiene que decir cuantas operaciones hay"
+    assert "delete_trades=true" in d.text
     # Nada se ha perdido
     assert client.get(f"/accounts/{cuenta.id}").status_code == 200
     assert db_session.query(Trade).filter(Trade.account_id == cuenta.id).count() == 1
@@ -376,7 +380,7 @@ def test_el_409_cuenta_cuantas_operaciones_tiene(client, cuenta):
 
     resp = client.delete(f"/accounts/{cuenta.id}")
     assert resp.status_code == 409
-    assert "3 operacion" in resp.json()["detail"]
+    assert detalle(resp).n == 3
 
 
 # ====================================================================

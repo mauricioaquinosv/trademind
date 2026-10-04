@@ -16,6 +16,7 @@ import pandas as pd
 
 from app.fifo_engine import ClosedTrade
 from app.parsers.file_reader import read_any_table
+from app.errors import FILE_BAD_DATE, FILE_BAD_TEMPLATE, FileError
 
 EXPECTED_HEADERS_PREFIX = ["Fecha apertura", "Hora apertura", "Posición", "Símbolo"]
 
@@ -29,9 +30,10 @@ class ManualTemplateParser:
         header_row = [str(c).strip() for c in raw.iloc[0].tolist()]
         header_starts = [h.split("(")[0].strip() for h in header_row[:4]]
         if header_starts != EXPECTED_HEADERS_PREFIX:
-            raise ValueError(
+            raise FileError(
+                FILE_BAD_TEMPLATE,
                 "El archivo no coincide con la plantilla de TradeMind. "
-                "Descarga la plantilla desde la vista de importar y vuelve a intentar."
+                "Descarga la plantilla desde la vista de importar y vuelve a intentar.",
             )
 
         trades: List[ClosedTrade] = []
@@ -100,9 +102,11 @@ class ManualTemplateParser:
                     return datetime.strptime(combined, fmt)
                 except ValueError:
                     continue
-            raise ValueError(
+            raise FileError(
+                FILE_BAD_DATE,
                 f"No se pudo interpretar la fecha '{date_str} {time_str}'. "
-                "Usa el formato AAAA-MM-DD en la columna de fecha."
+                "Usa el formato AAAA-MM-DD en la columna de fecha.",
+                extra={"date": f"{date_str} {time_str}"},
             )
 
     @staticmethod

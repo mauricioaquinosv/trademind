@@ -72,6 +72,38 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "errors.tradeSaveFailed": "Could not save the trade. Please check the data.",
   "errors.fileProcessing": "Error processing the file.",
 
+  /* Messages returned by the API. The backend sends a code and these are its
+     translations, so the backend never needs to know anyone's language. */
+  "apiErrors.emailTaken": "That email is already registered.",
+  "apiErrors.badCredentials": "Wrong email or password.",
+  "apiErrors.sessionInvalid": "Your session expired. Please sign in again.",
+  "apiErrors.accountNotFound": "That account no longer exists.",
+  "apiErrors.accountHasTrades": "This account has {n} trades. Delete them too to remove the account.",
+  "apiErrors.tradeNotFound": "That trade no longer exists.",
+  "apiErrors.fileBadExtension": "The file must be .xlsx, .xls or .csv: an MT5 report or the TradeMind template.",
+  "apiErrors.fileEmpty": "The file is empty: no table was found inside.",
+  "apiErrors.fileNoPositions": "No 'Positions' section found in the file. This looks like an incomplete MT5 report.",
+  "apiErrors.fileHtmlNoTable": "The file looks like a saved web page, but it has no trades table.",
+  "apiErrors.fileUnreadable": "The file could not be read. Check that it isn't damaged.",
+  "apiErrors.fileBadTemplate": "The file doesn't match the TradeMind template. Download it from the import view.",
+  "apiErrors.fileBadDate": "A date in the file could not be read. Use the YYYY-MM-DD format.",
+  "apiErrors.emptyName": "The account name cannot be empty.",
+  "apiErrors.negativeBalance": "The starting balance cannot be negative.",
+
+  /* Pydantic validation errors. The only ones we can't avoid in the backend:
+     Pydantic writes them in English and there's no way to change that without
+     rewriting its messages. They're translated by `type`, which IS stable. */
+  "apiErrors.fieldRequired": "{field} is required.",
+  "apiErrors.fieldInvalid": "{field} is not valid.",
+  "apiErrors.fieldTooShort": "{field} is too short.",
+  "apiErrors.fieldTooLong": "{field} is too long.",
+  "apiErrors.fieldMinValue": "{field} must be {n} or more.",
+  "apiErrors.fieldMaxValue": "{field} must be {n} or less.",
+  "apiErrors.fieldMustBeText": "{field} must be text.",
+  "apiErrors.fieldMustBeNumber": "{field} must be a number.",
+  "apiErrors.fieldMustBeWholeNumber": "{field} must be a whole number.",
+  "apiErrors.fieldInvalidChoice": "The value for {field} is not a valid choice.",
+
   // ------------------------------------------------------------------
   // Tarjetas de indicadores (vista Resumen)
   // ------------------------------------------------------------------

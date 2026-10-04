@@ -168,6 +168,40 @@ def client_anonimo(db_session):
     cliente.close()
 
 
+def detalle(respuesta):
+    """
+    El `detail` de un error de la API, desempaquetado.
+
+    Los errores devuelven {"code": ..., "text": ...} y no un texto suelto, para
+    que la interfaz pueda traducirlos. Esta funcion devuelve un objeto con
+    `.code` y `.text` para que los tests se lean como antes, sin repetir el
+    desempaquetado en cada asercion.
+
+    No es un fixture: se llama con la respuesta, `detalle(r)`.
+
+    Ademas comprueba la forma. Si alguien vuelve a poner un texto suelto en
+    `detail`, el fallo lo dice aqui y no en una asercion a 300 lineas de
+    distancia que no explica de donde sale el problema.
+    """
+    from types import SimpleNamespace
+
+    cuerpo = respuesta.json()
+    assert isinstance(cuerpo, dict), f"el error deberia ser un objeto JSON: {cuerpo!r}"
+    assert "detail" in cuerpo, f"faltaba 'detail' en la respuesta: {cuerpo!r}"
+
+    d = cuerpo["detail"]
+    assert isinstance(d, dict), (
+        "detail deberia ser un objeto con 'code' y 'text', no un texto suelto. "
+        f"Llego: {d!r}"
+    )
+    assert "code" in d, f"faltaba 'code' en el detail: {d!r}"
+    assert "text" in d, f"faltaba 'text' en el detail: {d!r}"
+
+    return SimpleNamespace(
+        code=d["code"], text=d["text"], **{k: v for k, v in d.items() if k not in ("code", "text")}
+    )
+
+
 @pytest.fixture
 def cuenta(usuario, db_session):
     """Una cuenta creada por el usuario de prueba."""

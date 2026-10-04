@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useI18n } from "../../lib/i18n/LocaleProvider";
+import { errorDeApi } from "../../lib/i18n/apiErrors";
 import LanguageSwitcher from "../../lib/i18n/LanguageSwitcher";
 
 export default function LoginPage() {
@@ -24,7 +25,10 @@ export default function LoginPage() {
     });
 
     if (!response.ok) {
-      setError(t("login.wrongCredentials"));
+      /* El backend devuelve un codigo (auth_bad_credentials) y el texto en
+         español. Se traduce el codigo para que el mensaje siga el idioma. */
+      const cuerpo = await response.json().catch(() => null);
+      setError(errorDeApi(cuerpo, t, t("login.wrongCredentials")));
       return;
     }
 

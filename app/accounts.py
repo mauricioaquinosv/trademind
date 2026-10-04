@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app import errors
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models import User, Account, Trade
@@ -70,7 +71,7 @@ def get_account(
         .first()
     )
     if not account:
-        raise HTTPException(status_code=404, detail="Cuenta no encontrada")
+        raise errors.error(errors.ACCOUNT_NOT_FOUND, "Cuenta no encontrada", status_code=404)
     return _anadir_contadores([account], db)[0]
 
 
@@ -94,7 +95,7 @@ def update_account(
         .first()
     )
     if not account:
-        raise HTTPException(status_code=404, detail="Cuenta no encontrada")
+        raise errors.error(errors.ACCOUNT_NOT_FOUND, "Cuenta no encontrada", status_code=404)
 
     # exclude_unset: distingue "no enviado" de "enviado con null".
     for campo, valor in changes.model_dump(exclude_unset=True).items():
@@ -132,17 +133,17 @@ def delete_account(
         .first()
     )
     if not account:
-        raise HTTPException(status_code=404, detail="Cuenta no encontrada")
+        raise errors.error(errors.ACCOUNT_NOT_FOUND, "Cuenta no encontrada", status_code=404)
 
     num_trades = db.query(Trade).filter(Trade.account_id == account.id).count()
 
     if num_trades and not delete_trades:
-        raise HTTPException(
+        raise errors.error(
+            errors.ACCOUNT_HAS_TRADES,
+            f"La cuenta tiene {num_trades} operacion(es). "
+            "Repite la peticion con ?delete_trades=true para borrarlas tambien.",
             status_code=409,
-            detail=(
-                f"La cuenta tiene {num_trades} operacion(es). "
-                "Repite la peticion con ?delete_trades=true para borrarlas tambien."
-            ),
+            n=num_trades,
         )
 
     if num_trades:
