@@ -86,6 +86,9 @@ export const es = {
   "kpi.expectedValueHelp":
     "Ganancia/pérdida promedio esperada por trade: (% acierto × ganancia promedio) + (% pérdida × pérdida promedio). Equivale a P&L neto ÷ total de trades.",
   "kpi.avgTradeTime": "Average Trade Time",
+  "chart.monthBandHint": "Franja turquesa: el mes que estás viendo en el calendario. La línea es de todo el histórico.",
+  "kpi.balanceNote": "Acumulado hasta {month}",
+  "kpi.noTradesThisMonth": "Sin operaciones en {month}. Las cifras de las tarjetas son las del mes; el balance y el gráfico siguen siendo acumulados.",
 
   // ------------------------------------------------------------------
   // Gráfico de PnL acumulado

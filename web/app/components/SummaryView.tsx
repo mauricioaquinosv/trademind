@@ -8,8 +8,12 @@ import {
   celdasEnPantalla as rotarCeldas,
   computeStats,
   filasDelMes,
+  indicesDelMes,
+  itemsDelMes,
   lunesDe,
   pad,
+  pnlHastaFinDeMes,
+  prefijoMes,
   resumenDelMes,
   type StatInput,
 } from "../../lib/resumen";
@@ -101,8 +105,16 @@ function fmtMoney(n: number) {
 
 
 
-function avgTradeDurationLabel(trades: SummaryTrade[]): string {
-  const durations = trades
+function avgTradeDurationLabel(
+  trades: SummaryTrade[],
+  prefijo: string | null
+): string {
+  /* El filtro del mes se aplica aquí y no antes, porque `trades` lo necesita
+     entero para `items`, de donde salen los días del calendario y el gráfico. */
+  const fuente = prefijo
+    ? trades.filter((t) => !!t.exit_time && t.exit_time!.slice(0, 7) === prefijo)
+    : trades;
+  const durations = fuente
     .map((t) => {
       if (!t.entry_time || !t.exit_time) return null;
       const open = new Date(t.entry_time.replace(" ", "T"));
@@ -290,6 +302,14 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
   // auto-ajusta al mes de los datos.
   const calNavManual = useRef(false);
 
+  /* El mes visible, en un ref, para que lo lea el plugin del gráfico.
+     Chart.js registra los plugins UNA vez, al crear el chart, así que si el
+     plugin cerrara sobre `calMonth` se quedaría con el valor del primer render y
+     la banda no se movería al navegar. Con un ref, el closure lee siempre el
+     valor actual. Es el mismo truco que usan pnlWavePhase y pnlSweepStart. */
+  const mesEnRef = useRef<[number, number] | null>(null);
+  mesEnRef.current = calYear !== null && calMonth !== null ? [calYear, calMonth] : null;
+
   const items: StatInput[] = useMemo(
     () =>
       trades
@@ -301,7 +321,35 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     [trades]
   );
 
+  /* `s` es la estadística de TODO el histórico. La consumen el gráfico de PnL y
+     el radar, que son preguntas de largo recorrido: "por dónde voy en el año" y
+     "cuál es mi nivel". Recortarlas al mes mentiría: la curva acumulada se
+     reiniciaría en cada mes y el drawdown del año desaparecería. */
+
   const s = useMemo(() => computeStats(items), [items]);
+
+  /* `sMes` es la del mes que se está viendo en el calendario. La consumen las
+     ocho tarjetas, que son la pregunta opuesta: "cómo fue este mes".
+
+     Esto era la incoherencia D2. Antes las tarjetas usaban `s`, así que al
+     navegar el calendario se movían el calendario, el resumen semanal y el
+     total del mes, pero las cifras se quedaban quietas.
+
+     Si el mes aún no está decidido (primer render, antes de que se fije
+     calMonth) se cae al histórico entero, que es lo que había antes. */
+  const sMes = useMemo(() => {
+    if (calYear === null || calMonth === null) return s;
+    return computeStats(itemsDelMes(items, calYear, calMonth));
+  }, [s, items, calYear, calMonth]);
+
+  /* El balance es acumulado, no mensual: el saldo que tenías el 28 de febrero
+     incluye lo que pasó en enero. Por eso NO usa `sMes.netPnl` sino la suma de
+     todo lo anterior a fin de mes. Sumar solo el mes daría el saldo inicial más
+     lo de ese mes, que no es el balance de nadie. */
+  const balancePnl = useMemo(() => {
+    if (calYear === null || calMonth === null) return s.netPnl;
+    return pnlHastaFinDeMes(items, calYear, calMonth);
+  }, [s.netPnl, items, calYear, calMonth]);
 
   const dailyMap = useMemo(() => {
     const m: Record<string, number> = {};
@@ -349,6 +397,68 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     },
     afterDatasetsDraw(chart: Chart) {
       chart.ctx.restore();
+    },
+  };
+
+  /* Plugin "banda del mes": sombrea la franja del eje X que corresponde al mes
+     que se está viendo en el calendario.
+
+     EL GRÁFICO NO SE RECORTA. La curva es la de todo el año, porque es la que
+     dice "por dónde voy": cuánto llevo ganado, cuán profundo fue el drawdown y si
+     estoy recuperando. Recortarla al mes la reiniciaría en cero y perdería todo
+     eso. Lo que hace este plugin es señalar DÓNDE está el mes dentro de esa
+     curva, para que se pueda leer "cómo fue este mes" sobre el contexto del año.
+
+     Se pinta antes que la línea (beforeDatasetsDraw) para que la curva quede
+     encima y no la tape. El ancho se toma de los puntos ya calculados: con un
+     solo día del mes, la banda se estrecha para no comerse los meses vecinos. */
+  const pnlMonthBandPlugin = {
+    id: "pnlMonthBand",
+    beforeDatasetsDraw(chart: Chart) {
+      const meta = chart.getDatasetMeta(0);
+      if (!meta || !meta.data || meta.data.length < 1) return;
+      if (mesEnRef.current === null) return;
+
+      const fechas = (chart.data.datasets[0] as unknown as { fullDates?: string[] }).fullDates;
+      if (!fechas || !fechas.length) return;
+
+      const rango = indicesDelMes(fechas, mesEnRef.current[0], mesEnRef.current[1]);
+      const { left, right, top, bottom } = chart.chartArea;
+
+      let x1: number;
+      let x2: number;
+      if (rango === null) {
+        return; // el mes no tiene ningún día con operaciones: no hay banda
+      } else if (rango.desde === rango.hasta) {
+        // Un solo día. La banda se limita a un ancho legible en vez de
+        // medir cero, que sería invisible.
+        const p = meta.data[rango.desde];
+        const ancho = 14;
+        x1 = p.x - ancho / 2;
+        x2 = p.x + ancho / 2;
+      } else {
+        const a = meta.data[rango.desde].x;
+        const b = meta.data[rango.hasta].x;
+        // Un poco de margen a cada lado, para que el primer y el último día del
+        // mes queden dentro de la banda y no en el borde.
+        const pad = Math.min(18, (b - a) / 2);
+        x1 = a - pad;
+        x2 = b + pad;
+      }
+
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.fillStyle = "rgba(47,216,200,.07)";
+      ctx.fillRect(x1, top, x2 - x1, bottom - top);
+      ctx.strokeStyle = "rgba(47,216,200,.30)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x1, top);
+      ctx.lineTo(x1, bottom);
+      ctx.moveTo(x2, top);
+      ctx.lineTo(x2, bottom);
+      ctx.stroke();
+      ctx.restore();
     },
   };
 
@@ -507,7 +617,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
             },
           },
         },
-        plugins: [pnlGlowPlugin, pnlWavePlugin],
+        plugins: [pnlGlowPlugin, pnlMonthBandPlugin, pnlWavePlugin],
       });
     }
 
@@ -525,10 +635,13 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     // los tipos de gráfico, y pointRadius no existe en todos ellos.
     (chart.data.datasets[0] as unknown as { pointRadius: number }).pointRadius =
       demasiadosPuntos ? 0 : 2.4;
-    chart.update();
+    /* La banda del mes se pinta si el mes cambió. Va en un 'none' aparte porque
+       la animación por defecto del update() movería la línea entera de golpe al
+       cambiar de cuenta. */
+    chart.update("none");
     // locale entra en las dependencias porque el tooltip se reconstruye al
     // cambiar de idioma ("23 de ene, 2026" <-> "Jan 23, 2026").
-  }, [s, locale]);
+  }, [s, locale, calYear, calMonth]);
 
   /* Celda del calendario -> línea de PnL.
      Chart.js no tiene forma de "marcar" un punto desde fuera salvo activando
@@ -623,7 +736,8 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
       });
     }
     const chart = radarChartRef.current;
-    chart.data.datasets[0].data = [s.radar.winRate, s.radar.profitFactor, s.radar.wlRatio, s.radar.recovery, s.radar.ddScore, s.radar.consistency].map((v) => Math.round(v));
+    // El radar es una foto del mes que se está viendo, como las ocho tarjetas.
+    chart.data.datasets[0].data = [sMes.radar.winRate, sMes.radar.profitFactor, sMes.radar.wlRatio, sMes.radar.recovery, sMes.radar.ddScore, sMes.radar.consistency].map((v) => Math.round(v));
     // locale: las etiquetas del radar se fijan al crear el chart, así que hay
     // que reconstruirlas al cambiar de idioma.
     chart.data.labels = [
@@ -631,7 +745,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
       t("radar.recovery"), t("radar.maxDrawdown"), t("radar.consistency"),
     ];
     chart.update();
-  }, [s, locale]);
+  }, [sMes, locale]);
 
   /* Flecha de mes que se acaba de pulsar, para que se vea cuál se pulsó.
      Se borra sola: es una pista visual, no un estado que haya que managing. */
@@ -691,19 +805,30 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     setCalMonth(m);
   }
 
-  const balance = initialBalance != null && isFinite(initialBalance) ? initialBalance + s.netPnl : s.netPnl;
-  const balancePositive = initialBalance != null && isFinite(initialBalance) ? balance >= initialBalance : s.netPnl >= 0;
-  const expectedValue = s.total ? s.netPnl / s.total : 0;
-  const scoreTier = s.score < 50 ? "tier-low" : s.score < 75 ? "tier-mid" : "tier-high";
+  /* El balance sale del acumulado (`balancePnl`), no del mes. Las siete
+     tarjetas restantes salen de `sMes`, que sí es el mes. */
+  const balance =
+    initialBalance != null && isFinite(initialBalance) ? initialBalance + balancePnl : balancePnl;
+  const balancePositive =
+    initialBalance != null && isFinite(initialBalance) ? balance >= initialBalance : balancePnl >= 0;
+  const expectedValue = sMes.total ? sMes.netPnl / sMes.total : 0;
+  const scoreTier = sMes.score < 50 ? "tier-low" : sMes.score < 75 ? "tier-mid" : "tier-high";
 
   // Animated numbers
   const animBalance = useAnimatedNumber(balance);
-  const animNetPnl = useAnimatedNumber(s.netPnl);
-  const animWinRate = useAnimatedNumber(s.winRate);
+  const animNetPnl = useAnimatedNumber(sMes.netPnl);
+  const animWinRate = useAnimatedNumber(sMes.winRate);
   const animExpectedValue = useAnimatedNumber(expectedValue);
-  const animScore = useAnimatedNumber(s.score);
+  const animScore = useAnimatedNumber(sMes.score);
 
   const monthLabel = calYear !== null && calMonth !== null ? `${mesesFull[calMonth]} ${calYear}` : "—";
+  /* Prefijo "AAAA-MM" del mes visible. Lo consumen las tarjetas (a través de
+     `sMes`) y la duración media. Es `null` solo en el primer render. */
+  const prefijoVisible = calYear !== null && calMonth !== null ? prefijoMes(calYear, calMonth) : null;
+  /* ¿Estamos viendo el mes con datos o uno vacío? Solo cambia una etiqueta:
+     cuando el mes no tiene operaciones, el balance sigue siendo el acumulado
+     y conviene decirlo, porque un $10.000 con cero trades parece un bug. */
+  const mesSinOperaciones = sMes.total === 0;
 
   /**
    * Filas del calendario. UNA fila = UNA semana completa de lunes a domingo.
@@ -751,34 +876,39 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
 
   return (
     <>
+      {/* Las ocho tarjetas son la pregunta "cómo fue ESTE mes". El balance es la
+          única excepción: es acumulado, así que lleva una nota que lo dice, y
+          un aviso cuando el mes no tiene operaciones, porque si no un saldo
+          intacto con cero trades parece un fallo. */}
       <div className="stats">
         <div className="card">
           <div className="label">{t("kpi.balance")}</div>
           <div className={`value num ${balancePositive ? "pos" : "neg"}`}>{fmtMoney(animBalance)}</div>
+          <div className="mini-note">{t("kpi.balanceNote", { month: monthLabel })}</div>
         </div>
         <div className="card">
           <div className="label">{t("kpi.netPnl")}</div>
-          <div className={`value num ${s.netPnl >= 0 ? "pos" : "neg"}`}>{fmtMoney(animNetPnl)}</div>
+          <div className={`value num ${sMes.netPnl >= 0 ? "pos" : "neg"}`}>{fmtMoney(animNetPnl)}</div>
         </div>
         <div className="card">
           <div className="label">{t("kpi.winrate")}</div>
           <div className="value num">{animWinRate.toFixed(2)}%</div>
-          <WinRateBar value={s.winRate} />
+          <WinRateBar value={sMes.winRate} />
         </div>
         <div className="card">
           <div className="label">{t("kpi.riskReward")}</div>
-          <div className="value num">{s.avgLoss ? Math.abs(s.avgWin / s.avgLoss).toFixed(2) : "—"}</div>
+          <div className="value num">{sMes.avgLoss ? Math.abs(sMes.avgWin / sMes.avgLoss).toFixed(2) : "—"}</div>
         </div>
         <div className="card">
           <div className="label">{t("kpi.profitFactor")}</div>
-          <div className="value num">{isFinite(s.profitFactor) && s.profitFactor < 99 ? s.profitFactor.toFixed(2) : "∞"}</div>
+          <div className="value num">{isFinite(sMes.profitFactor) && sMes.profitFactor < 99 ? sMes.profitFactor.toFixed(2) : "∞"}</div>
         </div>
         <div className="card">
           <div className="label">{t("kpi.totalTrades")}</div>
-          <div className="value num">{s.total}</div>
+          <div className="value num">{sMes.total}</div>
           <div className="mini-note">
-            <span style={{ color: "var(--green)" }}>{t("kpi.tradesWon", { n: s.wins.length })}</span> ·{" "}
-            <span style={{ color: "var(--red)" }}>{t("kpi.tradesLost", { n: s.losses.length })}</span>
+            <span style={{ color: "var(--green)" }}>{t("kpi.tradesWon", { n: sMes.wins.length })}</span> ·{" "}
+            <span style={{ color: "var(--red)" }}>{t("kpi.tradesLost", { n: sMes.losses.length })}</span>
           </div>
         </div>
         <div className="card">
@@ -792,8 +922,13 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
         </div>
         <div className="card">
           <div className="label">{t("kpi.avgTradeTime")}</div>
-          <div className="value num">{avgTradeDurationLabel(trades)}</div>
+          <div className="value num">{avgTradeDurationLabel(trades, prefijoVisible)}</div>
         </div>
+        {mesSinOperaciones && (
+          <div className="note-strip">
+            {t("kpi.noTradesThisMonth", { month: monthLabel })}
+          </div>
+        )}
       </div>
 
       <div className="grid-main">
@@ -804,6 +939,12 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
           <div className="pnl-canvas-wrap">
             <canvas ref={pnlCanvasRef} height={150} />
           </div>
+          {/* Pista de la franja turquesa. Sin ella, ver una banda sobre la curva
+              no significa nada: el usuario no sabría si es un mes, un highlight
+              o un error de render. */}
+          {sMes.total > 0 && (
+            <div className="mini-note band-hint">{t("chart.monthBandHint")}</div>
+          )}
         </div>
 
         <div className="panel score-panel">
@@ -815,7 +956,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
             <div className={`score-num num ${scoreTier}`}>{animScore.toFixed(2)}</div>
             <div className="score-bar" style={{ width: "90%" }}>
               <div className="score-bar-shine" />
-              <i style={{ left: `${Math.min(100, Math.max(0, s.score))}%` }} />
+              <i style={{ left: `${Math.min(100, Math.max(0, sMes.score))}%` }} />
             </div>
           </div>
         </div>
