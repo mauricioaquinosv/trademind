@@ -43,9 +43,10 @@ Las tres primeras se hicieron, más trabajo que no estaba en el plan: la suite d
 tests, el control de versiones, el sistema de idiomas y las 7 de las 8 mejoras
 que pidió el usuario.
 
-**La Fase 4 del plan original es exactamente donde estamos hoy**, y es la que
-aparece como Fases 4, 5 y 6 del
-[`informe-estado-y-plan.md`](./informe-estado-y-plan.md), desglosada.
+**La Fase 4 del plan original es exactamente donde estamos hoy.** Lo que sigue
+en el proyecto son fases nuevas, no deuda: la landing page, el acabado del
+login, el despliegue, las suscripciones y el asistente de IA. Están descritas
+en [`informe-estado-y-plan.md`](./informe-estado-y-plan.md).
 
 ---
 
