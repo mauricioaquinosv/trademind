@@ -84,64 +84,24 @@ export function prefijoMes(year: number, month: number): string {
 }
 
 /**
- * Trades del mes que se esta viendo.
- *
- * Es lo que hace que las ocho tarjetas respondan a la navegacion del
- * calendario. Antes usaban el historico entero, de modo que al cambiar de mes
- * el calendario se movia y las tarjetas se quedaban quietas: la incoherencia
- * que se senalo como D2.
- *
- * Un trade cuenta en el mes de su FECHA DE SALIDA, que es la misma regla que
- * usa el calendario para las celdas.
- */
-export function itemsDelMes(
-  items: StatInput[],
-  calYear: number,
-  calMonth: number
-): StatInput[] {
-  const prefijo = prefijoMes(calYear, calMonth);
-  return items.filter((t) => t.date.slice(0, 7) === prefijo);
-}
-
-/**
- * P&L acumulado HASTA el final de ese mes, sin filtro de mes.
- *
- * Esto NO es lo mismo que `itemsDelMes`, y la diferencia es el punto entero de
- * esta funcion.
- *
- * El balance de una cuenta es acumulado: el saldo que tenias el 28 de febrero
- * incluye lo que paso en enero. Si el balance se calculara con el P&L del mes
- * solamente, daria `initial_balance + P&L de febrero`, que no es el balance de
- * nadie: es el saldo inicial mas lo que paso ese mes.
- *
- * Por eso el balance usa ESTA funcion, y las otras siete tarjetas usan
- * `itemsDelMes`.
- */
-export function pnlHastaFinDeMes(
-  items: StatInput[],
-  calYear: number,
-  calMonth: number
-): number {
-  const ultimo = prefijoMes(calYear, calMonth) + "-" + pad(diasDelMes(calYear, calMonth));
-  return items.reduce((suma, t) => (t.date <= ultimo ? suma + t.pnl : suma), 0);
-}
-
-/**
  * Rango de indices, dentro de `dates`, que caen en el mes.
  *
- * Lo usa el grafico para resaltar el mes sin recortarlo: se queda la serie
- * entera, que es la que dice por donde vas en el ano, y se pinta encima una
- * banda sobre el tramo del mes, que es el que responde a "como fue este mes".
+ * Lo usa el grafico para señalar el mes SIN recortarlo: la serie entera es la
+ * que dice por donde vas en el ano, y la banda solo marca donde empieza y acaba
+ * el mes que estas leyendo en el calendario.
  *
  * Se comparan indices y no pixeles porque Chart.js da la posicion en x de cada
  * punto ya calculada; aqui solo hace falta saber cuales son los del mes.
+ *
+ * `prefijoMes` se queda porque la comparacion por prefijo es la que hace que
+ * esto no dependa del huso del navegador.
  */
 export function indicesDelMes(
   dates: string[],
   calYear: number,
   calMonth: number
 ): { desde: number; hasta: number } | null {
-  const prefijo = prefijoMes(calYear, calMonth);
+  const prefijo = `${calYear}-${pad(calMonth + 1)}`;
   let desde = -1;
   let hasta = -1;
   for (let i = 0; i < dates.length; i++) {

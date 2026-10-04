@@ -88,8 +88,8 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
     "Average expected profit/loss per trade: (win rate × average win) + (loss rate × average loss). Equivalent to net P&L ÷ total trades.",
   "kpi.avgTradeTime": "Average Trade Time",
   "chart.monthBandHint": "Teal band: the month you're viewing in the calendar. The line covers all your history.",
-  "kpi.balanceNote": "Accumulated up to {month}",
-  "kpi.noTradesThisMonth": "No trades in {month}. The cards show this month; the balance and the chart are still cumulative.",
+  "kpi.allTimeTitle": "Whole-account performance",
+  "kpi.allTimeNote": "These figures don't change as you browse the calendar. The month only moves the days and their summaries.",
 
   // ------------------------------------------------------------------
   // Gráfico de PnL acumulado

@@ -22,11 +22,8 @@ import {
   diasDelMes,
   filasDelMes,
   indicesDelMes,
-  itemsDelMes,
   lunesDe,
   pad,
-  pnlHastaFinDeMes,
-  prefijoMes,
   resumenDelMes,
 } from "../lib/resumen.ts";
 
@@ -435,7 +432,7 @@ test("todas las ramas del radar se quedan entre 0 y 100", () => {
   }
 });
 
-// --- El mes que se esta viendo (D2) -------------------------------------
+// --- La franja del mes en el grafico -----------------------------------
 
 const HISTORICO = [
   { date: "2026-01-05", pnl: 100 },
@@ -444,114 +441,6 @@ const HISTORICO = [
   { date: "2026-02-10", pnl: -70 },
   { date: "2026-03-15", pnl: 999 },
 ];
-
-test("prefijoMes arma el prefijo ISO del mes", () => {
-  assert.equal(prefijoMes(2026, 0), "2026-01");
-  assert.equal(prefijoMes(2026, 11), "2026-12");
-});
-
-test("itemsDelMes devuelve solo los trades de ESE mes", () => {
-  const enero = itemsDelMes(HISTORICO, 2026, 0);
-  assert.equal(enero.length, 2);
-  assert.deepEqual(
-    enero.map((t) => t.date),
-    ["2026-01-05", "2026-01-20"]
-  );
-
-  const febrero = itemsDelMes(HISTORICO, 2026, 1);
-  assert.equal(febrero.length, 2);
-  assert.ok(febrero.every((t) => t.date.startsWith("2026-02")));
-});
-
-test("itemsDelMes de un mes sin trades devuelve una lista vacia, no falla", () => {
-  assert.deepEqual(itemsDelMes(HISTORICO, 2026, 5), []);
-  assert.deepEqual(itemsDelMes(HISTORICO, 2021, 0), []);
-});
-
-test("las ocho tarjetas del mes cuadran con el mes que se esta viendo", () => {
-  // Este es el test de D2: las tarjetas tienen que responder a la navegacion.
-  const enero = computeStats(itemsDelMes(HISTORICO, 2026, 0));
-  const febrero = computeStats(itemsDelMes(HISTORICO, 2026, 1));
-
-  assert.equal(enero.total, 2);
-  assert.equal(enero.netPnl, 70);
-  assert.equal(enero.winRate, 50);
-
-  assert.equal(febrero.total, 2);
-  assert.equal(febrero.netPnl, 180);
-  assert.equal(febrero.winRate, 50);
-
-  assert.notEqual(enero.netPnl, febrero.netPnl, "los dos meses tienen que diferir");
-});
-
-test("pnlHastaFinDeMes acumula en vez de filtrar", () => {
-  // Esta es LA diferencia con itemsDelMes, y la razon de que la funcion exista.
-  const eneroFiltrado = itemsDelMes(HISTORICO, 2026, 0);
-  const eneroAcumulado = pnlHastaFinDeMes(HISTORICO, 2026, 0);
-
-  assert.equal(
-    eneroFiltrado.reduce((a, t) => a + t.pnl, 0),
-    70,
-    "itemsDelMes solo ve enero"
-  );
-  assert.equal(
-    eneroAcumulado,
-    70,
-    "a fin de enero solo ha pasado enero: en este caso coinciden"
-  );
-
-  // En febrero ya ha pasado enero tambien, y ahi se separan.
-  assert.equal(
-    pnlHastaFinDeMes(HISTORICO, 2026, 1),
-    250,
-    "100 - 30 + 250 - 70 = 250. Incluye enero."
-  );
-  assert.equal(
-    itemsDelMes(HISTORICO, 2026, 1).reduce((a, t) => a + t.pnl, 0),
-    180,
-    "itemsDelMes de febrero da 180, sin el -30 de enero"
-  );
-});
-
-test("pnlHastaFinDeMes incluye el ultimo dia del mes", () => {
-  const justo = [
-    { date: "2026-01-31", pnl: 7 },
-    { date: "2026-02-01", pnl: 1000 },
-  ];
-  assert.equal(pnlHastaFinDeMes(justo, 2026, 0), 7, "el 31 de enero entra");
-  assert.equal(pnlHastaFinDeMes(justo, 2026, 1), 1007, "a fin de febrero entra todo");
-});
-
-test("pnlHastaFinDeMes de un mes sin trades da el acumulado de antes", () => {
-  // Un mes en blanco no pone el balance a cero: sigue siendo el de antes.
-  // Ojo con el numero: el acumulado de mayo incluye marzo, que tiene un trade
-  // de +999. Mayo no tiene trades, pero el balance de fin de mayo es 1.249, no
-  // 250. Por eso este test distingue dos cosas que se confunden:
-  //   - itemsDelMes(mayo)  -> vacio        (no se opero ese mes)
-  //   - pnlHastaFinDeMes(mayo) -> 1249     (el balance sigue siendo ese)
-  assert.equal(pnlHastaFinDeMes(HISTORICO, 2026, 4), 1249);
-  assert.deepEqual(itemsDelMes(HISTORICO, 2026, 4), []);
-  assert.equal(pnlHastaFinDeMes([], 2026, 0), 0);
-});
-
-test("pnlHastaFinDeMes antes del primer trade da cero", () => {
-  assert.equal(pnlHastaFinDeMes(HISTORICO, 2025, 11), 0);
-});
-
-test("el balance del mes sale de initial_balance mas el acumulado", () => {
-  // Laformula que exige el balance. Con 10.000 de saldo inicial:
-  const inicial = 10000;
-  const enero = inicial + pnlHastaFinDeMes(HISTORICO, 2026, 0);
-  const febrero = inicial + pnlHastaFinDeMes(HISTORICO, 2026, 1);
-  const marzo = inicial + pnlHastaFinDeMes(HISTORICO, 2026, 2);
-
-  assert.equal(enero, 10070);
-  assert.equal(febrero, 10250);
-  assert.equal(marzo, 11249);
-
-  // Y no puede ser `inicial + P&L del mes`, que es lo que daria antes:
-  assert.notEqual(febrero, inicial + 180, "no es el saldo inicial mas el mes");
-});
 
 test("indicesDelMes localiza el tramo del mes en la serie", () => {
   const fechas = HISTORICO.map((t) => t.date);

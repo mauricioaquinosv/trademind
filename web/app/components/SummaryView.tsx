@@ -9,11 +9,8 @@ import {
   computeStats,
   filasDelMes,
   indicesDelMes,
-  itemsDelMes,
   lunesDe,
   pad,
-  pnlHastaFinDeMes,
-  prefijoMes,
   resumenDelMes,
   type StatInput,
 } from "../../lib/resumen";
@@ -105,16 +102,11 @@ function fmtMoney(n: number) {
 
 
 
-function avgTradeDurationLabel(
-  trades: SummaryTrade[],
-  prefijo: string | null
-): string {
-  /* El filtro del mes se aplica aquí y no antes, porque `trades` lo necesita
-     entero para `items`, de donde salen los días del calendario y el gráfico. */
-  const fuente = prefijo
-    ? trades.filter((t) => !!t.exit_time && t.exit_time!.slice(0, 7) === prefijo)
-    : trades;
-  const durations = fuente
+/** Duración media de las operaciones. Como el resto de las tarjetas, va sobre
+ *  TODAS las operaciones: la duración media de un mes con cuatro trades no
+ *  describe nada. */
+function avgTradeDurationLabel(trades: SummaryTrade[]): string {
+  const durations = trades
     .map((t) => {
       if (!t.entry_time || !t.exit_time) return null;
       const open = new Date(t.entry_time.replace(" ", "T"));
@@ -321,35 +313,21 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     [trades]
   );
 
-  /* `s` es la estadística de TODO el histórico. La consumen el gráfico de PnL y
-     el radar, que son preguntas de largo recorrido: "por dónde voy en el año" y
-     "cuál es mi nivel". Recortarlas al mes mentiría: la curva acumulada se
-     reiniciaría en cada mes y el drawdown del año desaparecería. */
+  /* `s` es la estadística de TODO el histórico, y la usan las ocho tarjetas, el
+     radar, el puntaje y el gráfico. DELIBERADAMENTE no cambia al navegar el
+     calendario.
 
+     Decisión del usuario: las tarjetas son el rendimiento de la cuenta, no
+     una foto de un mes. Se probó filtrarlas por mes (era la propuesta D2) y se
+     revirtió, porque con pocos trades el winrate de un mes no dice nada: dos
+     operaciones y un 100% no es un dato, es ruido. El winrate que importa es el
+     de las 300 operaciones, no el de las 4 de este mes.
+
+     El calendario, el resumen semanal y el total del mes SÍ responden al mes,
+     porque ahí la granularidad es el punto: estás leyendo los días, no una nota.
+     Para que no haya duda de qué es cada cosa, las tarjetas llevan una etiqueta
+     que lo dice y el gráfico lleva la franja del mes. */
   const s = useMemo(() => computeStats(items), [items]);
-
-  /* `sMes` es la del mes que se está viendo en el calendario. La consumen las
-     ocho tarjetas, que son la pregunta opuesta: "cómo fue este mes".
-
-     Esto era la incoherencia D2. Antes las tarjetas usaban `s`, así que al
-     navegar el calendario se movían el calendario, el resumen semanal y el
-     total del mes, pero las cifras se quedaban quietas.
-
-     Si el mes aún no está decidido (primer render, antes de que se fije
-     calMonth) se cae al histórico entero, que es lo que había antes. */
-  const sMes = useMemo(() => {
-    if (calYear === null || calMonth === null) return s;
-    return computeStats(itemsDelMes(items, calYear, calMonth));
-  }, [s, items, calYear, calMonth]);
-
-  /* El balance es acumulado, no mensual: el saldo que tenías el 28 de febrero
-     incluye lo que pasó en enero. Por eso NO usa `sMes.netPnl` sino la suma de
-     todo lo anterior a fin de mes. Sumar solo el mes daría el saldo inicial más
-     lo de ese mes, que no es el balance de nadie. */
-  const balancePnl = useMemo(() => {
-    if (calYear === null || calMonth === null) return s.netPnl;
-    return pnlHastaFinDeMes(items, calYear, calMonth);
-  }, [s.netPnl, items, calYear, calMonth]);
 
   const dailyMap = useMemo(() => {
     const m: Record<string, number> = {};
@@ -737,7 +715,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     }
     const chart = radarChartRef.current;
     // El radar es una foto del mes que se está viendo, como las ocho tarjetas.
-    chart.data.datasets[0].data = [sMes.radar.winRate, sMes.radar.profitFactor, sMes.radar.wlRatio, sMes.radar.recovery, sMes.radar.ddScore, sMes.radar.consistency].map((v) => Math.round(v));
+    chart.data.datasets[0].data = [s.radar.winRate, s.radar.profitFactor, s.radar.wlRatio, s.radar.recovery, s.radar.ddScore, s.radar.consistency].map((v) => Math.round(v));
     // locale: las etiquetas del radar se fijan al crear el chart, así que hay
     // que reconstruirlas al cambiar de idioma.
     chart.data.labels = [
@@ -745,7 +723,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
       t("radar.recovery"), t("radar.maxDrawdown"), t("radar.consistency"),
     ];
     chart.update();
-  }, [sMes, locale]);
+  }, [s, locale]);
 
   /* Flecha de mes que se acaba de pulsar, para que se vea cuál se pulsó.
      Se borra sola: es una pista visual, no un estado que haya que managing. */
@@ -805,30 +783,21 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     setCalMonth(m);
   }
 
-  /* El balance sale del acumulado (`balancePnl`), no del mes. Las siete
-     tarjetas restantes salen de `sMes`, que sí es el mes. */
-  const balance =
-    initialBalance != null && isFinite(initialBalance) ? initialBalance + balancePnl : balancePnl;
+  /* Todas las cifras salen de `s`, el histórico entero. No hay `sMes`. */
+  const balance = initialBalance != null && isFinite(initialBalance) ? initialBalance + s.netPnl : s.netPnl;
   const balancePositive =
-    initialBalance != null && isFinite(initialBalance) ? balance >= initialBalance : balancePnl >= 0;
-  const expectedValue = sMes.total ? sMes.netPnl / sMes.total : 0;
-  const scoreTier = sMes.score < 50 ? "tier-low" : sMes.score < 75 ? "tier-mid" : "tier-high";
+    initialBalance != null && isFinite(initialBalance) ? balance >= initialBalance : s.netPnl >= 0;
+  const expectedValue = s.total ? s.netPnl / s.total : 0;
+  const scoreTier = s.score < 50 ? "tier-low" : s.score < 75 ? "tier-mid" : "tier-high";
 
   // Animated numbers
   const animBalance = useAnimatedNumber(balance);
-  const animNetPnl = useAnimatedNumber(sMes.netPnl);
-  const animWinRate = useAnimatedNumber(sMes.winRate);
+  const animNetPnl = useAnimatedNumber(s.netPnl);
+  const animWinRate = useAnimatedNumber(s.winRate);
   const animExpectedValue = useAnimatedNumber(expectedValue);
-  const animScore = useAnimatedNumber(sMes.score);
+  const animScore = useAnimatedNumber(s.score);
 
   const monthLabel = calYear !== null && calMonth !== null ? `${mesesFull[calMonth]} ${calYear}` : "—";
-  /* Prefijo "AAAA-MM" del mes visible. Lo consumen las tarjetas (a través de
-     `sMes`) y la duración media. Es `null` solo en el primer render. */
-  const prefijoVisible = calYear !== null && calMonth !== null ? prefijoMes(calYear, calMonth) : null;
-  /* ¿Estamos viendo el mes con datos o uno vacío? Solo cambia una etiqueta:
-     cuando el mes no tiene operaciones, el balance sigue siendo el acumulado
-     y conviene decirlo, porque un $10.000 con cero trades parece un bug. */
-  const mesSinOperaciones = sMes.total === 0;
 
   /**
    * Filas del calendario. UNA fila = UNA semana completa de lunes a domingo.
@@ -874,41 +843,54 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
     [calYear, calMonth, dailyMap]
   );
 
+  /* ¿El mes visible tiene operaciones? Solo decide si se dibuja la franja del
+     mes sobre el gráfico y su pista. Un mes vacío no tiene dónde señalar nada,
+     y una franja sobre un hueco vacío parecería un dato que no existe. */
+  const mesConOperaciones = resumenMes !== null && resumenMes.dias > 0;
+
   return (
     <>
-      {/* Las ocho tarjetas son la pregunta "cómo fue ESTE mes". El balance es la
-          única excepción: es acumulado, así que lleva una nota que lo dice, y
-          un aviso cuando el mes no tiene operaciones, porque si no un saldo
-          intacto con cero trades parece un fallo. */}
+      {/* Las ocho tarjetas son el RENDIMIENTO GLOBAL DE LA CUENTA y no cambian
+          al navegar el calendario, por decisión del usuario. Se probó filtrarlas
+          por mes y se revirtió: con pocas operaciones el winrate de un mes no
+          dice nada (2 trades y 100% es ruido, no una estadística).
+
+          Para que no haya duda de qué es cada cosa, la fila lleva su propia
+          etiqueta y debajo una nota que lo dice. El calendario, el resumen
+          semanal y el total del mes sí responden al mes, porque ahí la
+          granularidad es justamente lo que se está leyendo. */}
       <div className="stats">
+        <div className="stats-caption">
+          <span className="stats-caption-title">{t("kpi.allTimeTitle")}</span>
+          <span className="stats-caption-note">{t("kpi.allTimeNote")}</span>
+        </div>
         <div className="card">
           <div className="label">{t("kpi.balance")}</div>
           <div className={`value num ${balancePositive ? "pos" : "neg"}`}>{fmtMoney(animBalance)}</div>
-          <div className="mini-note">{t("kpi.balanceNote", { month: monthLabel })}</div>
         </div>
         <div className="card">
           <div className="label">{t("kpi.netPnl")}</div>
-          <div className={`value num ${sMes.netPnl >= 0 ? "pos" : "neg"}`}>{fmtMoney(animNetPnl)}</div>
+          <div className={`value num ${s.netPnl >= 0 ? "pos" : "neg"}`}>{fmtMoney(animNetPnl)}</div>
         </div>
         <div className="card">
           <div className="label">{t("kpi.winrate")}</div>
           <div className="value num">{animWinRate.toFixed(2)}%</div>
-          <WinRateBar value={sMes.winRate} />
+          <WinRateBar value={s.winRate} />
         </div>
         <div className="card">
           <div className="label">{t("kpi.riskReward")}</div>
-          <div className="value num">{sMes.avgLoss ? Math.abs(sMes.avgWin / sMes.avgLoss).toFixed(2) : "—"}</div>
+          <div className="value num">{s.avgLoss ? Math.abs(s.avgWin / s.avgLoss).toFixed(2) : "—"}</div>
         </div>
         <div className="card">
           <div className="label">{t("kpi.profitFactor")}</div>
-          <div className="value num">{isFinite(sMes.profitFactor) && sMes.profitFactor < 99 ? sMes.profitFactor.toFixed(2) : "∞"}</div>
+          <div className="value num">{isFinite(s.profitFactor) && s.profitFactor < 99 ? s.profitFactor.toFixed(2) : "∞"}</div>
         </div>
         <div className="card">
           <div className="label">{t("kpi.totalTrades")}</div>
-          <div className="value num">{sMes.total}</div>
+          <div className="value num">{s.total}</div>
           <div className="mini-note">
-            <span style={{ color: "var(--green)" }}>{t("kpi.tradesWon", { n: sMes.wins.length })}</span> ·{" "}
-            <span style={{ color: "var(--red)" }}>{t("kpi.tradesLost", { n: sMes.losses.length })}</span>
+            <span style={{ color: "var(--green)" }}>{t("kpi.tradesWon", { n: s.wins.length })}</span> ·{" "}
+            <span style={{ color: "var(--red)" }}>{t("kpi.tradesLost", { n: s.losses.length })}</span>
           </div>
         </div>
         <div className="card">
@@ -922,13 +904,8 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
         </div>
         <div className="card">
           <div className="label">{t("kpi.avgTradeTime")}</div>
-          <div className="value num">{avgTradeDurationLabel(trades, prefijoVisible)}</div>
+          <div className="value num">{avgTradeDurationLabel(trades)}</div>
         </div>
-        {mesSinOperaciones && (
-          <div className="note-strip">
-            {t("kpi.noTradesThisMonth", { month: monthLabel })}
-          </div>
-        )}
       </div>
 
       <div className="grid-main">
@@ -942,7 +919,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
           {/* Pista de la franja turquesa. Sin ella, ver una banda sobre la curva
               no significa nada: el usuario no sabría si es un mes, un highlight
               o un error de render. */}
-          {sMes.total > 0 && (
+          {mesConOperaciones && (
             <div className="mini-note band-hint">{t("chart.monthBandHint")}</div>
           )}
         </div>
@@ -956,7 +933,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
             <div className={`score-num num ${scoreTier}`}>{animScore.toFixed(2)}</div>
             <div className="score-bar" style={{ width: "90%" }}>
               <div className="score-bar-shine" />
-              <i style={{ left: `${Math.min(100, Math.max(0, sMes.score))}%` }} />
+              <i style={{ left: `${Math.min(100, Math.max(0, s.score))}%` }} />
             </div>
           </div>
         </div>
