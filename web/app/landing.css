@@ -343,30 +343,23 @@
  *    montada encima de la imagen.
  */
 .landing-views-wide {
-  /* Ancho FIJO, no max-width.
+  /* Ancho fijo, y el ancho de ficha es el que se vea bien: 221 px.
    *
-   * Con max-width las cuatro fichas se estiran hasta llenar la pantalla, y con
-   * ellas el recorte del panel. En un monitor de 1440 la tarjeta mide 344 px y
-   * se ve una columna entera; en uno de 1280 mide 300 y ya se ve un trozo de la
-   * segunda; en un movil de 375 mide 220 y se ve la union de las dos, que es
-   * donde el texto sale partido por la mitad.
+   * Se probo con 280 px creyendo que el panel del dashboard (608 px) necesaria
+   * mas sitio. Al mas ancho, el recorte se movio de sitio y las ocho cajas
+   * quedaron partidas por la mitad. Con 221 px el recorte cae donde la foto
+   * caia, que es como se veía bien.
    *
-   * Es decir: el mismo diseno se veía bien o mal segun el monitor del visitante.
-   * Con el ancho fijo las cuatro fichas miden siempre lo mismo y el recorte es
-   * siempre el mismo, en cualquier pantalla.
-   *
-   * 4 tarjetas de 280 px + 3 separaciones de 20 = 1180 px.
+   * 4 x 221 + 3 x 20 = 964.
    */
-  width: 1180px;
+  width: 964px;
   max-width: calc(100% - 48px);
   margin: 34px auto 0;
 }
 
 .landing-cards-4 {
   display: grid;
-  /* minmax(0, 280px) con el ancho fijo de arriba: cada ficha mide 280 px, y si
-     la ventana no cabe, bajan de columnas por los media queries de abajo. */
-  grid-template-columns: repeat(4, minmax(0, 280px));
+  grid-template-columns: repeat(4, minmax(0, 221px));
   gap: 20px;
   justify-content: center;
 }
@@ -517,6 +510,34 @@
   font-family: "Space Grotesk", system-ui, sans-serif;
 }
 
+/*
+ * EL RECORTE DEL PANEL: TIENE QUE CAER EN UN BORDE DE COLUMNA.
+ *
+ * El panel del dashboard son 6 columnas de 85 px con 14 de separacion, o sea un
+ * paso de 99 px. Sus bordes caen en 0, 99, 198, 297, 396 y 495.
+ *
+ * La tarjeta muestra 278 px del panel. Si el recorte empieza en un borde de
+ * columna, se ven CAJAS ENTERAS; si empieza en medio de una, esa caja sale
+ * partida por la mitad.
+ *
+ * COMO SE CALCULA EL OFFSET
+ *
+ * La capa de delante tiene left:-33 px y width:144%. Medido en el navegador, el
+ * recorte sin corregir va de 209 a 487 px del panel, y 209 cae entre 198 y 297:
+ * dentro de la tercera columna. De ahi que salieran partidas.
+ *
+ * El desplazamiento que hace falta es -209 px para que el recorte empiece en 0,
+ * que es un borde de columna. Con eso se ven las dos primeras cajas enteras
+ * (0 a 85 y 99 a 184) y las otras cuatro se salen por el lado, como en la foto.
+ *
+ * El -209 no es magico: sale de dividir el recorte medido entre el ancho de la
+ * capa. Si cambia el ancho de la ficha hay que volver a medirlo.
+ */
+.landing-vscene .panel-vivo {
+  left: 0;
+  transform: none;
+}
+
 /* Las cajas del dashboard traen opacity:0 y una animacion de entrada con
    retardos escalonados. Aqui se pone visible: el movimiento de esta tarjeta lo
    aportan los numeros, y con las cajas invisibles se veria un hueco. */
@@ -643,15 +664,15 @@
 /* Los cortes de columna, calculados sobre el ancho fijo de 1180 px:
    4 x 280 + 3 x 20 = 1180   -> por debajo de 1228 caben 3, de 2, de 1
 */
-@media (max-width: 1228px) {
+@media (max-width: 1012px) {
   .landing-cards-4 {
-    grid-template-columns: repeat(2, minmax(0, 280px));
+    grid-template-columns: repeat(2, minmax(0, 221px));
   }
 }
 
-@media (max-width: 660px) {
+@media (max-width: 540px) {
   .landing-cards-4 {
-    grid-template-columns: minmax(0, 280px);
+    grid-template-columns: minmax(0, 221px);
     gap: 16px;
   }
 
