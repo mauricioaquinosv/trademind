@@ -2,10 +2,6 @@
 import Image from "next/image";
 import { cookies } from "next/headers";
 import LanguageSwitcher from "../lib/i18n/LanguageSwitcher";
-// Componente de cliente: es el unico trozo de la landing que necesita
-// JavaScript, y solo porque los numeros tienen que contar. El resto de la pagina
-// sigue renderizandose en servidor.
-import ContadorMetricas from "./components/ContadorMetricas";
 import {
   LOCALE_COOKIE,
   normalizarLocale,
@@ -52,10 +48,6 @@ export default async function LandingPage() {
       ancho: 590,
       alto: 498,
       atrasAlto: [384, 392],
-      // Esta tarjeta no usa la foto del frente: monta el panel de indicadores en
-      // HTML con las mismas clases del dashboard, para que los numeros puedan
-      // contar. atras[0] queda de fondo, inclinado.
-      panelVivo: true,
     },
     {
       clave: "calendario",
@@ -263,71 +255,38 @@ export default async function LandingPage() {
                 <h3>{t(b.titulo)}</h3>
                 <p>{t(b.cuerpo)}</p>
 
-                {"panelVivo" in b ? (
-                  /* LA TARJETA DE METRICAS TAMBIEN LLEVA ESCENA 3D.
-                   *
-                   * Se quito en el commit anterior porque el giro fuerte
-                   * (-26deg) mas el recorte al 144% dejaban las cifras en una
-                   * tira de 20 px. Ese error no fue quitar el 3D: fue no
-                   * dosificarlo. aqui van las dos cosas a la vez:
-                   *
-                   *   - El panel de delante es de TEXTO y cuenta, asi que entra
-                   *     casi entero (112%) y con un giro suave: -13 grados en vez
-                   *     de -26. Asi se ve el panel entero, se lee, y aun asi se
-                   *     ve que esta inclinado.
-                   *   - Detras va una CAPA REAL, la captura del mismo panel,
-                   *     apagada y desplazada. Eso es lo que da profundidad: una
-                   *     sola foto no tiene fondo, se ve plana por definition.
-                   *
-                   * La capa de atras NO es el grafico de PnL como estaba antes:
-                   * ese se colaba entre las cifras y era solo ruido. */
-                  <div className="landing-vscene landing-vscene-kpis">
-                    <div className="landing-vglow" aria-hidden="true" />
+                {/* La escena en 3D. La capa de delante entra al 150% y la
+                    tarjeta la recorta, asi que se ve un detalle grande del
+                    panel en vez del panel entero y pequeno. */}
+                <div className="landing-vscene">
+                  <div className="landing-vglow" aria-hidden="true" />
 
-                    <div className="landing-vlayer landing-vlayer-back" aria-hidden="true">
-                      <Image
-                        src={b.frente}
-                        alt=""
-                        width={b.ancho}
-                        height={b.alto}
-                        loading="eager"
-                      />
-                    </div>
-
-                    <div className="landing-vlayer landing-vlayer-front">
-                      <ContadorMetricas />
-                    </div>
+                  <div className="landing-vlayer landing-vlayer-back" aria-hidden="true">
+                    <Image
+                      src={b.atras[0]}
+                      alt=""
+                      width={b.ancho}
+                      height={b.atrasAlto[0]}
+                      /* next/image mete lazy por defecto, y una capa tapada no
+                         llega a cargarse nunca. */
+                      loading="eager"
+                    />
                   </div>
-                ) : (
-                  /* Las otras tres: foto con capas 3D. */
-                  <div className="landing-vscene">
-                    <div className="landing-vglow" aria-hidden="true" />
 
-                    <div className="landing-vlayer landing-vlayer-back" aria-hidden="true">
-                      <Image
-                        src={b.atras[0]}
-                        alt=""
-                        width={b.ancho}
-                        height={b.atrasAlto[0]}
-                        /* next/image mete lazy por defecto, y una capa tapada no
-                           llega a cargarse nunca. */
-                        loading="eager"
-                      />
-                    </div>
-
-                    <div className="landing-vlayer landing-vlayer-front">
-                      <Image
-                        src={b.frente}
-                        alt={t(b.titulo)}
-                        width={b.ancho}
-                        height={b.alto}
-                        /* Sin lazy a proposito: el hueco de la version anterior
-                           era justo la imagen sin cargar. */
-                        loading="eager"
-                      />
-                    </div>
+                  <div className="landing-vlayer landing-vlayer-front">
+                    <Image
+                      src={b.frente}
+                      alt={t(b.titulo)}
+                      width={b.ancho}
+                      height={b.alto}
+                      /* Sin lazy a proposito: el hueco de la version anterior
+                         era justo la imagen sin cargar. Con 352 KB en total son
+                         cuatro ficheros y cargar al entrar a la seccion es
+                         mejor que ver un rectangulo vacio. */
+                      loading="eager"
+                    />
                   </div>
-                )}
+                </div>
               </article>
             ))}
           </div>
