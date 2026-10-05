@@ -26,49 +26,68 @@ export default async function LandingPage() {
   const locale = normalizarLocale((await cookies()).get(LOCALE_COOKIE)?.value);
   const t = (clave: TranslationKey) => traducir(locale, clave);
 
-  // Las cuatro vistas del dashboard. Cada una lleva su captura REAL, hecha del
-  // panel con los 152 trades del reporte de MT5 que hay en la base de datos:
-  // nada de esto es un dibujo ni un mockup.
+  // Los bloques del dashboard. Cada uno lleva un recorte REAL del panel, no una
+  // captura de la pagina entera: asi la landing enseña los detalle (el +$222.90
+  // del calendario, la franja turquesa del grafico, el 81.18 del radar) en vez
+  // de una miniatura ilegible.
+  //
+  // atras/superpuestas son los mismos recortes que se ven inclinados detras del
+  // principal. Apilarlos es lo que da la sensacion de profundidad.
   //
   // next/image con width/height porque son imagenes estaticas servidas desde
-  // public/. Sin esas medidas Next no puede reservar el hueco y la pagina
-  // salta al cargar.
-  const vistas = [
+  // public/: sin esas medidas Next no reserva el hueco y la pagina salta.
+  const bloques = [
     {
-      clave: "summary",
-      titulo: "landing.views.summary.title",
-      cuerpo: "landing.views.summary.body",
+      clave: "kpis",
+      etiqueta: "landing.stack.kpis",
+      titulo: "landing.blocks.kpis.title",
+      cuerpo: "landing.blocks.kpis.body",
       color: "var(--teal)",
-      captura: "/landing/shot-resumen.png",
-      ancho: 630,
-      alto: 595,
+      frente: "/landing/panel-kpis.png",
+      atras: ["/landing/panel-grafico.png", "/landing/panel-calendario.png"],
+      ancho: 590,
+      alto: 498,
+      atrasAlto: [384, 392],
+      inclinacion: 13,
     },
     {
-      clave: "trades",
-      titulo: "landing.views.trades.title",
-      cuerpo: "landing.views.trades.body",
+      clave: "calendario",
+      etiqueta: "landing.stack.calendario",
+      titulo: "landing.blocks.calendario.title",
+      cuerpo: "landing.blocks.calendario.body",
       color: "var(--pink)",
-      captura: "/landing/shot-trades.png",
-      ancho: 630,
-      alto: 595,
+      frente: "/landing/panel-calendario.png",
+      atras: ["/landing/panel-radar.png", "/landing/panel-kpis.png"],
+      ancho: 590,
+      alto: 392,
+      atrasAlto: [384, 498],
+      inclinacion: -14,
     },
     {
-      clave: "accounts",
-      titulo: "landing.views.accounts.title",
-      cuerpo: "landing.views.accounts.body",
+      clave: "grafico",
+      etiqueta: "landing.stack.grafico",
+      titulo: "landing.blocks.grafico.title",
+      cuerpo: "landing.blocks.grafico.body",
       color: "var(--gold)",
-      captura: "/landing/shot-cuentas.png",
-      ancho: 630,
-      alto: 595,
+      frente: "/landing/panel-grafico.png",
+      atras: ["/landing/panel-kpis.png", "/landing/panel-radar.png"],
+      ancho: 590,
+      alto: 384,
+      atrasAlto: [498, 384],
+      inclinacion: -12,
     },
     {
-      clave: "analytics",
-      titulo: "landing.views.analytics.title",
-      cuerpo: "landing.views.analytics.body",
+      clave: "radar",
+      etiqueta: "landing.stack.radar",
+      titulo: "landing.blocks.radar.title",
+      cuerpo: "landing.blocks.radar.body",
       color: "var(--green)",
-      captura: "/landing/shot-analytics.png",
-      ancho: 630,
-      alto: 595,
+      frente: "/landing/panel-radar.png",
+      atras: ["/landing/panel-grafico.png", "/landing/panel-kpis.png"],
+      ancho: 590,
+      alto: 384,
+      atrasAlto: [384, 498],
+      inclinacion: 11,
     },
   ] as const;
 
@@ -229,26 +248,84 @@ export default async function LandingPage() {
         <h2 className="landing-h2">{t("landing.views.title")}</h2>
         <p className="landing-lead">{t("landing.views.lead")}</p>
         <div className="landing-grid landing-grid-2">
-          {vistas.map((v) => (
-            <article
-              className="landing-shot"
-              key={v.clave}
-              style={{ "--shot": v.color } as React.CSSProperties}
-            >
-              <div className="landing-shot-head">
-                <h3>{t(v.titulo)}</h3>
-                <p>{t(v.cuerpo)}</p>
-              </div>
-              <div className="landing-shot-body">
-                <Image
-                  className="landing-shot-img"
-                  src={v.captura}
-                  alt={t(v.titulo)}
-                  width={v.ancho}
-                  height={v.alto}
-                  loading="lazy"
-                />
-                <div className="landing-shot-fade" aria-hidden="true" />
+          {bloques.map((b) => (
+            <article className="landing-card" key={b.clave}>
+              <h3>{t(b.titulo)}</h3>
+              <p>{t(b.cuerpo)}</p>
+
+              {/* El monton de imagenes. atras[0] es la capa intermedia y
+                  atras[1] la de fondo; el frente tapa la parte de arriba y solo
+                  asoman los bordes de las de atras. */}
+              <div
+                className="landing-stack"
+                style={
+                  {
+                    "--shot": b.color,
+                    // El alto minimo lo fija el frente mas un margen para que
+                    // asome la capa de fondo por abajo.
+                    "--stack-h": `${b.alto + 96}px`,
+                    "--front-h": `${b.alto}px`,
+                  } as React.CSSProperties
+                }
+              >
+                <div className="landing-stack-glow" aria-hidden="true" />
+
+                <div
+                  className="landing-stack-back"
+                  style={
+                    {
+                      top: "52px",
+                      left: "14px",
+                      right: "-14px",
+                      height: `${b.atrasAlto[1]}px`,
+                      transform: `rotate(${b.inclinacion * 0.5}deg)`,
+                    } as React.CSSProperties
+                  }
+                  aria-hidden="true"
+                >
+                  <Image
+                    src={b.atras[1]}
+                    alt=""
+                    width={b.ancho}
+                    height={b.atrasAlto[1]}
+                    loading="lazy"
+                  />
+                </div>
+
+                <div
+                  className="landing-stack-back"
+                  style={
+                    {
+                      top: "26px",
+                      left: "6px",
+                      right: "-6px",
+                      height: `${b.atrasAlto[0]}px`,
+                      transform: `rotate(${b.inclinacion * 0.22}deg)`,
+                    } as React.CSSProperties
+                  }
+                  aria-hidden="true"
+                >
+                  <Image
+                    src={b.atras[0]}
+                    alt=""
+                    width={b.ancho}
+                    height={b.atrasAlto[0]}
+                    loading="lazy"
+                  />
+                </div>
+
+                <div className="landing-stack-front">
+                  <Image
+                    className="landing-shot-img"
+                    src={b.frente}
+                    alt={t(b.titulo)}
+                    width={b.ancho}
+                    height={b.alto}
+                    loading="lazy"
+                  />
+                </div>
+
+                <span className="landing-stack-tag">{t(b.etiqueta)}</span>
               </div>
             </article>
           ))}

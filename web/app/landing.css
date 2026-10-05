@@ -314,6 +314,100 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* Las vistas: composicion con profundidad                             */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Cada bloque de la seccion "las 4 vistas" es un panel REAL del dashboard, no
+ * una captura de la pagina entera. Se apilan e inclinan para dar profundidad:
+ * lo que va detras se ve un poco, lo de delante tapa el resto, y sale la
+ * sensacion de que hay un monton de cosas detras, que es lo que hace la
+ *competencia y lo que ninguna foto plana da.
+ *
+ * El inclinacion viene de --t: cada capa lo lleva distinto, asi que un solo
+ * grupo de reglas sirve para las cuatro vistas.
+ */
+.landing-stack {
+  position: relative;
+  /* El alto lo fijan las capas de atras, que son absolutas. Este es el hueco
+     reservado para la de delante. */
+  min-height: 380px;
+  margin-top: 12px;
+}
+
+/* La capa de DELANTE: la que se ve completa. */
+.landing-stack-front {
+  position: relative;
+  z-index: 4;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--panel-solid);
+  box-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.85);
+}
+
+/* Las capas de DETRAS. Se salen por un borde a proposito: eso es lo que
+   insinua que hay mas cosas debajo. */
+.landing-stack-back {
+  position: absolute;
+  z-index: 1;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.landing-stack-back img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Se atenuan para que se lean como fondo y no compitan con el frente. */
+  filter: saturate(0.7) brightness(0.55);
+  opacity: 0.55;
+}
+
+/* La sombra de color Detras del monton: es lo que hace que el grupo parezca
+   iluminado y no pegado sobre el fondo. */
+.landing-stack-glow {
+  position: absolute;
+  z-index: 0;
+  inset: 18% -12% -8% -12%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 50% 60%,
+    color-mix(in srgb, var(--shot) 32%, transparent),
+    transparent 68%
+  );
+  filter: blur(28px);
+  pointer-events: none;
+}
+
+.landing-shot-img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Etiqueta de la esquina: el nombre de la vista, en el color de esa vista. */
+.landing-stack-tag {
+  position: absolute;
+  z-index: 5;
+  top: -11px;
+  left: 18px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--shot);
+  background: var(--bg);
+  border: 1px solid color-mix(in srgb, var(--shot) 45%, transparent);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+/* ------------------------------------------------------------------ */
 /* Tarjeta con captura: cabecera de color + imagen de debajo           */
 /* ------------------------------------------------------------------ */
 
