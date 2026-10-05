@@ -401,22 +401,31 @@
   color: var(--muted);
   font-size: 13.5px;
   line-height: 1.6;
-  margin: 0 0 20px;
+  margin: 0;
 }
 
-/* El escenario: aqui vive el 3D. Alto fijo para que las cuatro fichas midan
-   lo mismo y el hilero quede recto. */
+/* El escenario: aqui vive el 3D.
+   El texto NO lleva margen abajo: lo que separa la foto del parrafo es el
+   padding-top del escenario. Con margin en el <p> y luego un hueco aqui se
+   abria un vacio de 20 px entre el texto y la imagen, que es lo que se veia. */
 .landing-vscene {
   position: relative;
-  height: 260px;
-  margin: 0 -18px;
+  height: 250px;
+  /* El margen negativo tensa la imagen contra los dos cantos, asi que se ve
+     como un panel y no como una foto metida en una caja. */
+  margin: 18px -18px 0;
   overflow: hidden;
   perspective: 1000px;
   perspective-origin: 50% 30%;
-  /* La ficha recorta por abajo, y ahi es donde se corta la foto, que es
-     exactamente lo que hace el ejemplo. */
-  -webkit-mask-image: linear-gradient(transparent 88%, #000 100%);
-  mask-image: linear-gradient(transparent 88%, #000 100%);
+  /* LA MASCARA ESTA AL REVES Y HACE LO CONTRARIO DE LO QUE PARECE.
+     Con linear-gradient(transparent 88%, #000 100%) el principio del degradado
+     es TRANSPARENTE y el final opaco: es decir, se ocultaba casi toda la
+     imagen y solo se veia una tira de 12% en el borde de abajo. Eso es
+     exactamente lo que se veia: un vacio enorme con un trozo de panel abajo.
+     Al reves: opaco casi hasta el final, y se difumina solo en el ultimo 15%
+     para que la foto no corte en seco. */
+  -webkit-mask-image: linear-gradient(#000 85%, transparent 100%);
+  mask-image: linear-gradient(#000 85%, transparent 100%);
 }
 
 /* El resplandor: fuerte, con la luz un poco desplazada para que el panel
@@ -437,16 +446,31 @@
   transition: opacity 0.4s ease;
 }
 
-/* Las capas en 3D. rotateY + rotateX es lo que produce el trapecio. */
+/* Las capas en 3D. rotateY + rotateX es lo que produce el trapecio.
+
+   EL ALTO SE FIJA AQUI Y NO EN EL height de la imagen. Con width:150% la
+   imagen se renderizaba a 425x412 dentro de una escena de 279x260: se salia
+   por abajo y el hueco se comia media ficha. Ahora cada capa declara el alto
+   que quiere y la imagen lo ocupa entero (object-fit:cover), asi que el
+   recorte lo hace el height y no el desbordamiento. */
 .landing-vlayer {
   position: absolute;
-  top: 8px;
-  left: -25%;
-  width: 150%;
+  top: 10px;
+  left: -22%;
+  width: 144%;
+  height: 200px;
   border-radius: 12px;
   overflow: hidden;
   transform-origin: 30% 40%;
   backface-visibility: hidden;
+}
+
+.landing-vlayer img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: left top;
 }
 
 /* La de atras: mas pequeña, mas inclinada y apagada. */
@@ -468,11 +492,6 @@
     0 0 40px -12px color-mix(in srgb, var(--shot) 45%, transparent);
 }
 
-.landing-vlayer img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
 
 /* ------------------------------------------------------------------ */
 /* Movimiento                                                          */

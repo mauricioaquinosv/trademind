@@ -279,7 +279,11 @@ export default async function LandingPage() {
                       alt={t(b.titulo)}
                       width={b.ancho}
                       height={b.alto}
-                      loading="lazy"
+                      /* Sin lazy a proposito: el hueco de la version anterior
+                         era justo la imagen sin cargar. Con 352 KB en total son
+                         cuatro ficheros y cargar al entrar a la seccion es
+                         mejor que ver un rectangulo vacio. */
+                      loading="eager"
                     />
                   </div>
                 </div>
