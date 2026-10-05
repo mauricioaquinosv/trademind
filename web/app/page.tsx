@@ -2,6 +2,9 @@
 import Image from "next/image";
 import { cookies } from "next/headers";
 import LanguageSwitcher from "../lib/i18n/LanguageSwitcher";
+// Unico componente de cliente de la landing, y solo para que los numeros del
+// panel se muevan. Todo lo demas sigue renderizandose en servidor.
+import CifrasAnimadas from "./components/CifrasAnimadas";
 import {
   LOCALE_COOKIE,
   normalizarLocale,
@@ -285,6 +288,17 @@ export default async function LandingPage() {
                          mejor que ver un rectangulo vacio. */
                       loading="eager"
                     />
+                    {b.clave === "kpis" ? (
+                      /* Las ocho cifras del panel, ENCIMA de la foto, en la misma
+                         posicion y con el mismo tamano que tenian dentro del PNG.
+
+                         La foto, su recorte y su inclinacion NO se tocan: la
+                         tarjeta se ve igual que las otras tres. Lo unico que
+                         cambia es que estos numeros se mueven. Y las de la
+                         columna izquierda se ven cortadas por el mismo borde que
+                         las de la foto, que es lo que se veia. */
+                      <CifrasAnimadas />
+                    ) : null}
                   </div>
                 </div>
               </article>

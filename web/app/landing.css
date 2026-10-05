@@ -473,6 +473,42 @@
   object-position: left top;
 }
 
+/* ------------------------------------------------------------------ */
+/* Cifras animadas ENCIMA de la foto del panel                         */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Van encima de la foto, dentro de la capa de delante, asi que heredan su
+ * recorte y su inclinacion: la tarjeta se ve EXACTAMENTE igual que las otras
+ * tres. Lo unico que se mueve son los numeros.
+ *
+ * Las posiciones van en pixeles ABSOLUTOS, calculados sobre la foto ya montada y
+ * medidos en el navegador (la imagen se dibuja en x=-33 con 395 px de ancho, o
+ * sea escala 0.6695), no en porcentajes: con porcentajes los numeros se
+ * descuadrian en cuanto la tarjeta cambia de ancho.
+ *
+ * overflow:hidden es lo que hace que las cifras de la columna izquierda se
+ * corten igual que las de la foto. Sin esto se verian encima de las de la
+ * derecha.
+ */
+.landing-cifras {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.landing-cifra {
+  position: absolute;
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 600;
+  /* tabular-nums para que los digitos no bailen de ancho mientras cuentan, que
+     es lo que delata una animacion hecha a pelo. */
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 /* La de atras: mas pequeña, mas inclinada y apagada. */
 .landing-vlayer-back {
   z-index: 1;
