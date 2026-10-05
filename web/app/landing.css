@@ -343,16 +343,32 @@
  *    montada encima de la imagen.
  */
 .landing-views-wide {
-  /* Contenedor propio y mas ancho que el resto: hacen falta cuatro columnas
-     estrechas. El titulo de la seccion se queda en el contenedor normal. */
-  max-width: 1400px;
+  /* Ancho FIJO, no max-width.
+   *
+   * Con max-width las cuatro fichas se estiran hasta llenar la pantalla, y con
+   * ellas el recorte del panel. En un monitor de 1440 la tarjeta mide 344 px y
+   * se ve una columna entera; en uno de 1280 mide 300 y ya se ve un trozo de la
+   * segunda; en un movil de 375 mide 220 y se ve la union de las dos, que es
+   * donde el texto sale partido por la mitad.
+   *
+   * Es decir: el mismo diseno se veía bien o mal segun el monitor del visitante.
+   * Con el ancho fijo las cuatro fichas miden siempre lo mismo y el recorte es
+   * siempre el mismo, en cualquier pantalla.
+   *
+   * 4 tarjetas de 280 px + 3 separaciones de 20 = 1180 px.
+   */
+  width: 1180px;
+  max-width: calc(100% - 48px);
   margin: 34px auto 0;
 }
 
 .landing-cards-4 {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* minmax(0, 280px) con el ancho fijo de arriba: cada ficha mide 280 px, y si
+     la ventana no cabe, bajan de columnas por los media queries de abajo. */
+  grid-template-columns: repeat(4, minmax(0, 280px));
   gap: 20px;
+  justify-content: center;
 }
 
 /* La ficha: vertical, sin padding abajo porque la imagen se sale por ahi. */
@@ -624,20 +640,18 @@
   }
 }
 
-/* Pantallas medianas: dos columnas. Sigue siendo el mismo formato vertical.
-   El corte baja a 900 px porque la seccion mide 1400 px de ancho: con el
-   breakpoint en 1100 se caia a dos columnas en pantallas anchas y las fichas
-   salian de 460 px, que es justo lo que queremos evitar (deben ser estrechas y
-   verticales, como en el ejemplo). */
-@media (max-width: 900px) {
+/* Los cortes de columna, calculados sobre el ancho fijo de 1180 px:
+   4 x 280 + 3 x 20 = 1180   -> por debajo de 1228 caben 3, de 2, de 1
+*/
+@media (max-width: 1228px) {
   .landing-cards-4 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 280px));
   }
 }
 
-@media (max-width: 620px) {
+@media (max-width: 660px) {
   .landing-cards-4 {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 280px);
     gap: 16px;
   }
 
