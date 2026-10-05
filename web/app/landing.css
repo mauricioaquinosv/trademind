@@ -474,8 +474,41 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Cifras animadas ENCIMA de la foto del panel                         */
+/* El panel de indicadores, entero y animable                         */
 /* ------------------------------------------------------------------ */
+
+/*
+ * EL PANEL SE DIBUJA ENTERO, A 582 px, QUE ES SU ANCHO REAL. Y LA TARJETA LO
+ * RECORTA IGUAL QUE RECORTA CUALQUIER FOTO.
+ *
+ * Esta es la solucion que llevaba horas desde el principio y no se hacia: no
+ * tocar el recorte, no forzar el panel dentro del marco, y no poner numeros
+ * sueltos encima de un PNG. El panel es una imagen hecha en HTML, con el mismo
+ * codigo y los mismos estilos que el del dashboard (.stats, .card, .label,
+ * .value, .bar-split, .mini-note, todos en dashboard.css). Por eso se ve
+ * identica. Y al ser una imagen y no un PNG, se anima entera.
+ *
+ * Va en SU PROPIO CONTENEDOR con position:absolute y ancho fijo, para que no
+ * dependa de lo que mida la tarjeta: el recorte lo decide el contenedor de la
+ * escena, igual que en las otras tres tarjetas.
+ */
+.panel-vivo {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 582px;
+  transform: translateX(-50%);
+  font-family: "Space Grotesk", system-ui, sans-serif;
+}
+
+/* Las cajas del dashboard traen opacity:0 y una animacion de entrada con
+   retardos escalonados. Aqui se pone visible: el movimiento de esta tarjeta lo
+   aportan los numeros, y con las cajas invisibles se veria un hueco. */
+.panel-vivo .card {
+  opacity: 1;
+  animation: none;
+}
+
 
 /*
  * Van encima de la foto, dentro de la capa de delante, asi que heredan su

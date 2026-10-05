@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import LanguageSwitcher from "../lib/i18n/LanguageSwitcher";
 // Unico componente de cliente de la landing, y solo para que los numeros del
 // panel se muevan. Todo lo demas sigue renderizandose en servidor.
-import CifrasAnimadas from "./components/CifrasAnimadas";
+import PanelAnimado from "./components/PanelAnimado";
 import {
   LOCALE_COOKIE,
   normalizarLocale,
@@ -264,41 +264,43 @@ export default async function LandingPage() {
                 <div className="landing-vscene">
                   <div className="landing-vglow" aria-hidden="true" />
 
-                  <div className="landing-vlayer landing-vlayer-back" aria-hidden="true">
-                    <Image
-                      src={b.atras[0]}
-                      alt=""
-                      width={b.ancho}
-                      height={b.atrasAlto[0]}
-                      /* next/image mete lazy por defecto, y una capa tapada no
-                         llega a cargarse nunca. */
-                      loading="eager"
-                    />
-                  </div>
+                  {/* La capa de fondo solo va en las tarjetas con foto. En la de
+                      metricas la delante ya es el panel entero, y una foto
+                      detras solo se colaba entre las cifras como ruido. */}
+                  {b.clave === "kpis" ? null : (
+                    <div className="landing-vlayer landing-vlayer-back" aria-hidden="true">
+                      <Image
+                        src={b.atras[0]}
+                        alt=""
+                        width={b.ancho}
+                        height={b.atrasAlto[0]}
+                        /* next/image mete lazy por defecto, y una capa tapada no
+                           llega a cargarse nunca. */
+                        loading="eager"
+                      />
+                    </div>
+                  )}
 
                   <div className="landing-vlayer landing-vlayer-front">
-                    <Image
-                      src={b.frente}
-                      alt={t(b.titulo)}
-                      width={b.ancho}
-                      height={b.alto}
-                      /* Sin lazy a proposito: el hueco de la version anterior
-                         era justo la imagen sin cargar. Con 352 KB en total son
-                         cuatro ficheros y cargar al entrar a la seccion es
-                         mejor que ver un rectangulo vacio. */
-                      loading="eager"
-                    />
                     {b.clave === "kpis" ? (
-                      /* Las ocho cifras del panel, ENCIMA de la foto, en la misma
-                         posicion y con el mismo tamano que tenian dentro del PNG.
-
-                         La foto, su recorte y su inclinacion NO se tocan: la
-                         tarjeta se ve igual que las otras tres. Lo unico que
-                         cambia es que estos numeros se mueven. Y las de la
-                         columna izquierda se ven cortadas por el mismo borde que
-                         las de la foto, que es lo que se veia. */
-                      <CifrasAnimadas />
-                    ) : null}
+                      /* El panel de indicadores entero, en HTML, con las mismas
+                         clases del dashboard. Se ve igual que la foto y se
+                         anima entera. El recorte y la inclinacion los pone el
+                         contenedor, como en las otras tres tarjetas. */
+                      <PanelAnimado />
+                    ) : (
+                      <Image
+                        src={b.frente}
+                        alt={t(b.titulo)}
+                        width={b.ancho}
+                        height={b.alto}
+                        /* Sin lazy a proposito: el hueco de la version anterior
+                           era justo la imagen sin cargar. Con 352 KB en total son
+                           cuatro ficheros y cargar al entrar a la seccion es
+                           mejor que ver un rectangulo vacio. */
+                        loading="eager"
+                      />
+                    )}
                   </div>
                 </div>
               </article>
