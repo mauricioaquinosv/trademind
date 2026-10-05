@@ -461,7 +461,12 @@
   height: 200px;
   border-radius: 12px;
   overflow: hidden;
-  transform-origin: 30% 40%;
+  /* El origen del giro, en el centro. Con 30% 40% el panel rotaba sobre un
+     punto cercano a su esquina, y eso hacia que el lado izquierdo se separase
+     cada vez mas hacia abajo (9, 11, 13, 15 px), que es justo lo que hacia
+     que las tarjetas de la izquierda se salieran del escenario.
+     Con el centro, el giro se reparte igual a los dos lados. */
+  transform-origin: 50% 50%;
   backface-visibility: hidden;
 }
 
@@ -567,9 +572,110 @@
  * Esto hace que la ficha de metricas sea unos 18 px mas alta que las demas. Se
  * acepta: es preferible a que falte un indicador.
  */
+/* ------------------------------------------------------------------ */
+/* La tarjeta de metricas: panel de texto DENTRO de la escena 3D       */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Aqui esta el equilibrio, y es lo que no se habia achieved antes.
+ *
+ * El giro de las otras tres tarjetas es de -26deg en Y y 11deg en X, con el
+ * panel al 144% y desplazado -22%: eso esta bien para una FOTO porque no hay
+ * nada que leer, solo se ensena un trozo grande. Aplicado a un panel de TEXTO
+ * deja las cifras en una columna de 20 px, que es lo que se vio.
+ *
+ * Asi que aqui el mismo efecto pero dosificado:
+ *
+ *   - Giro suave: -13 en Y y 6 en X, la mitad. Se sigue leyendo que el panel
+ *     esta inclinado, pero ya no colapsa el ancho.
+ *   - El panel entra casi entero, al 112% y desplazado -6%. Con el 144% solo
+ *     se veia una fraccion.
+ *   - Detras va una capa REAL (la captura del mismo panel), apagada y
+ *     desplazada. Una imagen sola no tiene fondo: por eso se veia plana. El
+ *     fondo es lo que da la sensacion de profundidad.
+ *   - Sin mascara de difuminado, para que la ultima fila no se desvanzca.
+ *
+ * El alto sale de medir: el panel mide 240 px, y con el giro y el desplazamiento
+ * de la capa de atras hacen falta 300.
+ */
 .landing-vscene-kpis {
-  /* Se queda sin usar: la tarjeta de metricas ya no pasa por la escena 3D. */
-  display: none;
+  height: 300px;
+  /* PERSPECTIVE LARGA: 2200 en vez de 1400.
+   *
+   * Medido: con 1400, el giro de -13 grados desplazaba la columna izquierda
+   * entre 9 y 16 px hacia fuera (y cada fila un poco mas, porque el giro crece
+   * hacia abajo). Con 2200 la proyeccion es mas plana y el desplazamiento cae
+   * por debajo de los 8 px, que es lo que se puede absorbing con un margen sin
+   * ensanchar el panel.
+   *
+   * Es el mismo truco que usan las otras tres tarjetas, pero mas marcado,
+   * porque aqui el panel es de texto y no puede perder ni un caracter. */
+  perspective: 2200px;
+  perspective-origin: 50% 25%;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/*
+ * EL ANCHO ES LO QUE HACE QUE LAS CIFRAS SEAN LEGIBLES.
+ *
+ * Con width:112% la caja media 318 px dentro de una escena de 279: el giro la
+ * saca por los dos lados y las ocho tarjetas quedaban cortadas.
+ *
+ * Aqui va al 100% (279 px), que con el giro de -13 grados se ve entero pero
+ * inclinado. El alto se queda en 236 px porque el panel mide 240 y con el
+ * margen del padding de la tarjeta cabe justo.
+ */
+.landing-vscene-kpis .landing-vlayer-front {
+  top: 6px;
+  /* SOLO rotateX, NADA de rotateY, Y SIN MARGENES.
+   *
+   * Se probo con margins negativos (-9, -13 px) pensando que compensaban el
+   * desplazamiento del giro, y hacian lo contrario: cuanto mas negativo era el
+   * left, MAS se salia la columna izquierda (9, luego 13). El margen no
+   * compensa el giro, lo amplifica.
+   *
+   * Asi que left:0 y width:100%, que es lo natural. Queda un recorte de 1-2 px
+   * en las dos filas de abajo, que es la sombra de la caja y no la cifra: con
+   * overflow:hidden del contenedor no se ve nada.
+   *
+   * El rotateY si hay que quitarlo: es el que de verdad empuja el panel hacia
+   * un lado (5, 7, 10 y 12 px segun la fila, porque el giro se acumula hacia
+   * abajo). El rotateX inclina hacia atras sin sacar nada de lado, y con el solo
+   * la profundidad se sigue viendo.
+   *
+   * El 3D no viene del angulo: viene del translateZ y de la capa de atras, que
+   * es lo que hace que se vea como un objeto y no como texto plano. */
+  left: 0;
+  width: 100%;
+  height: 236px;
+  padding: 0;
+  transform: rotateX(9deg) translateZ(20px);
+}
+
+.landing-vscene-kpis .landing-vlayer-back {
+  top: 24px;
+  left: 4px;
+  width: 100%;
+  height: 236px;
+  /* Tambien sin rotateY, por el mismo motivo que la capa de delante. */
+  transform: rotateX(13deg) translateZ(-30px);
+}
+
+/* La capa de atras es una foto del mismo panel: se apaga mas que en las otras
+   tarjetas para que no compita con las cifras de delante. */
+.landing-vscene-kpis .landing-vlayer-back img {
+  filter: saturate(0.4) brightness(0.35);
+  opacity: 0.45;
+}
+
+/* Al pasar el raton el panel se endereza un poco, como en las otras tres. */
+.landing-vcard:hover .landing-vscene-kpis .landing-vlayer-front {
+  transform: rotateX(5deg) translateZ(30px);
+}
+
+.landing-vcard:hover .landing-vscene-kpis .landing-vlayer-back {
+  transform: rotateX(15deg) translateZ(-20px);
 }
 
 /* La de atras: mas pequeña, mas inclinada y apagada. */

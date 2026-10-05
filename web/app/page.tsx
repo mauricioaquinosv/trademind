@@ -264,17 +264,40 @@ export default async function LandingPage() {
                 <p>{t(b.cuerpo)}</p>
 
                 {"panelVivo" in b ? (
-                  /* LA TARJETA DE METRICAS NO LLEVA ESCENA 3D.
+                  /* LA TARJETA DE METRICAS TAMBIEN LLEVA ESCENA 3D.
                    *
-                   * Las otras tres muestran una foto, y una foto se puede inclinar,
-                   * ampliar y recortar porque no hay nada que leer. Este panel es
-                   * texto de verdad: inclinado y recortado se convertia en una
-                   * tira de 20 px a la izquierda, ilegible, que es lo que se
-                   * vio. Y ademas incumple la condicion del usuario: un panel
-                   * torcido no puede parecerse al dashboard, que es recto.
+                   * Se quito en el commit anterior porque el giro fuerte
+                   * (-26deg) mas el recorte al 144% dejaban las cifras en una
+                   * tira de 20 px. Ese error no fue quitar el 3D: fue no
+                   * dosificarlo. aqui van las dos cosas a la vez:
                    *
-                   * Por eso aqui va de frente, a tamano real y sin recorte. */
-                  <ContadorMetricas />
+                   *   - El panel de delante es de TEXTO y cuenta, asi que entra
+                   *     casi entero (112%) y con un giro suave: -13 grados en vez
+                   *     de -26. Asi se ve el panel entero, se lee, y aun asi se
+                   *     ve que esta inclinado.
+                   *   - Detras va una CAPA REAL, la captura del mismo panel,
+                   *     apagada y desplazada. Eso es lo que da profundidad: una
+                   *     sola foto no tiene fondo, se ve plana por definition.
+                   *
+                   * La capa de atras NO es el grafico de PnL como estaba antes:
+                   * ese se colaba entre las cifras y era solo ruido. */
+                  <div className="landing-vscene landing-vscene-kpis">
+                    <div className="landing-vglow" aria-hidden="true" />
+
+                    <div className="landing-vlayer landing-vlayer-back" aria-hidden="true">
+                      <Image
+                        src={b.frente}
+                        alt=""
+                        width={b.ancho}
+                        height={b.alto}
+                        loading="eager"
+                      />
+                    </div>
+
+                    <div className="landing-vlayer landing-vlayer-front">
+                      <ContadorMetricas />
+                    </div>
+                  </div>
                 ) : (
                   /* Las otras tres: foto con capas 3D. */
                   <div className="landing-vscene">
