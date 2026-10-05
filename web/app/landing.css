@@ -314,188 +314,234 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Las vistas: composicion con profundidad                             */
+/* Las vistas: monton de paneles con profundidad                       */
 /* ------------------------------------------------------------------ */
 
 /*
- * Cada bloque de la seccion "las 4 vistas" es un panel REAL del dashboard, no
- * una captura de la pagina entera. Se apilan e inclinan para dar profundidad:
- * lo que va detras se ve un poco, lo de delante tapa el resto, y sale la
- * sensacion de que hay un monton de cosas detras, que es lo que hace la
- *competencia y lo que ninguna foto plana da.
+ * Cada ficha es un panel REAL del dashboard. Se apilan como cartas: la de
+ * delante tapa el resto y solo asoman los bordes de las de atras, y por eso
+ * se ven inclinadas y escaladas hacia dentro.
  *
- * El inclinacion viene de --t: cada capa lo lleva distinto, asi que un solo
- * grupo de reglas sirve para las cuatro vistas.
+ * LAS TRES COSAS QUE HACEN QUE ESTO SE VEA BIEN Y NO FEO:
+ *
+ * 1. Quien recorta es el ESCENARIO (.landing-shot-stage), no la ficha. Las
+ *    capas giradas se salian de la tarjeta y quedaban flotando por debajo como
+ *    rectangulos sueltos, que era lo mas grave. El escenario recorta con
+ *    overflow:hidden y va pegado al canto de la ficha, asi que las capas se
+ *    cortan justo en el borde y el recorte parece intencionado.
+ *
+ * 2. La altura sale de la imagen de delante (--front-h) mas 30 px para que
+ *    asome la capa de fondo. Antes habia un min-height fijo de 380 px que
+ *    dejaba media ficha vacia.
+ *
+ * 3. Columnas y no rejilla: los cuatro paneles tienen altos distintos y con
+ *    rejilla la fila se estiraba dejando un hueco bajo la ficha mas corta.
+ *    Con columnas cada ficha fluye a su alto natural y no queda ningun hueco.
  */
-.landing-stack {
-  position: relative;
-  /* El alto lo fijan las capas de atras, que son absolutas. Este es el hueco
-     reservado para la de delante. */
-  min-height: 380px;
-  margin-top: 12px;
+.landing-cols {
+  margin-top: 34px;
+  column-count: 2;
+  column-gap: 18px;
 }
 
-/* La capa de DELANTE: la que se ve completa. */
-.landing-stack-front {
-  position: relative;
-  z-index: 4;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  background: var(--panel-solid);
-  box-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.85);
+.landing-cols > * {
+  break-inside: avoid;
+  margin-bottom: 18px;
 }
 
-/* Las capas de DETRAS. Se salen por un borde a proposito: eso es lo que
-   insinua que hay mas cosas debajo. */
-.landing-stack-back {
-  position: absolute;
-  z-index: 1;
-  border-radius: 12px;
-  border: 1px solid var(--line);
-  background: var(--panel);
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.landing-stack-back img {
-  display: block;
-  width: 100%;
-  height: auto;
-  /* Se atenuan para que se lean como fondo y no compitan con el frente. */
-  filter: saturate(0.7) brightness(0.55);
-  opacity: 0.55;
-}
-
-/* La sombra de color Detras del monton: es lo que hace que el grupo parezca
-   iluminado y no pegado sobre el fondo. */
-.landing-stack-glow {
-  position: absolute;
-  z-index: 0;
-  inset: 18% -12% -8% -12%;
-  border-radius: 50%;
-  background: radial-gradient(
-    ellipse at 50% 60%,
-    color-mix(in srgb, var(--shot) 32%, transparent),
-    transparent 68%
-  );
-  filter: blur(28px);
-  pointer-events: none;
-}
-
-.landing-shot-img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-/* Etiqueta de la esquina: el nombre de la vista, en el color de esa vista. */
-.landing-stack-tag {
-  position: absolute;
-  z-index: 5;
-  top: -11px;
-  left: 18px;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--shot);
-  background: var(--bg);
-  border: 1px solid color-mix(in srgb, var(--shot) 45%, transparent);
-  border-radius: 999px;
-  padding: 4px 12px;
-}
-
-/* ------------------------------------------------------------------ */
-/* Tarjeta con captura: cabecera de color + imagen de debajo           */
-/* ------------------------------------------------------------------ */
-
-/*
- * El header lleva el degradado y la imagen va PEGADA debajo, sin hueco, para
- * que la tarjeta parezca una sola pieza y no una foto metida en una caja.
- * Por eso el overflow:hidden y el padding-bottom:0.
- */
 .landing-shot {
   background: var(--panel);
   backdrop-filter: blur(20px);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   overflow: hidden;
-  padding-bottom: 0;
   display: flex;
   flex-direction: column;
+  transition:
+    transform 0.35s cubic-bezier(0.2, 0.7, 0.3, 1),
+    border-color 0.3s ease,
+    box-shadow 0.35s ease;
 }
 
 .landing-shot-head {
-  padding: 24px 24px 20px;
-  /* El color de cada tarjeta se pasa por --shot y el degradado se construye con
-     el, para que una sola regla sirva para las cuatro vistas.
-
-     El color va CON ALPHA BAJO y se mezclacon el fondo del panel: a opacidad
-     completa el parrafo gris se perdia encima del turquesa. Y el degradado
-     termina ANTES de la derecha (60%), porque si llega hasta abajo el texto de
-     la mitad de la tarjeta caia sobre la parte mas clara y no se leia. */
-  background: linear-gradient(
-    120deg,
-    color-mix(in srgb, var(--shot) 30%, transparent),
-    transparent 60%
-  );
-  border-bottom: 1px solid var(--line);
+  padding: 22px 24px 16px;
 }
 
 .landing-shot-head h3 {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
   letter-spacing: -0.01em;
   margin: 0 0 7px;
+  transition: color 0.3s ease;
 }
 
+/* Dos lineas, ni una mas. Con cinco lineas de parrafo la imagen pasaba a ser
+   un detalle y la ficha se leia como un muro de texto. */
 .landing-shot-head p {
-  /* --muted se ve bien sobre el panel, pero con el tinte de color de fondo
-     hace falta subirlo un poco para mantener el contraste. */
-  color: #B4B9CA;
+  color: var(--muted);
   font-size: 14px;
   line-height: 1.55;
   margin: 0;
-  /* La columna se queda corta para que la ultima linea no caiga sobre la parte
-     mas clara del degradado. */
-  max-width: 46ch;
 }
 
-/* Marco de la captura. El inset deja ver el borde de color de la cabecera,
-   que es lo que da el aspecto de "ventana". */
-.landing-shot-body {
-  padding: 16px 16px 0;
-  background: var(--panel2);
-  flex: 1;
+.landing-shot-stage {
+  position: relative;
+  height: calc(var(--front-h) + 30px);
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+}
+
+.landing-stack-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  pointer-events: none;
+  transform-origin: top center;
+}
+
+.landing-stack-back img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: saturate(0.65) brightness(0.5);
+  opacity: 0.5;
+}
+
+.landing-stack-front {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 3;
+  border-radius: 10px 10px 0 0;
+  overflow: hidden;
+  background: var(--panel-solid);
+  box-shadow: 0 18px 44px -14px rgba(0, 0, 0, 0.9);
 }
 
 .landing-shot-img {
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 8px 8px 0 0;
-  border: 1px solid var(--line);
-  border-bottom: none;
 }
 
-/* El boton de Next.js (el circulo con la N) sale en las capturas del navegador
-   de desarrollo y no debe aparecer en la landing. No se puede quitar desde el
-   CSS de la pagina, asi que se recorta con el contenedor: el marco de la
-   captura esconde la esquina inferior izquierda. */
-.landing-shot-body {
-  position: relative;
-}
-
-/* El degradado que se difumina en el borde inferior de la captura, para que
-   no corte en seco la ultima fila de la tabla. */
-.landing-shot-fade {
-  height: 46px;
-  margin-top: -46px;
-  position: relative;
-  background: linear-gradient(transparent, var(--bg));
+.landing-stack-glow {
+  position: absolute;
+  z-index: 0;
+  inset: 30% -18% -14%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 50% 60%,
+    color-mix(in srgb, var(--shot) 30%, transparent),
+    transparent 70%
+  );
+  filter: blur(30px);
   pointer-events: none;
+  opacity: 0.75;
+  transition: opacity 0.35s ease;
+}
+
+/* Reposo: las capas se separan hacia abajo-derecha y se escalan para que la
+   de delante siga mandando. */
+.stack-back-2 {
+  transform: translate(26px, 26px) rotate(9deg) scale(0.9);
+  transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.stack-back-1 {
+  transform: translate(13px, 13px) rotate(4.5deg) scale(0.955);
+  transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+/* ------------------------------------------------------------------ */
+/* Movimiento                                                          */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Entrada: la ficha sube y aparece al llegar a la vista. Con
+ * animation-timeline: view(), que es CSS puro: ni JavaScript ni un
+ * IntersectionObserver.
+ *
+ * Va DENTRO de @supports a proposito: fuera de el la ficha se ve normal. En un
+ * navegador sin soporte no hay animacion, pero tampoco hay nada roto.
+ */
+@keyframes landing-ficha-entra {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .landing-cols > .landing-shot {
+    animation: landing-ficha-entra linear both;
+    animation-timeline: view();
+    animation-range: entry 5% cover 26%;
+  }
+}
+
+/* Al pasar el raton: la ficha se levanta, el canto se ilumina en el color de su
+   vista, el resplandor sube y las capas de atras se separan mas. Eso ultimo es
+ * lo que deja ver que hay un monton y no una sola foto.
+ *
+ * Solo con punteros reales: en movil no hay hover y el :hover se queda pegado
+ * al tocar la pantalla.
+ */
+@media (hover: hover) and (pointer: fine) {
+  .landing-shot:hover {
+    transform: translateY(-6px);
+    border-color: color-mix(in srgb, var(--shot) 42%, transparent);
+    box-shadow:
+      0 28px 60px -20px rgba(0, 0, 0, 0.92),
+      0 0 0 1px color-mix(in srgb, var(--shot) 20%, transparent);
+  }
+
+  .landing-shot:hover .landing-stack-glow {
+    opacity: 1;
+  }
+
+  .landing-shot:hover .landing-shot-head h3 {
+    color: color-mix(in srgb, var(--shot) 62%, var(--text));
+  }
+
+  .landing-shot:hover .stack-back-2 {
+    transform: translate(40px, 40px) rotate(11deg) scale(0.87);
+  }
+
+  .landing-shot:hover .stack-back-1 {
+    transform: translate(20px, 20px) rotate(6deg) scale(0.945);
+  }
+}
+
+/* Quien no quiera movimiento, no lo tiene. */
+@media (prefers-reduced-motion: reduce) {
+  .landing-cols > .landing-shot {
+    animation: none !important;
+  }
+
+  .landing-shot,
+  .landing-shot-head h3,
+  .stack-back-1,
+  .stack-back-2,
+  .landing-stack-glow {
+    transition: none !important;
+  }
+
+  .landing-shot:hover {
+    transform: none;
+  }
+
+  .landing-shot:hover .stack-back-1,
+  .landing-shot:hover .stack-back-2 {
+    transform: none;
+  }
 }
 
 /* Variante de la tarjeta con una pasada de color por arriba, sin captura.
@@ -667,5 +713,31 @@
   .landing-nav-right {
     flex-wrap: wrap;
     justify-content: flex-end;
+  }
+
+  /* Una sola columna. Ademas el desplazamiento de las capas se reduce: en una
+     pantalla estrecha un monte de 26 px saca la imagen de la ficha. */
+  .landing-cols {
+    column-count: 1;
+  }
+
+  .stack-back-2 {
+    transform: translate(16px, 16px) rotate(6deg) scale(0.93);
+  }
+
+  .stack-back-1 {
+    transform: translate(8px, 8px) rotate(3deg) scale(0.965);
+  }
+}
+
+/* Pantallas muy estrechas: el margen de las capas se aparta mas, porque el
+   borde de la ficha esta cada vez mas cerca de la imagen. */
+@media (max-width: 420px) {
+  .stack-back-2 {
+    transform: translate(10px, 10px) rotate(4deg) scale(0.95);
+  }
+
+  .stack-back-1 {
+    transform: translate(5px, 5px) rotate(2deg) scale(0.98);
   }
 }
