@@ -2,6 +2,10 @@
 import Image from "next/image";
 import { cookies } from "next/headers";
 import LanguageSwitcher from "../lib/i18n/LanguageSwitcher";
+// Componente de cliente: es el unico trozo de la landing que necesita
+// JavaScript, y solo porque los numeros tienen que contar. El resto de la pagina
+// sigue renderizandose en servidor.
+import ContadorMetricas from "./components/ContadorMetricas";
 import {
   LOCALE_COOKIE,
   normalizarLocale,
@@ -48,6 +52,10 @@ export default async function LandingPage() {
       ancho: 590,
       alto: 498,
       atrasAlto: [384, 392],
+      // Esta tarjeta no usa la foto del frente: monta el panel de indicadores en
+      // HTML con las mismas clases del dashboard, para que los numeros puedan
+      // contar. atras[0] queda de fondo, inclinado.
+      panelVivo: true,
     },
     {
       clave: "calendario",
@@ -258,7 +266,7 @@ export default async function LandingPage() {
                 {/* La escena en 3D. La capa de delante entra al 150% y la
                     tarjeta la recorta, asi que se ve un detalle grande del
                     panel en vez del panel entero y pequeno. */}
-                <div className="landing-vscene">
+                <div className={b.clave === "kpis" ? "landing-vscene landing-vscene-kpis" : "landing-vscene"}>
                   <div className="landing-vglow" aria-hidden="true" />
 
                   <div className="landing-vlayer landing-vlayer-back" aria-hidden="true">
@@ -274,17 +282,22 @@ export default async function LandingPage() {
                   </div>
 
                   <div className="landing-vlayer landing-vlayer-front">
-                    <Image
-                      src={b.frente}
-                      alt={t(b.titulo)}
-                      width={b.ancho}
-                      height={b.alto}
-                      /* Sin lazy a proposito: el hueco de la version anterior
-                         era justo la imagen sin cargar. Con 352 KB en total son
-                         cuatro ficheros y cargar al entrar a la seccion es
-                         mejor que ver un rectangulo vacio. */
-                      loading="eager"
-                    />
+                    {"panelVivo" in b ? (
+                      /* El panel de indicadores en HTML. El componente lleva su
+                         propio onMouseEnter, asi que la cascada la arranca el
+                         raton al entrar en el panel, no en la ficha. */
+                      <ContadorMetricas />
+                    ) : (
+                      <Image
+                        src={b.frente}
+                        alt={t(b.titulo)}
+                        width={b.ancho}
+                        height={b.alto}
+                        /* Sin lazy a proposito: el hueco de la version anterior
+                           era justo la imagen sin cargar. */
+                        loading="eager"
+                      />
+                    )}
                   </div>
                 </div>
               </article>

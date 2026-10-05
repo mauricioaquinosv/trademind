@@ -24,6 +24,10 @@ FICHEROS = [
     "app/components/SummaryView.tsx",
     "app/components/AnalyticsView.tsx",
     "app/components/CfControls.tsx",
+    # La tarjeta de metricas con los numeros vivos. Tambien entra en la lista:
+    # los nombres de los indicadores tienen que venir del diccionario igual que
+    # en el resto de la app.
+    "app/components/ContadorMetricas.tsx",
     "app/login/page.tsx",
     "app/layout.tsx",
 ]
