@@ -19,6 +19,7 @@ import sys
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 
 FICHEROS = [
+    "app/page.tsx",
     "app/dashboard/page.tsx",
     "app/components/SummaryView.tsx",
     "app/components/AnalyticsView.tsx",

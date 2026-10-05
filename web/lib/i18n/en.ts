@@ -349,6 +349,88 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "header.dashboard": "Dashboard",
 
   // ------------------------------------------------------------------
+  // Landing (página pública)
+  // ------------------------------------------------------------------
+  "landing.badge": "Trading journal",
+  "landing.nav.login": "Sign in",
+  "landing.nav.signup": "Create account",
+
+  "landing.hero.title": "The trading journal that tells you",
+  "landing.hero.titleAccent": "how you win.",
+  "landing.hero.sub": "Upload your broker's real report and look at your numbers: win rate, profit factor, which days you make money and how much risk you take. Without trading a single position.",
+  "landing.hero.cta": "Create account",
+  "landing.hero.cta2": "See the dashboard",
+
+  "landing.problem.eyebrow": "The problem",
+  "landing.problem.title": "Your win rate isn't the one you think",
+  "landing.problem.body": "Every trader knows how much they made last month. Almost none knows why. And without that answer, every decision is still a guess.",
+  "landing.problem.p1.title": "You trade blind",
+  "landing.problem.p1.body": "You know you were profitable. You don't know which weekday, what time, or on which symbol you actually make money.",
+  "landing.problem.p2.title": "The total result says nothing",
+  "landing.problem.p2.body": "Twelve months and +8% won't tell you whether that month was one good streak and eleven bad ones, or the other way round.",
+  "landing.problem.p3.title": "Nobody points out the pattern",
+  "landing.problem.p3.body": "Your best day and your worst day are in your data. Nobody shows them to you.",
+
+  "landing.how.eyebrow": "How it works",
+  "landing.how.title": "Three steps, without changing how you trade",
+  "landing.how.s1.title": "Upload your report",
+  "landing.how.s1.body": "The file your broker already gives you. As it is: no renaming columns and no mapping fields by hand.",
+  "landing.how.s2.title": "TradeMind calculates",
+  "landing.how.s2.body": "We reconcile your trades with FIFO and compute every metric from your data, not from estimates.",
+  "landing.how.s3.title": "See the truth",
+  "landing.how.s3.body": "Where you make money, where you lose it, and what you're really doing with your risk.",
+
+  "landing.views.eyebrow": "What you'll see",
+  "landing.views.title": "Four views, one place",
+  "landing.views.lead": "These are real screenshots of the dashboard, with 152 trades imported from an MT5 report. Not renderings.",
+  "landing.views.summary.title": "Summary",
+  "landing.views.summary.body": "Eight global metrics, the cumulative PnL chart, the six-axis radar with your score, a day-by-day calendar and a summary for every week.",
+  "landing.views.trades.title": "Trades",
+  "landing.views.trades.body": "A table with date filters, the columns you choose, sorting, pagination, and the ability to edit or delete every trade.",
+  "landing.views.accounts.title": "Accounts",
+  "landing.views.accounts.body": "Several accounts, each with its balance, its currency and its source. Switch between them without losing anything.",
+  "landing.views.analytics.title": "Analytics",
+  "landing.views.analytics.body": "Performance by symbol, with five cards and a selector for metric and sort order.",
+
+  "landing.import.eyebrow": "What sets us apart",
+  "landing.import.title": "Importing is the hard part, and that's not a competition for us",
+  "landing.import.body": "Almost every journal falls apart right here: columns that don't match, dates that won't parse, trades that get lost. TradeMind reads the MT5 report directly. And if your broker isn't MT5, you have the Excel template and manual entry.",
+  "landing.import.mt5.title": "MetaTrader 5",
+  "landing.import.mt5.body": "The closed-trades report is imported exactly as the broker generates it.",
+  "landing.import.excel.title": "Excel template",
+  "landing.import.excel.body": "A template with the columns you need. You fill it in and upload it.",
+  "landing.import.manual.title": "Manual entry",
+  "landing.import.manual.body": "If you'd rather add them one by one, you can.",
+  "landing.import.universal.title": "Universal reader",
+  "landing.import.universal.body": "Generic CSV and Excel files: it reads the table and proposes the columns for you.",
+
+  "landing.langs.eyebrow": "Language",
+  "landing.langs.title": "Two languages, properly done",
+  "landing.langs.body": "The entire interface is available in Spanish and English, including error messages and form validation. This isn't machine translation: if a string isn't translated, the application doesn't compile.",
+
+  "landing.faq.eyebrow": "Questions",
+  "landing.faq.title": "What people usually ask us",
+  "landing.faq.q1": "Do I have to connect my broker?",
+  "landing.faq.a1": "No. TradeMind never connects to your broker and never asks for your credentials. You upload a file and you're done.",
+  "landing.faq.q2": "Does it work if I don't use MetaTrader?",
+  "landing.faq.a2": "Yes. The MT5 reader is automatic, but with the Excel template or manual entry you can bring in any broker.",
+  "landing.faq.q3": "Who can see my data?",
+  "landing.faq.a3": "Only you. We don't share trades with anyone and don't use them for anything outside your own account.",
+  "landing.faq.q4": "Can I track several accounts?",
+  "landing.faq.a4": "Yes. Each account keeps its balance, its currency and its history, and you can analyse them separately.",
+  "landing.faq.q5": "How long until I see anything?",
+  "landing.faq.a5": "As soon as the import finishes, which is immediate. There's nothing to wait for.",
+  "landing.faq.q6": "Can I correct a trade?",
+  "landing.faq.a6": "Yes. Editing and deleting trades is right there in the dashboard.",
+
+  "landing.final.title": "Start by knowing the truth",
+  "landing.final.body": "Create an account and upload your report. It takes you less time than deciding whether this is useful to you.",
+
+  "landing.legal.title": "Notice",
+  "landing.legal.body": "TradeMind is a record-keeping and analysis tool. We do not provide investment recommendations or financial advice, and we do not trade on your behalf. Leveraged trading carries a high level of risk and can result in the total loss of your invested capital. No statistic or result shown on this website is a promise of future performance.",
+  "landing.footer.rights": "All rights reserved.",
+
+  // ------------------------------------------------------------------
   // Meses y días
   // ------------------------------------------------------------------
   "months.full": [

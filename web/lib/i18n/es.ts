@@ -348,6 +348,88 @@ export const es = {
   "header.dashboard": "Dashboard",
 
   // ------------------------------------------------------------------
+  // Landing (página pública)
+  // ------------------------------------------------------------------
+  "landing.badge": "Diario de trading",
+  "landing.nav.login": "Iniciar sesión",
+  "landing.nav.signup": "Crear cuenta",
+
+  "landing.hero.title": "El diario de trading que te dice",
+  "landing.hero.titleAccent": "cómo ganas.",
+  "landing.hero.sub": "Sube el reporte real de tu broker y mira tus números: winrate, profit factor, qué días ganas y cuánto riesgo tomas. Sin operar un solo trade.",
+  "landing.hero.cta": "Crear cuenta",
+  "landing.hero.cta2": "Ver el dashboard",
+
+  "landing.problem.eyebrow": "El problema",
+  "landing.problem.title": "Tu winrate no es el que crees",
+  "landing.problem.body": "Todo trader sabe cuánto ganó el mes pasado. Casi ninguno sabe por qué. Y sin esa respuesta, cada decisión sigue siendo una apuesta.",
+  "landing.problem.p1.title": "Operas en vacío",
+  "landing.problem.p1.body": "Sabes que ganaste. No sabes qué día de la semana, ni a qué hora, ni sobre qué símbolo te sale rentable.",
+  "landing.problem.p2.title": "El resultado total no dice nada",
+  "landing.problem.p2.body": "Doce meses y un +8% no te dicen si ese mes fue una buena racha y once malos, o al revés.",
+  "landing.problem.p3.title": "Nadie te señala el patrón",
+  "landing.problem.p3.body": "Tu mejor día y tu peor día están ahí, en tus datos. Solo que nadie te los enseña.",
+
+  "landing.how.eyebrow": "Cómo funciona",
+  "landing.how.title": "Tres pasos, sin cambiar tu forma de operar",
+  "landing.how.s1.title": "Sube tu reporte",
+  "landing.how.s1.body": "El archivo que tu broker ya te da. Tal cual: sin renombrar columnas y sin mapear campos a mano.",
+  "landing.how.s2.title": "TradeMind calcula",
+  "landing.how.s2.body": "Reconciliamos las operaciones con FIFO y calculamos cada indicador sobre tus datos, no sobre estimaciones.",
+  "landing.how.s3.title": "Mira la verdad",
+  "landing.how.s3.body": "Dónde ganas, dónde pierdes y qué estás haciendo realmente con tu riesgo.",
+
+  "landing.views.eyebrow": "Lo que ves",
+  "landing.views.title": "Cuatro vistas, un solo lugar",
+  "landing.views.lead": "Estas son capturas reales del panel, con 152 operaciones importadas del reporte de MT5. No son dibujos.",
+  "landing.views.summary.title": "Resumen",
+  "landing.views.summary.body": "Ocho indicadores globales, el gráfico de PnL acumulado, el radar de seis ejes con tu puntaje, el calendario día a día y el resumen de cada semana.",
+  "landing.views.trades.title": "Operaciones",
+  "landing.views.trades.body": "Tabla con filtros por fecha, las columnas que elijas, orden, paginación, y editar o borrar cada operación.",
+  "landing.views.accounts.title": "Cuentas",
+  "landing.views.accounts.body": "Varias cuentas, cada una con su saldo, su moneda y su origen. Cambia de una a otra sin perder nada.",
+  "landing.views.analytics.title": "Analítica",
+  "landing.views.analytics.body": "Rendimiento por símbolo, con cinco tarjetas y selector de métrica y de orden.",
+
+  "landing.import.eyebrow": "Lo que nos diferencia",
+  "landing.import.title": "La importación es lo difícil, y ahí no competimos",
+  "landing.import.body": "Casi todos los journals se caen justo aquí: columnas que no coinciden, fechas que no se leen, operaciones que se pierden. TradeMind lee el reporte de MT5 directamente. Y si tu broker no es MT5, tienes la plantilla de Excel y la carga manual.",
+  "landing.import.mt5.title": "MetaTrader 5",
+  "landing.import.mt5.body": "El reporte de operaciones cerradas se importa tal cual lo genera el broker.",
+  "landing.import.excel.title": "Plantilla de Excel",
+  "landing.import.excel.body": "Una plantilla con las columnas que necesitas. La llenas y la subes.",
+  "landing.import.manual.title": "Carga manual",
+  "landing.import.manual.body": "Si prefieres meterlas de una en una, también.",
+  "landing.import.universal.title": "Lector universal",
+  "landing.import.universal.body": "CSV y Excel genéricos: lee la tabla y te propone las columnas.",
+
+  "landing.langs.eyebrow": "Idioma",
+  "landing.langs.title": "Dos idiomas de verdad",
+  "landing.langs.body": "Toda la interfaz está en español y en inglés, incluidos los mensajes de error y las validaciones de los formularios. No es traducción automática: si una cadena no está traducida, la aplicación no compila.",
+
+  "landing.faq.eyebrow": "Preguntas",
+  "landing.faq.title": "Lo que suelen preguntarnos",
+  "landing.faq.q1": "¿Tengo que conectar mi broker?",
+  "landing.faq.a1": "No. TradeMind no se conecta a tu broker ni pide tus credenciales. Subes un archivo y ya está.",
+  "landing.faq.q2": "¿Sirve si no uso MetaTrader?",
+  "landing.faq.a2": "Sí. El lector de MT5 es automático, pero con la plantilla de Excel o la carga manual entra cualquier broker.",
+  "landing.faq.q3": "¿Quién ve mis datos?",
+  "landing.faq.a3": "Solo tú. No compartimos operaciones con nadie ni las usamos para nada ajeno a tu cuenta.",
+  "landing.faq.q4": "¿Puedo llevar varias cuentas?",
+  "landing.faq.a4": "Sí. Cada cuenta tiene su saldo, su moneda y su historial, y las analizas por separado.",
+  "landing.faq.q5": "¿Cuánto tarda en verse?",
+  "landing.faq.a5": "En cuanto acaba la importación, que es inmediata. No hay que esperar a nada.",
+  "landing.faq.q6": "¿Puedo corregir una operación?",
+  "landing.faq.a6": "Sí. Editar y borrar operaciones está en el propio dashboard, sin pedirle permiso a nadie.",
+
+  "landing.final.title": "Empieza por saber la verdad",
+  "landing.final.body": "Crea una cuenta y sube tu reporte. Tardas menos en hacerlo que en decidir si esto te sirve.",
+
+  "landing.legal.title": "Aviso",
+  "landing.legal.body": "TradeMind es una herramienta de registro y análisis. No damos recomendaciones de inversión ni asesoramiento financiero, y no operamos por ti. Operar conapalancamiento implica un riesgo alto y puede terminar con la pérdida total de lo invertido. Ninguna estadística ni ningún resultado mostrado en esta web es una promesa de resultados futuros.",
+  "landing.footer.rights": "Todos los derechos reservados.",
+
+  // ------------------------------------------------------------------
   // Nombres de meses y días (para calendarios y fechas)
   // ------------------------------------------------------------------
   "months.full": [

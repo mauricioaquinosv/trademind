@@ -1,69 +1,346 @@
+﻿import Link from "next/link";
 import Image from "next/image";
+import { cookies } from "next/headers";
+import LanguageSwitcher from "../lib/i18n/LanguageSwitcher";
+import {
+  LOCALE_COOKIE,
+  normalizarLocale,
+  traducir,
+  type TranslationKey,
+} from "../lib/i18n/config";
 
-export default function Home() {
+/**
+ * LANDING PUBLICA.
+ *
+ * Componente de SERVIDOR a proposito: el idioma se lee de la cookie igual que
+ * en layout.tsx, asi que la primera pintura sale en el idioma correcto y no
+ * hay destello. La unica pieza de cliente es el selector de idioma.
+ *
+ * REGLA DE CONTENIDO: aqui solo se afirma lo que TradeMind hace HOY. Cada
+ * linea de esta pagina tiene que ser verdad sin development deployed. No hay
+ * testimonios de usuarios porque no hay usuarios, ni cifras de mercado
+ * inventadas, ni funciones planificadas.
+ */
+
+export default async function LandingPage() {
+  const locale = normalizarLocale((await cookies()).get(LOCALE_COOKIE)?.value);
+  const t = (clave: TranslationKey) => traducir(locale, clave);
+
+  // Las cuatro vistas del dashboard. Cada una lleva su captura REAL, hecha del
+  // panel con los 152 trades del reporte de MT5 que hay en la base de datos:
+  // nada de esto es un dibujo ni un mockup.
+  //
+  // next/image con width/height porque son imagenes estaticas servidas desde
+  // public/. Sin esas medidas Next no puede reservar el hueco y la pagina
+  // salta al cargar.
+  const vistas = [
+    {
+      clave: "summary",
+      titulo: "landing.views.summary.title",
+      cuerpo: "landing.views.summary.body",
+      color: "var(--teal)",
+      captura: "/landing/shot-resumen.png",
+      ancho: 630,
+      alto: 595,
+    },
+    {
+      clave: "trades",
+      titulo: "landing.views.trades.title",
+      cuerpo: "landing.views.trades.body",
+      color: "var(--pink)",
+      captura: "/landing/shot-trades.png",
+      ancho: 630,
+      alto: 595,
+    },
+    {
+      clave: "accounts",
+      titulo: "landing.views.accounts.title",
+      cuerpo: "landing.views.accounts.body",
+      color: "var(--gold)",
+      captura: "/landing/shot-cuentas.png",
+      ancho: 630,
+      alto: 595,
+    },
+    {
+      clave: "analytics",
+      titulo: "landing.views.analytics.title",
+      cuerpo: "landing.views.analytics.body",
+      color: "var(--green)",
+      captura: "/landing/shot-analytics.png",
+      ancho: 630,
+      alto: 595,
+    },
+  ] as const;
+
+  // Las cuatro vias de entrada de datos. Es el bloque que mas nos diferencia.
+  // El color se alterna turquesa/rosa para que la rejilla no quede monotonous.
+  const importaciones = [
+    {
+      titulo: "landing.import.mt5.title",
+      cuerpo: "landing.import.mt5.body",
+      color: "var(--teal)",
+    },
+    {
+      titulo: "landing.import.excel.title",
+      cuerpo: "landing.import.excel.body",
+      color: "var(--pink)",
+    },
+    {
+      titulo: "landing.import.manual.title",
+      cuerpo: "landing.import.manual.body",
+      color: "var(--gold)",
+    },
+    {
+      titulo: "landing.import.universal.title",
+      cuerpo: "landing.import.universal.body",
+      color: "var(--green)",
+    },
+  ] as const;
+
+  const pasos = [
+    { titulo: "landing.how.s1.title", cuerpo: "landing.how.s1.body" },
+    { titulo: "landing.how.s2.title", cuerpo: "landing.how.s2.body" },
+    { titulo: "landing.how.s3.title", cuerpo: "landing.how.s3.body" },
+  ] as const;
+
+  const problemas = [
+    { titulo: "landing.problem.p1.title", cuerpo: "landing.problem.p1.body" },
+    { titulo: "landing.problem.p2.title", cuerpo: "landing.problem.p2.body" },
+    { titulo: "landing.problem.p3.title", cuerpo: "landing.problem.p3.body" },
+  ] as const;
+
+  const preguntas = [
+    { q: "landing.faq.q1", a: "landing.faq.a1" },
+    { q: "landing.faq.q2", a: "landing.faq.a2" },
+    { q: "landing.faq.q3", a: "landing.faq.a3" },
+    { q: "landing.faq.q4", a: "landing.faq.a4" },
+    { q: "landing.faq.q5", a: "landing.faq.a5" },
+    { q: "landing.faq.q6", a: "landing.faq.a6" },
+  ] as const;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+    <div className="landing">
+      {/* ---------------------------------------------------------- */}
+      {/* Navegacion                                                  */}
+      {/* ---------------------------------------------------------- */}
+      <nav className="landing-nav">
+        <div className="landing-brand">
+          {/* Mismo SVG que el dashboard, byte a byte, para que el logo de
+              la landing y el de la app sean el mismo. */}
+          <svg className="brand-icon" viewBox="0 0 40 40" fill="none">
+            <path
+              d="M20 4c-7 0-11 5-11 11 0 3 1 5 2 7-1 2-2 4-2 6 0 5 4 8 9 8V4z"
+              fill="var(--pink)"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <path
+              d="M20 4c7 0 11 5 11 11 0 3-1 5-2 7 1 2 2 4 2 6 0 5-4 8-9 8V4z"
+              fill="var(--teal)"
+            />
+            <path
+              d="M14 14l3 3-2 3 3 3-2 3"
+              stroke="#05060B"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+            <path
+              d="M26 14l-3 3 2 3-3 3 2 3"
+              stroke="#05060B"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+          </svg>
+          <span className="landing-brand-name">TradeMind</span>
         </div>
-      </main>
+
+        <div className="landing-nav-right">
+          <LanguageSwitcher />
+          <Link href="/login" className="landing-btn">
+            {t("landing.nav.login")}
+          </Link>
+          <Link href="/login" className="landing-btn landing-btn-primary">
+            {t("landing.nav.signup")}
+          </Link>
+        </div>
+      </nav>
+
+      {/* ---------------------------------------------------------- */}
+      {/* Hero                                                        */}
+      {/* ---------------------------------------------------------- */}
+      <section className="landing-hero">
+        <span className="landing-badge">{t("landing.badge")}</span>
+        <h1 className="landing-h1">
+          {t("landing.hero.title")} <em>{t("landing.hero.titleAccent")}</em>
+        </h1>
+        <p className="landing-sub">{t("landing.hero.sub")}</p>
+        <div className="landing-hero-actions">
+          <Link href="/login" className="landing-btn landing-btn-primary landing-btn-lg">
+            {t("landing.hero.cta")}
+          </Link>
+          <Link href="/login" className="landing-btn landing-btn-lg">
+            {t("landing.hero.cta2")}
+          </Link>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------- */}
+      {/* El problema                                                  */}
+      {/* ---------------------------------------------------------- */}
+      <section className="landing-section">
+        <span className="landing-eyebrow">{t("landing.problem.eyebrow")}</span>
+        <h2 className="landing-h2">{t("landing.problem.title")}</h2>
+        <p className="landing-lead">{t("landing.problem.body")}</p>
+        <div className="landing-grid landing-grid-3">
+          {problemas.map((p) => (
+            <article className="landing-card" key={p.titulo}>
+              <h3>{t(p.titulo)}</h3>
+              <p>{t(p.cuerpo)}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------- */}
+      {/* Como funciona                                                */}
+      {/* ---------------------------------------------------------- */}
+      <section className="landing-section">
+        <span className="landing-eyebrow">{t("landing.how.eyebrow")}</span>
+        <h2 className="landing-h2">{t("landing.how.title")}</h2>
+        <div className="landing-grid landing-grid-3">
+          {pasos.map((p, i) => (
+            <article className="landing-card" key={p.titulo}>
+              {/* El numero va en la fuente de las cifras del dashboard. */}
+              <div className="landing-step-n">{i + 1}</div>
+              <h3>{t(p.titulo)}</h3>
+              <p>{t(p.cuerpo)}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------- */}
+      {/* Lo que ves: las cuatro vistas                               */}
+      {/* ---------------------------------------------------------- */}
+      <section className="landing-section">
+        <span className="landing-eyebrow">{t("landing.views.eyebrow")}</span>
+        <h2 className="landing-h2">{t("landing.views.title")}</h2>
+        <p className="landing-lead">{t("landing.views.lead")}</p>
+        <div className="landing-grid landing-grid-2">
+          {vistas.map((v) => (
+            <article
+              className="landing-shot"
+              key={v.clave}
+              style={{ "--shot": v.color } as React.CSSProperties}
+            >
+              <div className="landing-shot-head">
+                <h3>{t(v.titulo)}</h3>
+                <p>{t(v.cuerpo)}</p>
+              </div>
+              <div className="landing-shot-body">
+                <Image
+                  className="landing-shot-img"
+                  src={v.captura}
+                  alt={t(v.titulo)}
+                  width={v.ancho}
+                  height={v.alto}
+                  loading="lazy"
+                />
+                <div className="landing-shot-fade" aria-hidden="true" />
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------- */}
+      {/* La importacion: el diferenciador                             */}
+      {/* ---------------------------------------------------------- */}
+      <section className="landing-section">
+        <span className="landing-eyebrow">{t("landing.import.eyebrow")}</span>
+        <h2 className="landing-h2">{t("landing.import.title")}</h2>
+        <p className="landing-lead">{t("landing.import.body")}</p>
+        <div className="landing-grid landing-grid-4">
+          {importaciones.map((i) => (
+            <article
+              className="landing-card landing-card-tinted"
+              key={i.titulo}
+              style={{ "--shot": i.color } as React.CSSProperties}
+            >
+              <h3>{t(i.titulo)}</h3>
+              <p>{t(i.cuerpo)}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------- */}
+      {/* Idioma                                                      */}
+      {/* ---------------------------------------------------------- */}
+      <section className="landing-section">
+        <span className="landing-eyebrow">{t("landing.langs.eyebrow")}</span>
+        <h2 className="landing-h2">{t("landing.langs.title")}</h2>
+        <p className="landing-lead">{t("landing.langs.body")}</p>
+      </section>
+
+      {/* ---------------------------------------------------------- */}
+      {/* Preguntas                                                   */}
+      {/* ---------------------------------------------------------- */}
+      <section className="landing-section">
+        <span className="landing-eyebrow">{t("landing.faq.eyebrow")}</span>
+        <h2 className="landing-h2">{t("landing.faq.title")}</h2>
+        {/* <details> nativo: el desplegar no necesita JavaScript, asi que las
+            preguntas se abren aunque el script aun no haya cargado. */}
+        <div className="landing-faq">
+          {preguntas.map((p) => (
+            <details key={p.q}>
+              <summary>{t(p.q)}</summary>
+              <p>{t(p.a)}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------- */}
+      {/* Cierre                                                      */}
+      {/* ---------------------------------------------------------- */}
+      <section className="landing-final">
+        <h2 className="landing-h2" style={{ margin: "0 auto" }}>
+          {t("landing.final.title")}
+        </h2>
+        <p className="landing-sub">{t("landing.final.body")}</p>
+        <div className="landing-hero-actions">
+          <Link href="/login" className="landing-btn landing-btn-primary landing-btn-lg">
+            {t("landing.hero.cta")}
+          </Link>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------- */}
+      {/* Pie con el aviso legal                                      */}
+      {/* ---------------------------------------------------------- */}
+      <footer className="landing-foot">
+        <div className="landing-foot-brand">
+          <svg className="brand-icon" viewBox="0 0 40 40" fill="none" width="22" height="22">
+            <path
+              d="M20 4c-7 0-11 5-11 11 0 3 1 5 2 7-1 2-2 4-2 6 0 5 4 8 9 8V4z"
+              fill="var(--pink)"
+            />
+            <path
+              d="M20 4c7 0 11 5 11 11 0 3-1 5-2 7 1 2 2 4 2 6 0 5-4 8-9 8V4z"
+              fill="var(--teal)"
+            />
+          </svg>
+          <span className="landing-brand-name">TradeMind</span>
+        </div>
+        <h4>{t("landing.legal.title")}</h4>
+        <p>{t("landing.legal.body")}</p>
+        <p style={{ marginTop: "16px" }}>
+          &copy; 2026 TradeMind &middot; {t("landing.footer.rights")}
+        </p>
+      </footer>
     </div>
   );
 }

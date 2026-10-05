@@ -5,6 +5,10 @@ import "./globals.css";
 // (tarjetas de cristal, degradados, sombras y animaciones) prevaillezcan
 // sobre el preflight de Tailwind.
 import "./dashboard.css";
+// El CSS de la landing va DESPUÉS del del dashboard y está todo bajo el
+// selector .landing, así que no pisa nada del dashboard. Se carga aquí porque
+// Next solo permite importar CSS desde el layout.
+import "./landing.css";
 // Las constantes y la normalizacion se importan de ./config y NO de
 // LocaleProvider: LocaleProvider es un modulo de cliente, y desde el
 // servidor Next solo devuelve un proxy de referencia (y LOCALES.includes
@@ -14,7 +18,8 @@ import { LocaleProvider } from "../lib/i18n/LocaleProvider";
 
 export const metadata: Metadata = {
   title: "TradeMind",
-  description: "Dashboard de estadísticas de trading",
+  description:
+    "Diario de trading: sube el reporte real de tu broker y mira tu winrate, tu profit factor, tus dias y tu riesgo. En español e inglés.",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
