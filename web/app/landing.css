@@ -493,12 +493,11 @@
 /* DOS COLUMNAS, Y ES LO CORRECTO.
  *
  * El panel real mide 582 px en 6 columnas con 14 de separacion, o sea 85 px por
- * caja. Aqui, sobre 171 px utiles y con 7 de separacion, salen 82 px: casi el
- * mismo ancho. Las etiquetas largas ("Ratio riesgo/beneficio") tambien se parten
- * en el panel real, asi que parten aqui tambien y queda igual.
+ * caja. Aqui, con 2 columnas sobre 207 px utiles y 7 de separacion, salen 100 px
+ * por caja: un poco mas ancha que la real, y las etiquetas se leen enteras.
  *
- * Se probo con una sola columna y quedo mal: las cajas se estiran al ancho de la
- * tarjeta y dejan de parecerse al panel de verdad. */
+ * Se probo con una sola columna y quedo mal: las cajas se estirian al ancho de
+ * la tarjeta y dejarian de parecerse al panel de verdad. */
 .landing-kpis {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -539,9 +538,22 @@
   border-radius: 2px;
 }
 
-/* El titulo y su nota van FUERA de la caja: en el panel real estan encima de
-   los indicadores y en la tarjeta se recortarian. */
-.landing-kpis .stats-caption {
+/* El contenedor del panel: sin margenes negativos y sin recorte, porque ya no
+   va dentro de la escena 3D. Se estira contra los dos cantos de la tarjeta, que
+   es lo que hace que parezca un panel y no una foto metida en una caja. */
+.landing-stats {
+  margin-top: 4px;
+  position: relative;
+}
+
+.landing-stats .stats {
+  display: block;
+  margin-bottom: 0;
+}
+
+/* El titulo y su nota ya no se pintan (se quito del componente), pero por si
+   acaso se vuelven a anadir, se ocultan aqui tambien. */
+.landing-stats .stats-caption {
   display: none;
 }
 
@@ -556,42 +568,8 @@
  * acepta: es preferible a que falte un indicador.
  */
 .landing-vscene-kpis {
-  /* 420 px, no 280.
-   *
-   * Medido en el navegador: el panel de los 8 indicadores mide 284 px de alto
-   * natural, y el rotateX(11deg) con perspective lo desplaza otra 115 px hacia
-   * abajo dentro de la escena. Con 280 se salian las cuatro ultimas tarjetas
-   * (Profit Factor, Total Trades, Expected Value y Average Trade Time).
-   *
-   * En las otras tres tarjetas la escena es de 250 y la foto se recorta con
-   * object-fit:cover, losingo un poco no importa. Aqui no: si falta un
-   * indicador, la tarjeta miente sobre lo que enseña.
-   */
-  height: 420px;
-}
-
-/* La capa de delante de esta tarjeta se tensa contra la escena.
- *
- * Las otras tres llevan una foto con object-fit:cover, y el margen superior de
- * 10 px no pasa nada porque la foto se estira. Aqui hay contenido HTML: con el
- * margen, el panel empezaba 79 px mas abajo y las dos ultimas tarjetas
- * (Expected Value y Average Trade Time) se salian de la escena.
- *
- * left:-2% en vez de -22% y width:112%: el panel necesita todo el ancho
- * disponible, no el 144% con el que se amplia una foto para enseñar un detalle. */
-.landing-vscene-kpis .landing-vlayer-front {
-  top: 0;
-  left: -2%;
-  width: 112%;
-  height: 100%;
-  padding: 8px 9px 10px;
-}
-
-.landing-vscene-kpis .landing-vlayer-back {
-  top: 8px;
-  left: 2%;
-  width: 112%;
-  height: calc(100% - 8px);
+  /* Se queda sin usar: la tarjeta de metricas ya no pasa por la escena 3D. */
+  display: none;
 }
 
 /* La de atras: mas pequeña, mas inclinada y apagada. */

@@ -159,11 +159,10 @@ export default function ContadorMetricas() {
       onMouseLeave={detener}
     >
       <div className="stats">
-        <div className="stats-caption">
-          <span className="stats-caption-title">{t("kpi.allTimeTitle")}</span>
-          <span className="stats-caption-note">{t("kpi.allTimeNote")}</span>
-        </div>
-
+        {/* Sin el .stats-caption que el dashboard pone encima. En la tarjeta no
+            cabe: el titulo de la ficha ("Ocho indicadores, todos globales") ya
+            dice lo mismo, y dentro de un panel inclinado el texto se solapaba
+            con las cifras. */}
         <div className="landing-kpis">
           <div className="card">
             <div className="label">{t("kpi.balance")}</div>

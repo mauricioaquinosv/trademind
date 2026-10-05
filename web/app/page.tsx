@@ -263,31 +263,36 @@ export default async function LandingPage() {
                 <h3>{t(b.titulo)}</h3>
                 <p>{t(b.cuerpo)}</p>
 
-                {/* La escena en 3D. La capa de delante entra al 150% y la
-                    tarjeta la recorta, asi que se ve un detalle grande del
-                    panel en vez del panel entero y pequeno. */}
-                <div className={b.clave === "kpis" ? "landing-vscene landing-vscene-kpis" : "landing-vscene"}>
-                  <div className="landing-vglow" aria-hidden="true" />
+                {"panelVivo" in b ? (
+                  /* LA TARJETA DE METRICAS NO LLEVA ESCENA 3D.
+                   *
+                   * Las otras tres muestran una foto, y una foto se puede inclinar,
+                   * ampliar y recortar porque no hay nada que leer. Este panel es
+                   * texto de verdad: inclinado y recortado se convertia en una
+                   * tira de 20 px a la izquierda, ilegible, que es lo que se
+                   * vio. Y ademas incumple la condicion del usuario: un panel
+                   * torcido no puede parecerse al dashboard, que es recto.
+                   *
+                   * Por eso aqui va de frente, a tamano real y sin recorte. */
+                  <ContadorMetricas />
+                ) : (
+                  /* Las otras tres: foto con capas 3D. */
+                  <div className="landing-vscene">
+                    <div className="landing-vglow" aria-hidden="true" />
 
-                  <div className="landing-vlayer landing-vlayer-back" aria-hidden="true">
-                    <Image
-                      src={b.atras[0]}
-                      alt=""
-                      width={b.ancho}
-                      height={b.atrasAlto[0]}
-                      /* next/image mete lazy por defecto, y una capa tapada no
-                         llega a cargarse nunca. */
-                      loading="eager"
-                    />
-                  </div>
+                    <div className="landing-vlayer landing-vlayer-back" aria-hidden="true">
+                      <Image
+                        src={b.atras[0]}
+                        alt=""
+                        width={b.ancho}
+                        height={b.atrasAlto[0]}
+                        /* next/image mete lazy por defecto, y una capa tapada no
+                           llega a cargarse nunca. */
+                        loading="eager"
+                      />
+                    </div>
 
-                  <div className="landing-vlayer landing-vlayer-front">
-                    {"panelVivo" in b ? (
-                      /* El panel de indicadores en HTML. El componente lleva su
-                         propio onMouseEnter, asi que la cascada la arranca el
-                         raton al entrar en el panel, no en la ficha. */
-                      <ContadorMetricas />
-                    ) : (
+                    <div className="landing-vlayer landing-vlayer-front">
                       <Image
                         src={b.frente}
                         alt={t(b.titulo)}
@@ -297,9 +302,9 @@ export default async function LandingPage() {
                            era justo la imagen sin cargar. */
                         loading="eager"
                       />
-                    )}
+                    </div>
                   </div>
-                </div>
+                )}
               </article>
             ))}
           </div>
