@@ -39,6 +39,7 @@ export default async function LandingPage() {
   const bloques = [
     {
       clave: "kpis",
+      etiqueta: "landing.stack.kpis",
       titulo: "landing.blocks.kpis.title",
       cuerpo: "landing.blocks.kpis.body",
       color: "var(--teal)",
@@ -50,6 +51,7 @@ export default async function LandingPage() {
     },
     {
       clave: "calendario",
+      etiqueta: "landing.stack.calendario",
       titulo: "landing.blocks.calendario.title",
       cuerpo: "landing.blocks.calendario.body",
       color: "var(--pink)",
@@ -61,6 +63,7 @@ export default async function LandingPage() {
     },
     {
       clave: "grafico",
+      etiqueta: "landing.stack.grafico",
       titulo: "landing.blocks.grafico.title",
       cuerpo: "landing.blocks.grafico.body",
       color: "var(--gold)",
@@ -72,6 +75,7 @@ export default async function LandingPage() {
     },
     {
       clave: "radar",
+      etiqueta: "landing.stack.radar",
       titulo: "landing.blocks.radar.title",
       cuerpo: "landing.blocks.radar.body",
       color: "var(--green)",
@@ -239,65 +243,49 @@ export default async function LandingPage() {
         <span className="landing-eyebrow">{t("landing.views.eyebrow")}</span>
         <h2 className="landing-h2">{t("landing.views.title")}</h2>
         <p className="landing-lead">{t("landing.views.lead")}</p>
-        <div className="landing-cols">
-          {bloques.map((b) => (
-            <article
-              className="landing-shot"
-              key={b.clave}
-              style={{ "--shot": b.color } as React.CSSProperties}
-            >
-              <div className="landing-shot-head">
+        <div className="landing-views-wide">
+          <div className="landing-cards-4">
+            {bloques.map((b) => (
+              <article
+                className="landing-vcard"
+                key={b.clave}
+                style={{ "--shot": b.color } as React.CSSProperties}
+              >
+                <span className="landing-vcard-tag">{t(b.etiqueta)}</span>
                 <h3>{t(b.titulo)}</h3>
                 <p>{t(b.cuerpo)}</p>
-              </div>
 
-              {/* El escenario: aqui se recorta todo. Su alto sale de la imagen
-                  de delante mas el hueco para que asome la capa de fondo. */}
-              <div
-                className="landing-shot-stage"
-                style={{ "--front-h": `${b.alto}px` } as React.CSSProperties}
-              >
-                <div className="landing-stack-glow" aria-hidden="true" />
+                {/* La escena en 3D. La capa de delante entra al 150% y la
+                    tarjeta la recorta, asi que se ve un detalle grande del
+                    panel en vez del panel entero y pequeno. */}
+                <div className="landing-vscene">
+                  <div className="landing-vglow" aria-hidden="true" />
 
-                <div className="landing-stack-back stack-back-2" aria-hidden="true">
-                  <Image
-                    src={b.atras[1]}
-                    alt=""
-                    width={b.ancho}
-                    height={b.atrasAlto[1]}
-                    /* next/image pone loading="lazy" por defecto. En las capas de
-                       atras eso las deja sin pedir nunca, porque estan tapadas
-                       por la de delante y el navegador no las ve: al pasar el
-                       raton se veria un hueco. Con eager se piden desde el
-                       principio, que ademas es lo que hay que hacer porque solo
-                       hay cuatro ficheros y pesan 352 KB. */
-                    loading="eager"
-                  />
+                  <div className="landing-vlayer landing-vlayer-back" aria-hidden="true">
+                    <Image
+                      src={b.atras[0]}
+                      alt=""
+                      width={b.ancho}
+                      height={b.atrasAlto[0]}
+                      /* next/image mete lazy por defecto, y una capa tapada no
+                         llega a cargarse nunca. */
+                      loading="eager"
+                    />
+                  </div>
+
+                  <div className="landing-vlayer landing-vlayer-front">
+                    <Image
+                      src={b.frente}
+                      alt={t(b.titulo)}
+                      width={b.ancho}
+                      height={b.alto}
+                      loading="lazy"
+                    />
+                  </div>
                 </div>
-
-                <div className="landing-stack-back stack-back-1" aria-hidden="true">
-                  <Image
-                    src={b.atras[0]}
-                    alt=""
-                    width={b.ancho}
-                    height={b.atrasAlto[0]}
-                    loading="eager"
-                  />
-                </div>
-
-                <div className="landing-stack-front">
-                  <Image
-                    className="landing-shot-img"
-                    src={b.frente}
-                    alt={t(b.titulo)}
-                    width={b.ancho}
-                    height={b.alto}
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
