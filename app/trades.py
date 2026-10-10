@@ -3,7 +3,7 @@ import shutil
 import tempfile
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Query
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from app import errors
@@ -58,8 +58,40 @@ def _pick_parser(file_path: str):
     return MT5Parser()
 
 
+# 25 MB. Va GENEROSO a proposito: un reporte de MT5 con años de historial sigue
+# siendo un Excel de un par de megas, y un limite demasiado bajo dejaria fuera a
+# los usuarios que llevan mucho tiempo registrando.
+TAMANO_MAXIMO = 25 * 1024 * 1024
+
+
+def _copiar_con_tope(origen, destino, tope: int) -> None:
+    """Copia contando, y para en cuanto se pasa del tope.
+
+    No se comprueba al final porque entonces ya esta todo escrito: el punto de
+    este limite es no llenar el disco, y eso hay que hacerlo mientras se copia.
+
+    Los bloques son de 64 KB, que es lo que usa shutil por defecto, pero aqui se
+    hace a mano para poder mirar el contador entre bloque y bloque. Con un
+    bloque de 1 MB el desborde seria mayor; con uno pequeno se para antes.
+    """
+    escrito = 0
+    while True:
+        trozo = origen.read(64 * 1024)
+        if not trozo:
+            break
+        escrito += len(trozo)
+        if escrito > tope:
+            raise errors.error(
+                errors.FILE_TOO_LARGE,
+                f"El archivo supera el máximo de {tope} bytes",
+                status_code=413,
+            )
+        destino.write(trozo)
+
+
 @router.post("/upload")
 def upload_trades(
+    request: Request,
     account_id: UUID,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
@@ -82,12 +114,42 @@ def upload_trades(
             status_code=400,
         )
 
-    suffix = "." + nombre.rsplit(".", 1)[-1].lower()
-    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        shutil.copyfileobj(file.file, tmp)
-        tmp_path = tmp.name
+    # El tamaño se mira ANTES de copiar, y la copia se corta en cuanto se pasa.
+    #
+    # Las dos comprobaciones hacen falta por motivos distintos. La cabecera
+    # `Content-Length` llega antes de recibir el cuerpo, y sirve para rechazar de
+    # inmediato lo que se DECLARA enorme: es lo unico que evita que un archivo
+    # grande llegue a llenarse en el temporal de Starlette, que ya lo tiene
+    # escrito cuando este codigo se ejecuta.
+    #
+    # Pero `Content-Length` la pone el cliente y se la puede mentir, asi que no
+    # basta. Por eso la copia se cuenta sobre lo que llega de verdad, y en
+    # cuanto se pasa del tope se corta y se borra el temporal. Si no, alguien
+    # podria declarar 1 KB y mandar 4 GB.
+    #
+    # 25 MB es generoso: un reporte de MT5 con años de historial sigue siendo un
+    # Excel de un par de megas.
+    declarado = request.headers.get("content-length")
+    if declarado and declarado.isdigit() and int(declarado) > TAMANO_MAXIMO:
+        raise errors.error(
+            errors.FILE_TOO_LARGE,
+            f"El archivo pesa {declarado} bytes y el máximo son {TAMANO_MAXIMO}",
+            status_code=413,
+        )
 
+    suffix = "." + nombre.rsplit(".", 1)[-1].lower()
+
+    # El temporal nace DENTRO del try, y no antes. Si la copia se pasa del tope
+    # a la mitad, `_copiar_con_tope` lanza y hay que borrar lo ya escrito: si el
+    # temporal se crease fuera, el finally de abajo no lo alcanzaria y se
+    # acumularia uno por cada intento de subir un archivo enorme. Es exactamente
+    # el fallo que el comentario del finally describe, solo que por otra via.
+    tmp_path = None
     try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            tmp_path = tmp.name
+            _copiar_con_tope(file.file, tmp, TAMANO_MAXIMO)
+
         # `_pick_parser` también lee el archivo, así que va DENTRO del try: si
         # se queda fuera, un .xlsx vacío revienta con un 500 en vez de un 400.
         # pandas.EmptyDataError y ParserError heredan de ValueError, así que el
@@ -112,10 +174,15 @@ def upload_trades(
         # El temporal se crea con delete=False porque el parser lo lee por ruta,
         # así que hay que borrarlo a mano. Sin esto se acumulaba uno por cada
         # subida, para siempre: se llegaron a contar 45 huérfanos en TEMP.
-        try:
-            os.remove(tmp_path)
-        except OSError:
-            pass
+        #
+        # El `if tmp_path` cubre el caso de que la propia creación del temporal
+        # falle: entonces no hay nada que borrar, y `os.remove(None)` reventaría
+        # con un TypeError tapando el error de verdad.
+        if tmp_path:
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
 
     saved = 0
     # Las operaciones se validan una a una. Las validas se importan; las que no,

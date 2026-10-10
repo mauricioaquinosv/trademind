@@ -31,6 +31,7 @@ export type ApiErrorBody = {
 const CLAVES: Record<string, TranslationKey> = {
   auth_email_taken: "apiErrors.emailTaken",
   auth_bad_credentials: "apiErrors.badCredentials",
+  auth_too_many_attempts: "apiErrors.tooManyAttempts",
   session_invalid: "apiErrors.sessionInvalid",
 
   account_not_found: "apiErrors.accountNotFound",
@@ -45,6 +46,7 @@ const CLAVES: Record<string, TranslationKey> = {
   file_unreadable: "apiErrors.fileUnreadable",
   file_bad_template: "apiErrors.fileBadTemplate",
   file_bad_date: "apiErrors.fileBadDate",
+  file_too_large: "apiErrors.fileTooLarge",
 
   validation_empty_name: "apiErrors.emptyName",
   validation_negative_balance: "apiErrors.negativeBalance",

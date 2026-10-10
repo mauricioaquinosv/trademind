@@ -65,6 +65,7 @@ class FileError(ValueError):
 
 AUTH_EMAIL_TAKEN = "auth_email_taken"
 AUTH_BAD_CREDENTIALS = "auth_bad_credentials"
+AUTH_TOO_MANY_ATTEMPTS = "auth_too_many_attempts"
 SESSION_INVALID = "session_invalid"
 
 ACCOUNT_NOT_FOUND = "account_not_found"
@@ -79,6 +80,7 @@ FILE_HTML_NO_TABLE = "file_html_no_table"
 FILE_UNREADABLE = "file_unreadable"
 FILE_BAD_TEMPLATE = "file_bad_template"
 FILE_BAD_DATE = "file_bad_date"
+FILE_TOO_LARGE = "file_too_large"
 
 VALIDATION_EMPTY_NAME = "El nombre de la cuenta no puede estar vacío"
 VALIDATION_NEGATIVE_BALANCE = "El balance inicial no puede ser negativo"

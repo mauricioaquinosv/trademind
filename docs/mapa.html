@@ -203,7 +203,7 @@
       <span class="tag t-azul">12 endpoints</span>
       <span class="tag t-azul">3 tablas</span>
       <span class="tag t-azul">423 claves × 2 idiomas</span>
-      <span class="tag t-verde">216 + 106 tests</span>
+      <span class="tag t-verde">250 + 123 tests</span>
       <span class="tag t-rojo">5 bloqueos</span>
     </div>
   </div>
@@ -364,7 +364,7 @@
         <tbody>
           <tr>
             <td class="ruta">subir el mismo archivo dos veces</td>
-            <td><span class="tag t-rojo">defecto</span></td>
+            <td><span class="tag t-verde">resuelto</span></td>
             <td><code>models.py</code> — sin índice único</td>
             <td>
               <strong>Es lo más grave en el uso diario.</strong> El usuario sube el reporte, ve algo
@@ -377,17 +377,15 @@
           </tr>
           <tr>
             <td class="ruta">tamaño de la subida</td>
-            <td><span class="tag t-rojo">defecto</span></td>
-            <td><code>trades.py:83</code> — <code>copyfileobj</code> sin tope</td>
-            <td>Se copia el archivo entero al disco sin límite. Un archivo grande llena el servidor.
-                Con subscribing, cualquiera puede hacerlo.</td>
+            <td><span class="tag t-verde">resuelto</span></td>
+            <td><code>trades.py</code> — 25 MB, contando al copiar</td>
+            <td>Ya está. Se corta al pasar de 25 MB, tanto contando lo que llega como mirando la cabecera.</td>
           </tr>
           <tr>
             <td class="ruta">freno en el login</td>
-            <td><span class="tag t-rojo">defecto</span></td>
+            <td><span class="tag t-verde">resuelto</span></td>
             <td><code>auth.py:31</code></td>
-            <td>Se pueden probar contraseñas sin freno. El bcrypt da ~100 ms por intento, pero se
-                pueden hacer miles contra un email concreto.</td>
+            <td>Ya está: 10 intentos y 15 minutos, contados en la base por email y por IP. El bloqueo da 429.</td>
           </tr>
           <tr>
             <td class="ruta">dirección del backend escrita a mano</td>
@@ -481,7 +479,7 @@
         <ul>
           <li><code>app/main.py</code> — monta todo y el CORS</li>
           <li><code>auth.py</code>, <code>accounts.py</code>, <code>trades.py</code></li>
-          <li><code>errors.py</code> — los 15 códigos</li>
+          <li><code>errors.py</code> — los 17 códigos</li>
           <li><code>dependencies.py</code> — quién es el usuario</li>
         </ul>
       </div>
@@ -590,7 +588,7 @@
           <tr><td class="ruta">en.ts</td><td>Las mismas 423. Si sobra o falta una, TypeScript lo dice.</td></tr>
           <tr><td class="ruta">config.ts</td><td>La lógica: traducir, interpolar, plurales. Sin dependencias de React, para poder llamarla desde el servidor.</td></tr>
           <tr><td class="ruta">LocaleProvider.tsx</td><td>El contexto de React. Es lo único que lleva "use client".</td></tr>
-          <tr><td class="ruta">apiErrors.ts</td><td>Traduce los 15 códigos de error de la API, y los de Pydantic.</td></tr>
+          <tr><td class="ruta">apiErrors.ts</td><td>Traduce los 17 códigos de error de la API, y los de Pydantic.</td></tr>
           <tr><td class="ruta">importRechazos.ts</td><td>Traduce los 9 códigos de rechazo de la importación.</td></tr>
         </tbody>
       </table>
@@ -650,7 +648,7 @@
       <div class="qa-i"><div class="L">I</div><div class="txt"><div class="t">Los dos idiomas, entero</div><div class="d">Si algo sale en español con la app en inglés, es un fallo. Los números también cambian de formato.</div></div></div>
       <div class="qa-i"><div class="L">J</div><div class="txt"><div class="t">Lo que se rompe con facilidad</div><div class="d">Recargar a mitad de una subida, backend caído, sin conexión, dos pestañas con cuentas distintas.</div></div></div>
       <div class="qa-i human"><div class="L">K</div><div class="txt"><div class="t">Lo que necesita tus ojos</div><div class="d">Que los textos estén bien redactados, que el inglés suene natural, que nada quede torcido. <strong>No lo puedo hacer yo.</strong></div></div></div>
-      <div class="qa-i auto"><div class="L">L</div><div class="txt"><div class="t">Lo que ya corre solo</div><div class="d">216 tests de backend, 106 de frontend, el guard de traducción, los tipos y el build. No lo pruebas tú: sirve para saber si se ha roto algo de arriba.</div></div></div>
+      <div class="qa-i auto"><div class="L">L</div><div class="txt"><div class="t">Lo que ya corre solo</div><div class="d">250 tests de backend, 123 de frontend, el guard de traducción, los tipos y el build. No lo pruebas tú: sirve para saber si se ha roto algo de arriba.</div></div></div>
     </div>
   </section>
 

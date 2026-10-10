@@ -93,6 +93,7 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
      translations, so the backend never needs to know anyone's language. */
   "apiErrors.emailTaken": "That email is already registered.",
   "apiErrors.badCredentials": "Wrong email or password.",
+  "apiErrors.tooManyAttempts": "Too many failed attempts. Wait a few minutes and try again.",
   "apiErrors.sessionInvalid": "Your session expired. Please sign in again.",
   "apiErrors.accountNotFound": "That account no longer exists.",
   "apiErrors.accountHasTrades": "This account has {n} trades. Delete them too to remove the account.",
@@ -104,6 +105,7 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "apiErrors.fileUnreadable": "The file could not be read. Check that it isn't damaged.",
   "apiErrors.fileBadTemplate": "The file doesn't match the TradeMind template. Download it from the import view.",
   "apiErrors.fileBadDate": "A date in the file could not be read. Use the YYYY-MM-DD format.",
+  "apiErrors.fileTooLarge": "The file is too large. The maximum is 25 MB.",
   "apiErrors.emptyName": "The account name cannot be empty.",
   "apiErrors.negativeBalance": "The starting balance cannot be negative.",
 

@@ -202,9 +202,9 @@ etiquetas distintas. Mezclarlas hizo que parecieran todas igual de urgentes.
 
 | Qué | Tipo | Dónde |
 |---|---|---|
-| Subir el mismo archivo dos veces | **defecto** | `models.py`, sin índice único. Decidido, sin hacer |
-| Tamaño de la subida | **defecto** | `trades.py:83`, `copyfileobj` sin tope |
-| Freno en el login | **defecto** | `auth.py:31` |
+| Subir el mismo archivo dos veces | **resuelto** | `separa_repetidas`, en `import_validacion.py` |
+| Tamaño de la subida | **resuelto** | `TAMANO_MAXIMO`, 25 MB, en `trades.py` |
+| Freno en el login | **resuelto** | `login_freno.py`, 10 intentos / 15 min |
 | `SECRET_KEY` | **despliegue** | `security.py:10` |
 | Instalar el backend | **despliegue** | no hay `requirements.txt` |
 | Puerto 5432 abierto | **despliegue** | `docker-compose.yml:15` |
@@ -245,8 +245,10 @@ etiquetas distintas. Mezclarlas hizo que parecieran todas igual de urgentes.
         `UNIQUE` que rechaza la fila entera traería de vuelta el problema de
         "el archivo con una operación rara no carga".
 
-- [ ] **La subida tiene un tope de tamaño.** Hoy se copia entero al disco.
-- [ ] **El login tiene freno de intentos.**
+- [x] **La subida tiene un tope de tamaño.** 25 MB, contando mientras copia y mirando
+      la cabecera `Content-Length`. Un archivo demasiado grande da 413, no 400.
+- [x] **El login tiene freno de intentos.** 10 intentos y 15 minutos, contados en la base
+      por email **y** por IP. El bloqueo da 429, no 401.
 - [ ] **La app no arranca si falta `SECRET_KEY`.** Ahora arranca y revienta en el
       primer login, que es el peor momento para descubrirlo.
 - [ ] **Se puede instalar el backend desde cero**, con las versiones fijadas.

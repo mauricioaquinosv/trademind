@@ -70,7 +70,12 @@ def db_session(_crear_base_de_datos):
 
     session = TestingSession()
     # Empezamos de cero para que cada test sea independiente.
-    session.execute(text("TRUNCATE trades, accounts, users RESTART IDENTITY CASCADE"))
+    # `login_fallidos` tambien entra: es donde cuenta el freno de intentos del
+    # login, y si sus filas se quedaron de un test anterior, el test siguiente
+    # IECAPA antes de tiempo y falla sin relacion con lo que prueba.
+    session.execute(
+        text("TRUNCATE trades, accounts, users, login_fallidos RESTART IDENTITY CASCADE")
+    )
     session.commit()
 
     yield session

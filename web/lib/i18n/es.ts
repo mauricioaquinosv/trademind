@@ -92,6 +92,7 @@ export const es = {
      traducciones: asi el backend no necesita saber en que idioma esta nadie. */
   "apiErrors.emailTaken": "Ese email ya está registrado.",
   "apiErrors.badCredentials": "Email o contraseña incorrectos.",
+  "apiErrors.tooManyAttempts": "Demasiados intentos fallidos. Espera unos minutos y vuelve a intentarlo.",
   "apiErrors.sessionInvalid": "Tu sesión ha caducado. Vuelve a iniciar sesión.",
   "apiErrors.accountNotFound": "Esa cuenta ya no existe.",
   "apiErrors.accountHasTrades": "La cuenta tiene {n} operaciones. Bórralas también para eliminarla.",
@@ -103,6 +104,7 @@ export const es = {
   "apiErrors.fileUnreadable": "No se pudo leer el archivo. Comprueba que no esté dañado.",
   "apiErrors.fileBadTemplate": "El archivo no coincide con la plantilla de TradeMind. Descárgala desde la vista de importar.",
   "apiErrors.fileBadDate": "No se pudo interpretar una fecha del archivo. Usa el formato AAAA-MM-DD.",
+  "apiErrors.fileTooLarge": "El archivo es demasiado grande. El máximo son 25 MB.",
   "apiErrors.emptyName": "El nombre de la cuenta no puede estar vacío.",
   "apiErrors.negativeBalance": "El balance inicial no puede ser negativo.",
 

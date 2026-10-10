@@ -45,6 +45,41 @@ class Account(Base):
     created_at = Column(DateTime, default=utcnow_naive)
 
 
+class LoginFallido(Base):
+    """
+    Un intento de login que fallo, contado por email y por direccion IP.
+
+    POR QUE ESTA EN LA BASE Y NO EN MEMORIA
+
+    Un diccionario en memoria seria mas simple, pero se pierde al reiniciar el
+    servidor: basta con reiniciarlo para que el freno se borre entero. Y con dos
+    procesos (que es lo normal al desplegar) cada uno contaria por su lado, y el
+    limite real seria el doble del que crees.
+
+    En la base no pasa ninguna de las dos cosas.
+
+    La contrasena correcta NO se guarda aqui, y los intentos se borran en cuanto
+    uno acierta: esto solo cuenta fallos, no guarda cuentas.
+    """
+
+    __tablename__ = "login_fallidos"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    # El email se normaliza a minusculas al guardarlo. Si no, "Juan@x.com" y
+    # "juan@x.com" contarian como dos cuentas distintas y el freno no serviria.
+    email = Column(String, nullable=False, index=True)
+
+    # La IP va aparte del email porque tambien hay que frenar a quien prueba
+    # muchos correos distintos desde el mismo sitio, que es lo que hace un
+    # ataque de verdad: si solo se contara por email, bastaria con inventarse un
+    # correo nuevo en cada intento.
+    ip = Column(String, nullable=False, index=True)
+
+    # Cuando fue este intento. Los antiguos se limpian al pasar por el login.
+    cuando = Column(DateTime, nullable=False, default=utcnow_naive, index=True)
+
+
 class Trade(Base):
     __tablename__ = "trades"
 
