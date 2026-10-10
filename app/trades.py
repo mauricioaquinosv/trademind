@@ -11,6 +11,7 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models import User, Trade, Account
 from app.schemas import TradeCreate, TradeUpdate, TradeOut
+from app.import_validacion import valida_trades_de_archivo
 from app.parsers.mt5_parser import MT5Parser
 from app.parsers.manual_template_parser import ManualTemplateParser
 from app.parsers.file_reader import read_any_table
@@ -89,7 +90,15 @@ def upload_trades(
         # pandas.EmptyDataError y ParserError heredan de ValueError, así que el
         # except de abajo ya los cubre.
         parser = _pick_parser(tmp_path)
-        closed_trades = parser.parse(tmp_path)
+
+        # Si el parser sabe decir de que fila salio cada operacion, se usa eso
+        # para poder decirle al usuario "la fila 23". Si no lo sabe (la
+        # plantilla manual), se importan igual y el aviso lo dirá.
+        if hasattr(parser, "parse_con_filas"):
+            closed_trades, filas = parser.parse_con_filas(tmp_path)
+        else:
+            closed_trades = parser.parse(tmp_path)
+            filas = [None] * len(closed_trades)
     except errors.FileError as e:
         raise errors.error(e.codigo, e.texto, status_code=400)
     except ValueError as e:
@@ -106,7 +115,16 @@ def upload_trades(
             pass
 
     saved = 0
-    for t in closed_trades:
+    # Las operaciones se validan una a una. Las validas se importan; las que no,
+    # no, pero se le explican al usuario una a una con su fila y el motivo.
+    #
+    # Decision de producto: el archivo se acepta SIEMPRE. Bloquear la subida
+    # entera porque cuatro operaciones de quinientas vienen raras deja al
+    # usuario sin herramienta hasta que las arregla, y en un reporte de MT5 las
+    # celdas vacias son lo normal (en el de ejemplo, 67 de 130).
+    validas, rechazos = valida_trades_de_archivo(closed_trades, filas)
+
+    for t in validas:
         trade = Trade(
             user_id=current_user.id,
             account_id=account_id,
@@ -130,7 +148,20 @@ def upload_trades(
 
     db.commit()
 
-    return {"trades_guardados": saved}
+    # La respuesta lleva cuantos se han guardado y cuales no, con el detalle de
+    # cada rechazo. El frontend enseña el numero grande y deja el detalle para
+    # que el usuario lo abra si quiere.
+    #
+    # Cuando no hay rechazos se devuelve solo el numero, como hasta ahora, para
+    # no cambiar la forma de la respuesta en el caso normal.
+    if not rechazos:
+        return {"trades_guardados": saved}
+
+    return {
+        "trades_guardados": saved,
+        "trades_leidos": len(closed_trades),
+        "rechazos": [r.model_dump() for r in rechazos],
+    }
 
 
 @router.get("/", response_model=list[TradeOut])

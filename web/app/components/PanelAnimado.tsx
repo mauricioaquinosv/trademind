@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useI18n } from "../../lib/i18n/LocaleProvider";
+import type { TranslationKey } from "../../lib/i18n/config";
 
 /**
  * EL PANEL DE INDICADORES ENTERO, EN HTML.
@@ -35,19 +37,22 @@ interface Metrica {
   desde: number;
   hasta: number;
   signo?: string;
+  /** La etiqueta sale del diccionario: este panel estaba en español fijo y la
+   *  landing en ingles seguia enseñando "Balance" y "Winrate" en castellano. */
+  etiqueta: TranslationKey;
 }
 
 const METRICAS: Metrica[] = [
   // El balance cuenta desde el saldo inicial, para que se vea una cuenta
   // creciendo y no un numero que aparece de la nada.
-  { clase: "dinero", desde: 10000, hasta: 11308.95 },
-  { clase: "dinero", desde: 0, hasta: 1308.95 },
-  { clase: "decimal", desde: 0, hasta: 71.71, signo: "%" },
-  { clase: "decimal", desde: 0, hasta: 1.28 },
-  { clase: "decimal", desde: 0, hasta: 3.24 },
-  { clase: "entero", desde: 0, hasta: 152 },
-  { clase: "dinero", desde: 0, hasta: 8.61 },
-  { clase: "fijo", desde: 0, hasta: 0 },
+  { clase: "dinero", desde: 10000, hasta: 11308.95, etiqueta: "kpi.balance" },
+  { clase: "dinero", desde: 0, hasta: 1308.95, etiqueta: "kpi.netPnl" },
+  { clase: "decimal", desde: 0, hasta: 71.71, signo: "%", etiqueta: "kpi.winrate" },
+  { clase: "decimal", desde: 0, hasta: 1.28, etiqueta: "kpi.riskReward" },
+  { clase: "decimal", desde: 0, hasta: 3.24, etiqueta: "kpi.profitFactor" },
+  { clase: "entero", desde: 0, hasta: 152, etiqueta: "kpi.totalTrades" },
+  { clase: "dinero", desde: 0, hasta: 8.61, etiqueta: "kpi.expectedValue" },
+  { clase: "fijo", desde: 0, hasta: 0, etiqueta: "kpi.avgTradeTime" },
 ];
 
 const DURACION_MEDIA = "49m 33s";
@@ -70,6 +75,7 @@ function fmtDinero(n: number): string {
 const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 
 export default function PanelAnimado() {
+  const { t } = useI18n();
   const [valores, setValores] = useState<number[]>(METRICAS.map((m) => m.hasta));
   const [barra, setBarra] = useState(WINRATE);
 
@@ -142,25 +148,22 @@ export default function PanelAnimado() {
     <div className="panel-vivo" onMouseEnter={arrancar} onMouseLeave={detener}>
       <div className="stats">
         <div className="stats-caption">
-          <span className="stats-caption-title">Rendimiento de toda la cuenta</span>
-          <span className="stats-caption-note">
-            Estas cifras no cambian al navegar el calendario. El mes solo mueve los días y sus
-            resúmenes.
-          </span>
+          <span className="stats-caption-title">{t("kpi.allTimeTitle")}</span>
+          <span className="stats-caption-note">{t("kpi.allTimeNote")}</span>
         </div>
 
         <div className="card">
-          <div className="label">Balance</div>
+          <div className="label">{t("kpi.balance")}</div>
           <div className="value num pos">{fmt(0, valores[0])}</div>
         </div>
 
         <div className="card">
-          <div className="label">PnL neto</div>
+          <div className="label">{t("kpi.netPnl")}</div>
           <div className="value num pos">{fmt(1, valores[1])}</div>
         </div>
 
         <div className="card">
-          <div className="label">Winrate</div>
+          <div className="label">{t("kpi.winrate")}</div>
           <div className="value num">{fmt(2, valores[2])}</div>
           <div className="bar-split">
             <div className="bar-fill" style={{ width: `${barra}%` }} />
@@ -168,31 +171,32 @@ export default function PanelAnimado() {
         </div>
 
         <div className="card">
-          <div className="label">Ratio riesgo/beneficio</div>
+          <div className="label">{t("kpi.riskReward")}</div>
           <div className="value num">{fmt(3, valores[3])}</div>
         </div>
 
         <div className="card">
-          <div className="label">Profit Factor</div>
+          <div className="label">{t("kpi.profitFactor")}</div>
           <div className="value num">{fmt(4, valores[4])}</div>
         </div>
 
         <div className="card">
-          <div className="label">Total Trades</div>
+          <div className="label">{t("kpi.totalTrades")}</div>
           <div className="value num">{fmt(5, valores[5])}</div>
           <div className="mini-note">
-            <span style={{ color: "var(--green)" }}>{GANADAS} ganadas</span> ·{" "}
-            <span style={{ color: "var(--red)" }}>{PERDIDAS} perdidas</span>
+            <span style={{ color: "var(--green)" }}>{t("kpi.tradesWon", { n: GANADAS })}</span>
+            {" · "}
+            <span style={{ color: "var(--red)" }}>{t("kpi.tradesLost", { n: PERDIDAS })}</span>
           </div>
         </div>
 
         <div className="card">
-          <div className="label">Valor esperado</div>
+          <div className="label">{t("kpi.expectedValue")}</div>
           <div className="value num pos">{fmt(6, valores[6])}</div>
         </div>
 
         <div className="card">
-          <div className="label">Duración media</div>
+          <div className="label">{t("kpi.avgTradeTime")}</div>
           <div className="value num">{fmt(7, valores[7])}</div>
         </div>
       </div>

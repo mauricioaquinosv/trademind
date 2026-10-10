@@ -44,10 +44,28 @@ class MT5Parser:
     }
 
     def parse(self, file_path: str) -> List[ClosedTrade]:
+        """Las operaciones del reporte, sin nada mas.
+
+        Se mantiene por compatibilidad: la usaban el resto de codigo y los
+        tests. Para el aviso de operaciones rechazadas hace falta saber de que
+        fila del archivo salio cada una, y eso lo da `parse_con_filas`.
+        """
+        trades, _filas = self.parse_con_filas(file_path)
+        return trades
+
+    def parse_con_filas(self, file_path: str):
+        """Igual que parse, pero cada operacion viene con su fila en el archivo.
+
+        Devuelve una lista de (ClosedTrade, fila). La fila es la que ve el
+        usuario en su Excel, contando desde 1. Se usa para poder decirle "la
+        fila 23" cuando una operacion no se puede importar: sin eso no tiene
+        forma de encontrarla.
+        """
         raw = read_any_table(file_path)
 
         start = self._find_positions_header_row(raw)
         trades: List[ClosedTrade] = []
+        filas: List[int] = []
 
         for i in range(start + 1, len(raw)):
             row = raw.iloc[i].tolist()
@@ -71,14 +89,37 @@ class MT5Parser:
 
             direction = "long" if str(row[3]).strip().lower() == "buy" else "short"
 
-            trades.append(ClosedTrade(
-                symbol=str(row[2]).strip(),
+            # ANTES: float(row[4]) a pelo. Con una celda vacia, float() lanza
+            # ValueError, la excepcion sube hasta el endpoint y se pierde el
+            # ARCHIVO ENTERO: un solo dato raro en la fila 300 hacia que no se
+            # importara ninguna de las 502 operaciones.
+            #
+            # Ahora los numeros que pueden venir vacios o ser ilegibles se leen
+            # como None, y la operacion se pasa a la validacion, que la rechaza
+            # con un motivo explicito y la fila. El resto del archivo entra.
+            #
+            # `fila` es i+1 porque el usuario ve las filas de su Excel contando
+            # desde 1, y i es el indice con base 0 de pandas.
+            fila = i + 1
+
+            try:
+                entry_time = self._parse_time(row[0])
+            except (TypeError, ValueError):
+                entry_time = None
+
+            try:
+                exit_time = self._parse_time(row[8])
+            except (TypeError, ValueError):
+                exit_time = None
+
+            trade = ClosedTrade(
+                symbol=str(row[2]).strip() if not pd.isna(row[2]) else "",
                 direction=direction,
-                quantity=float(row[4]),
-                entry_price=float(row[5]),
-                exit_price=float(row[9]),
-                entry_time=self._parse_time(row[0]),
-                exit_time=self._parse_time(row[8]),
+                quantity=self._parse_float_or_none(row[4]),
+                entry_price=self._parse_float_or_none(row[5]),
+                exit_price=self._parse_float_or_none(row[9]),
+                entry_time=entry_time,
+                exit_time=exit_time,
                 # El reporte de MT5 deja estas tres celdas VACIAS con mucha
                 # frecuencia (67 de 130 filas en el reporte de ejemplo). Con
                 # `float(x or 0.0)` el 0.0 nunca se usaba, porque en Python NaN
@@ -95,9 +136,12 @@ class MT5Parser:
                 sl=self._parse_optional_float(row[6]),
                 tp=self._parse_optional_float(row[7]),
                 position=self._parse_position(row[1]),
-            ))
+            )
 
-        return trades
+            trades.append(trade)
+            filas.append(fila)
+
+        return trades, filas
 
     @staticmethod
     def _find_positions_header_row(raw: pd.DataFrame) -> int:
@@ -122,6 +166,20 @@ class MT5Parser:
         if isinstance(value, datetime):
             return value
         return datetime.strptime(str(value).strip(), "%Y.%m.%d %H:%M:%S")
+
+    @staticmethod
+    def _parse_float_or_none(value) -> Optional[float]:
+        """Lee un numero que puede venir vacio o ser ilegible.
+
+        Devuelve None en lugar de lanzar la excepcion, para que una celda mala
+        rechace solo esa operacion en vez de tumbar el archivo entero.
+        """
+        if pd.isna(value):
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
 
     @staticmethod
     def _parse_optional_float(value) -> Optional[float]:

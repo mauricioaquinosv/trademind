@@ -317,6 +317,40 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "import.dropHere": "Click to choose a file or drag it here",
   "import.formats": "Format .csv, .xlsx or .xls",
 
+  // --- Trades that could not be imported ----------------------------
+  // The file is always accepted: the good ones go in and these are explained one
+  // by one. The text comes from a code sent by the backend, not from text
+  // written here, so that it exists in both languages and can be checked.
+  "import.partial":
+    { one: "You imported {n} of {total} trades.", other: "You imported {n} of {total} trades." },
+  "import.rejectedTitle":
+    { one: "This trade was not imported:", other: "These trades were not imported:" },
+  "import.row": "Row {n}",
+  "import.rowUnknown": "Row not given",
+  "import.emptyValue": "(empty)",
+  "import.showDetail": "See why",
+  "import.hideDetail": "Hide the details",
+  "import.why":
+    { one: "{n} trade was not imported. The rest is fine.", other: "{n} trades were not imported. The rest is fine." },
+  "import.reason.symbol_empty": "We could not read the pair symbol.",
+  "import.reason.symbol_too_long": "The symbol is too long.",
+  "import.reason.direction_invalid": "The type does not say whether the trade was a buy or a sell.",
+  "import.reason.quantity_unreadable": "We could not read how many units were traded.",
+  "import.reason.quantity_not_positive": "A trade cannot have 0 units or a negative number.",
+  "import.reason.entry_price_unreadable": "We could not read the opening price.",
+  "import.reason.entry_price_not_positive": "A price cannot be 0 or negative.",
+  "import.reason.exit_price_unreadable": "We could not read the closing price.",
+  "import.reason.exit_price_not_positive": "A price cannot be 0 or negative.",
+  "import.fix.symbol_empty": "Fix the symbol in the file and upload it again.",
+  "import.fix.symbol_too_long": "Symbols are pairs like EURUSD. Check that cell.",
+  "import.fix.direction_invalid": "In the file, the type must say buy or sell.",
+  "import.fix.quantity_unreadable": "Check that the volume cell has a number.",
+  "import.fix.quantity_not_positive": "Check the volume of that trade in the file.",
+  "import.fix.entry_price_unreadable": "Check the opening price cell.",
+  "import.fix.entry_price_not_positive": "Check the opening price cell.",
+  "import.fix.exit_price_unreadable": "Check the closing price cell.",
+  "import.fix.exit_price_not_positive": "Check the closing price cell.",
+
   // ------------------------------------------------------------------
   // Onboarding
   // ------------------------------------------------------------------

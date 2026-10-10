@@ -316,6 +316,40 @@ export const es = {
   "import.dropHere": "Haz clic para elegir un archivo o arrástralo aquí",
   "import.formats": "Formato .csv, .xlsx o .xls",
 
+  // --- Operaciones que no se han podido importar -------------------
+  // El archivo se acepta siempre: se importan las buenas y estas se explican
+  // una a una. El texto sale de un codigo del backend, no de un texto escrito
+  // aqui, para que exista en los dos idiomas y se pueda comprobar.
+  "import.partial":
+    { one: "Has importado {n} de {total} operaciones.", other: "Has importado {n} de {total} operaciones." },
+  "import.rejectedTitle":
+    { one: "Esta operación no se ha importado:", other: "Estas operaciones no se han importado:" },
+  "import.row": "Fila {n}",
+  "import.rowUnknown": "Fila no indicada",
+  "import.emptyValue": "(vacío)",
+  "import.showDetail": "Ver por qué",
+  "import.hideDetail": "Ocultar el detalle",
+  "import.why":
+    { one: "{n} operación no se ha importado. El resto está bien.", other: "{n} operaciones no se han importado. El resto está bien." },
+  "import.reason.symbol_empty": "No hemos podido leer el símbolo del par.",
+  "import.reason.symbol_too_long": "El símbolo es demasiado largo.",
+  "import.reason.direction_invalid": "El tipo no indica si la operación fue de compra o de venta.",
+  "import.reason.quantity_unreadable": "No hemos podido leer cuántas unidades se operaron.",
+  "import.reason.quantity_not_positive": "Una operación no puede tener 0 unidades ni un número negativo.",
+  "import.reason.entry_price_unreadable": "No hemos podido leer el precio de apertura.",
+  "import.reason.entry_price_not_positive": "Un precio no puede ser 0 ni negativo.",
+  "import.reason.exit_price_unreadable": "No hemos podido leer el precio de cierre.",
+  "import.reason.exit_price_not_positive": "Un precio no puede ser 0 ni negativo.",
+  "import.fix.symbol_empty": "Corrige el símbolo en el archivo y vuelve a subirlo.",
+  "import.fix.symbol_too_long": "Los símbolos son pares como EURUSD. Revisa esa celda.",
+  "import.fix.direction_invalid": "En el archivo, el tipo debe decir buy o sell.",
+  "import.fix.quantity_unreadable": "Revisa que la celda de volumen tenga un número.",
+  "import.fix.quantity_not_positive": "Revisa el volumen de esa operación en el archivo.",
+  "import.fix.entry_price_unreadable": "Revisa la celda del precio de apertura.",
+  "import.fix.entry_price_not_positive": "Revisa la celda del precio de apertura.",
+  "import.fix.exit_price_unreadable": "Revisa la celda del precio de cierre.",
+  "import.fix.exit_price_not_positive": "Revisa la celda del precio de cierre.",
+
   // ------------------------------------------------------------------
   // Onboarding
   // ------------------------------------------------------------------

@@ -620,6 +620,30 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
 .status{margin-top:14px;font-size:13px;padding:10px 12px;border-radius:8px;}
 .status.ok{background:var(--green-bg);color:var(--green);}
 .status.err{background:var(--red-bg);color:var(--red);}
+
+/* Aviso de operaciones que no se han importado.
+   Vive FUERA de las vistas a proposito: al terminar la subida el codigo salta
+   a la vista de trades, asi que un aviso dentro de la vista de importar se
+   pondria en pantalla justo cuando ya no se mira. */
+.aviso-import{margin:0 24px 16px;border:1px solid var(--gold);background:rgba(242,169,59,.10);border-radius:12px;padding:12px 14px;}
+.aviso-import-cab{display:flex;align-items:center;gap:12px;}
+.aviso-import-cab>svg{width:20px;height:20px;color:var(--gold);flex-shrink:0;}
+.aviso-import-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.aviso-import-txt b{font-size:13.5px;color:var(--text);font-weight:600;}
+.aviso-import-txt span{font-size:12.5px;color:var(--gold);}
+.aviso-import-acc{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+
+.aviso-import-lista{list-style:none;margin:12px 0 0;padding:0;border-top:1px solid var(--line);max-height:340px;overflow-y:auto;}
+.aviso-import-item{padding:10px 2px;border-bottom:1px solid var(--line);}
+.aviso-import-item:last-child{border-bottom:none;}
+.aviso-import-fila{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:4px;}
+.aviso-import-nro{font-family:'IBM Plex Mono',monospace;color:var(--gold);font-weight:600;}
+.aviso-import-sim{color:var(--text);font-weight:600;}
+.aviso-import-fecha{color:var(--muted2);font-family:'IBM Plex Mono',monospace;font-size:11px;}
+.aviso-import-dato{font-size:12.5px;color:var(--muted);margin-bottom:3px;}
+.aviso-import-dato b{color:var(--red);font-family:'IBM Plex Mono',monospace;}
+.aviso-import-porque{font-size:12.5px;color:var(--text);}
+.aviso-import-fix{font-size:12px;color:var(--muted2);margin-top:2px;}
 .preview-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:14px;}
 .preview-table th,.preview-table td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);}
 .preview-table th{color:var(--muted);font-weight:500;}

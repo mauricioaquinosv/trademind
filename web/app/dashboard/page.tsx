@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { CfDate, CfDateTime, CfSelect } from "../components/CfControls";
 import SummaryView from "../components/SummaryView";
 import AnalyticsView from "../components/AnalyticsView";
+import AvisoImportacion from "../components/AvisoImportacion";
 import { useI18n } from "../../lib/i18n/LocaleProvider";
 import { errorDeApi } from "../../lib/i18n/apiErrors";
 import LanguageSwitcher from "../../lib/i18n/LanguageSwitcher";
@@ -226,6 +227,16 @@ export default function DashboardPage() {
   const [importBalance, setImportBalance] = useState("");
   const [importBalanceError, setImportBalanceError] = useState("");
   const [importStatus, setImportStatus] = useState<{ text: string; kind: "ok" | "err" | "" }>({ text: "", kind: "" });
+  /* Las operaciones que el backend no ha podido importar, tal cual vienen.
+     Se guarda SIN traducir y se traduce al pintar, para que el aviso cambie de
+     idioma si el usuario lo cambia mientras esta abierto. `null` = no hay
+     aviso. Se guarda tambien cuantas se importaron y cuantas habia en el
+     archivo, para poder decir "498 de 502" en el titular. */
+  const [aviso, setAviso] = useState<{
+    rechazos: unknown;
+    guardadas: number;
+    leidas: number | null;
+  } | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -441,6 +452,9 @@ export default function DashboardPage() {
   async function handleFile(file: File | null | undefined) {
     if (!file) return;
     let accountId = currentAccountId;
+    /* El aviso de la subida anterior se cierra al empezar otra: si no, se
+       queda con las 4 operaciones del archivo viejo mientras el nuevo se sube. */
+    setAviso(null);
 
     if (!accountId) {
       const balance = parseFloat(importBalance);
@@ -477,7 +491,28 @@ export default function DashboardPage() {
     }
 
     const data = await res.json();
-    setImportStatus({ text: t("import.success", { n: data.trades_guardados }), kind: "ok" });
+    /* Si el backend ha dejado algo fuera, se guarda la lista para pintarla en
+       el aviso. El mensaje de "N cargadas" NO se pone en `importStatus` cuando
+       hay rechazos: dira solo las buenas y el usuario creera que se han
+       importado todas. El aviso ya dice "498 de 502". */
+    const hayRechazos = Array.isArray(data.rechazos) && data.rechazos.length > 0;
+    setAviso(
+      hayRechazos
+        ? {
+            rechazos: data.rechazos,
+            guardadas: data.trades_guardados,
+            // El backend solo manda `trades_leidos` cuando hay rechazos. Si un
+            // dia dejara de mandarlo, se calcula con lo que hay.
+            leidas: typeof data.trades_leidos === "number" ? data.trades_leidos : null,
+          }
+        : null,
+    );
+    setImportStatus({
+      text: hayRechazos
+        ? t("import.why", { n: data.rechazos.length })
+        : t("import.success", { n: data.trades_guardados }),
+      kind: hayRechazos ? "" : "ok",
+    });
     if (accountId === currentAccountId) loadTrades(accountId);
     setView("trades");
   }
@@ -949,6 +984,18 @@ export default function DashboardPage() {
               <span>{t("nav.analytics")}</span>
             </button>
           </nav>
+
+          {/* Aviso de operaciones no importadas. Va FUERA de las vistas: al
+              terminar la subida el codigo salta a la vista de trades, asi que
+              aqui dentro no se veria nunca. */}
+          {aviso && (
+            <AvisoImportacion
+              rechazos={aviso.rechazos}
+              guardadas={aviso.guardadas}
+              leidas={aviso.leidas}
+              onClose={() => setAviso(null)}
+            />
+          )}
 
           <main>
             {/* ---- Vista Resumen ---- */}

@@ -24,6 +24,8 @@ FICHEROS = [
     "app/components/SummaryView.tsx",
     "app/components/AnalyticsView.tsx",
     "app/components/CfControls.tsx",
+    "app/components/PanelAnimado.tsx",
+    "app/components/AvisoImportacion.tsx",
     "app/login/page.tsx",
     "app/layout.tsx",
 ]
