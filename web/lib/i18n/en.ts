@@ -649,6 +649,200 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "legal.terms.accept": "By using TradeMind you accept these conditions and the privacy policy.",
 
   // ------------------------------------------------------------------
+  // Flujo de suscripcion (/plan y /bienvenida)
+  //
+  // Los numeros del plan salen de lib/plan/datos.ts, no de aqui. "Day 5" y
+  // "Day 7" van con {n} para que cambiar la duracion de la prueba no obligue a
+  // reescribir las claves.
+  // ------------------------------------------------------------------
+  "flujo.steps": "Signup steps",
+  "flujo.step.account": "Account",
+  "flujo.step.plan": "Plan",
+  "flujo.step.ready": "Done",
+
+  "plan.kicker": "One plan, everything included",
+  "plan.title": {
+    one: "Try TradeMind free for {n} day",
+    other: "Try TradeMind free for {n} days",
+  },
+  "plan.subtitle":
+    "You get everything unlocked from today. If you don't like it, cancel before day {dias} and you pay nothing.",
+  "plan.howTitle": "How the trial works",
+  "plan.step.today": "Today",
+  "plan.step.dayN": { one: "Day {n}", other: "Day {n}" },
+  "plan.step.hoyBody":
+    "Full access, no charge. Upload your report and see your numbers.",
+  "plan.step.avisoBody":
+    "We email you to let you know the trial ends in two days.",
+  "plan.step.finBody":
+    "{precio} is charged and nothing stops. If you cancelled earlier, your access pauses and your data is kept.",
+  "plan.badge": {
+    one: "{n} day free",
+    other: "{n} days free",
+  },
+  "plan.name": "TradeMind",
+  "plan.perMonth": "per month",
+  "plan.noChargeToday": "You pay {precio} today. The first charge is in {dias} days.",
+  "plan.feature.import": "Import your MT5 report or the Excel template",
+  "plan.feature.accounts": "Several accounts, each with its own balance and currency",
+  "plan.feature.calendar": "Trading calendar with a weekly summary",
+  "plan.feature.metrics": "Eight metrics and a trader score across six axes",
+  "plan.feature.analytics": "Analytics per symbol",
+  "plan.feature.languages": "Spanish and English",
+  "plan.feature.cancel": "No lock-in: cancel whenever you want",
+  "plan.cta": { one: "Start my free day", other: "Start my {n} free days" },
+  "plan.ctaNote": "We ask for your card in the next step. Nothing is charged until day {dias}.",
+
+  "welcome.title": "Your trial has started",
+  "welcome.body":
+    "You have full access until {fecha}. We email you two days before it ends.",
+  "welcome.row.plan": "Plan",
+  "welcome.row.planValue": "TradeMind · everything included",
+  "welcome.row.ends": "Trial ends",
+  "welcome.row.charge": "First charge",
+  "welcome.row.chargeValue": "{precio} on {fecha}",
+  "welcome.startTitle": "To get started",
+  "welcome.step1.title": "Upload your report",
+  "welcome.step1.body":
+    "The MT5 one or the Excel template. If a row doesn't make it in, we tell you which one and why.",
+  "welcome.step2.title": "Look at your eight metrics",
+  "welcome.step2.body":
+    "Balance, winrate, profit factor, expected value and the rest, from your real data.",
+  "welcome.step3.title": "Open the calendar",
+  "welcome.step3.body":
+    "Every day with its result, the month's total and your best and worst day.",
+  "welcome.cta": "Go to my dashboard",
+  "welcome.changeMind": "Changed your mind?",
+  "welcome.manageSub": "Manage your subscription",
+
+  // ------------------------------------------------------------------
+  // Pago (/pago)
+  //
+  // El formulario no cobra nada todavia. Las frases que prometen seguridad
+  // ("pago.secure") solo son verdad cuando el pago lo hace un tercero.
+  // ------------------------------------------------------------------
+  "pago.back": "Change plan",
+  "pago.title": {
+    one: "Start your {n}-day free trial",
+    other: "Start your {n}-day free trial",
+  },
+  "pago.lead":
+    "Add a card to activate your {dias} days. Nothing is charged today.",
+  "pago.summary": "Summary",
+  "pago.planNote": "One plan, everything included · per month",
+  "pago.trialLine": {
+    one: "{n}-day free trial",
+    other: "{n}-day free trial",
+  },
+  "pago.zero": "$0.00",
+  "pago.totalToday": "Total due today",
+  "pago.chargeOn":
+    "On {fecha} {precio} is charged and then every month. Cancel whenever you want, and if you do it before that date you pay nothing.",
+  "pago.taxes":
+    "If your country applies taxes, they are shown before you confirm and added to the price.",
+  "pago.method": "Payment method",
+  "pago.email": "Email",
+  "pago.emailEjemplo": "you@email.com",
+  "pago.cardName": "Name on card",
+  "pago.cardNamePh": "As it appears on the card",
+  "pago.cardNumber": "Card number",
+  "pago.expiry": "Expiry",
+  "pago.cvc": "CVC",
+  "pago.postalCode": "Postal code",
+  "pago.postalCodePh": "Your postal code",
+  "pago.cta": {
+    one: "Start my {n}-day free trial",
+    other: "Start my {n}-day free trial",
+  },
+  "pago.secure":
+    "Secure payment. TradeMind does not store your card details: the payment service processes them.",
+
+  // ------------------------------------------------------------------
+  // Facturación (/facturacion)
+  //
+  // Una pantalla con cinco estados. Las claves de cada estado van con el
+  // prefijo del estado, asi que añadir uno nuevo es añadir un bloque y no
+  // tocar los otros cuatro.
+  // ------------------------------------------------------------------
+  "nav.billing": "Billing",
+  "billing.sections": "Sections",
+  "billing.title": "Billing",
+  "billing.planName": "TradeMind · everything included",
+  "billing.badge.en-prueba": "In trial",
+  "billing.badge.termina-pronto": "Ending soon",
+  "billing.badge.activa": "Active",
+  "billing.badge.cancelada": "Cancelled",
+  "billing.badge.pago-fallido": "Payment failed",
+  "billing.desc.en-prueba":
+    "First charge of {precio} on {fecha}. You pay nothing today and can cancel before that at no cost.",
+  "billing.desc.termina-pronto":
+    "Your trial ends in {quedan} days. On {fecha} {precio} is charged and nothing stops.",
+  "billing.desc.activa":
+    "Next charge: {precio} on {fecha}. Cancel whenever you want.",
+  "billing.desc.cancelada":
+    "You have access until {fecha}. Nothing more will be charged and your data is kept.",
+  "billing.desc.pago-fallido":
+    "We could not charge {precio} on {fecha}. We will try again in 3 days; if that also fails, your access pauses.",
+  "billing.banner.en-prueba.lead": "Free trial",
+  "billing.banner.en-prueba.body":
+    "Day {n} of {dias}. Ends {fecha}.",
+  "billing.banner.en-prueba.cta": "View my plan",
+  "billing.banner.termina-pronto.lead": "Your trial ends in {quedan} days",
+  "billing.banner.termina-pronto.body":
+    "On {fecha} {precio} is charged.",
+  "billing.banner.termina-pronto.cta": "View my plan",
+  "billing.banner.cancelada.lead": "Subscription cancelled",
+  "billing.banner.cancelada.body": "You have access until {fecha}.",
+  "billing.banner.cancelada.cta": "Reactivate",
+  "billing.banner.pago-fallido.lead": "We could not charge your card",
+  "billing.banner.pago-fallido.body":
+    "Update it so you do not lose access.",
+  "billing.banner.pago-fallido.cta": "Update card",
+  "billing.progress": "Trial progress",
+  "billing.dayOf": "Day {n} of {dias}",
+  "billing.endsOn": "Ends {fecha}",
+  "billing.paymentMethod": "Payment method",
+  "billing.cardSample": "Visa ···· 4242",
+  "billing.cardExpires": "Expires {fecha}",
+  "billing.cardDeclined": "Your bank declined the charge",
+  "billing.changeCard": "Change card",
+  "billing.invoices": "Invoices",
+  "billing.paid": "Paid",
+  "billing.failed": "Failed",
+  "billing.noInvoices":
+    "No invoices yet. The first one arrives with the first charge, on {fecha}.",
+  "billing.noInvoicesCancel": "No pending invoices.",
+  "billing.reactivate": "Reactivate subscription",
+  "billing.cancel": "Cancel subscription",
+  "billing.confirm.title": "Cancel your subscription?",
+  "billing.confirm.body":
+    "If you cancel now, your trial runs until {fecha} and nothing is charged.",
+  "billing.confirm.keep1": "You keep all your data.",
+  "billing.confirm.keep2": "You can come back whenever you want.",
+  "billing.confirm.yes": "Yes, cancel",
+  "billing.confirm.keep": "Keep my plan",
+
+  // ------------------------------------------------------------------
+  // Acceso pausado (/acceso-pausado)
+  //
+  // Dos motivos, una sola pantalla. Solo cambian el icono, el titulo, el
+  // parrafo y el boton.
+  // ------------------------------------------------------------------
+  "pausa.prueba-terminada.title": "Your free trial has ended",
+  "pausa.prueba-terminada.lead":
+    "You had {dias} days with everything unlocked. To keep seeing your metrics and uploading reports, activate the plan.",
+  "pausa.prueba-terminada.cta": "Activate TradeMind",
+  "pausa.pago-no-recibido.title": "Your access is paused",
+  "pausa.pago-no-recibido.lead":
+    "We could not charge the subscription and the retries ran out. Update your card and you are back in right away.",
+  "pausa.pago-no-recibido.cta": "Update card and reactivate",
+  "pausa.safeTitle": "Your data is safe",
+  "pausa.safeCount": "{n} trades · {cuentas} account",
+  "pausa.safeBody":
+    "We delete nothing. As soon as you reactivate, you find everything as you left it.",
+  "logout": "Log out",
+
+  // ------------------------------------------------------------------
   // Meses y días
   // ------------------------------------------------------------------
   "months.full": [

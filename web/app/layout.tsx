@@ -12,6 +12,10 @@ import "./landing.css";
 // El CSS del login va DESPUES del de la landing: comparte el fondo y la
 // rejilla con ella, y asi el login gana si algun dia chocaran.
 import "./login.css";
+// El del flujo de suscripcion (/plan, /bienvenida) va el ULTIMO: sus clases
+// llevan prefijo .fl y no pisan nada, pero si mañana se añade algo compartido
+// con el login, el orden es el que manda.
+import "./flujo.css";
 // Las constantes y la normalizacion se importan de ./config y NO de
 // LocaleProvider: LocaleProvider es un modulo de cliente, y desde el
 // servidor Next solo devuelve un proxy de referencia (y LOCALES.includes
@@ -34,9 +38,22 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang={locale} className="h-full">
       <head>
-        {/* Mismas fuentes que usa el HTML original */}
+        {/* LAS FUENTES, Y POR QUE SON LAS CUATRO
+            Aqui se pedian dos familias y faltaban otras dos. Las pantallas
+            (landing, login, legales y el flujo de suscripcion) declaran en su
+            CSS 'Bricolage Grotesque' para los titulos e 'Instrument Sans' para
+            el texto, y ninguna de las dos estaba en esta lista. Sin ellas el
+            navegador caia a system-ui, que en Windows es Segoe UI: mas ancha y
+            mas alta, y sin las formas de titular que pedia el diseno. Por eso
+            las pantallas se veian mas grandes de lo que estaban disenadas.
+
+            Space Grotesk NO sobra: es la que usa dashboard.css, y por eso se
+            queda. quitarla cambiaria el dashboard entero.
+
+            El orden de las cuatro no importa al navegador; van en orden
+            alfabetico, que es como las devuelve Google. */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400..700&family=Space+Grotesk:wght@500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>

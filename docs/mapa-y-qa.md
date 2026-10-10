@@ -12,17 +12,30 @@ No es un plan de trabajo ni una lista de prioridades. El orden es tuyo.
 
 # PARTE 1 — EL MAPA
 
-## 1. Las tres paginas
+## 1. Las rutas
 
-Solo hay tres rutas. Next.js App Router, todo renderizado en el servidor.
+Once rutas. Next.js App Router. Cinco son públicas y seis piden token.
 
 | Ruta | Fichero | Que es | Acceso |
 |---|---|---|---|
 | `/` | `web/app/page.tsx` | La landing publica | Todo el mundo |
 | `/login` | `web/app/login/page.tsx` | Iniciar sesion | Todo el mundo |
+| `/plan` | `web/app/plan/page.tsx` | El plan, paso 2 de 3 | Todo el mundo |
+| `/pago` | `web/app/pago/page.tsx` | El pago, paso 2 de 3 | Todo el mundo |
+| `/bienvenida` | `web/app/bienvenida/page.tsx` | El paso 3 de 3 | Todo el mundo |
+| `/facturacion` | `web/app/facturacion/page.tsx` | Cinco estados de la suscripcion | Todo el mundo |
+| `/acceso-pausado` | `web/app/acceso-pausado/page.tsx` | Dos motivos de pausa | Todo el mundo |
 | `/dashboard` | `web/app/dashboard/page.tsx` | La aplicacion | Con token |
+| `/legal` | `web/app/legal/page.tsx` | Aviso legal | Todo el mundo |
+| `/privacidad` | `web/app/privacidad/page.tsx` | Politica de privacidad | Todo el mundo |
+| `/terminos` | `web/app/terminos/page.tsx` | Terminos del servicio | Todo el mundo |
 
-Lo que NO existe todavia: registro, recuperar contrasena, cerrar sesion.
+**Las cinco del flujo de suscripcion son una maqueta.** Ninguna cobra, ninguna guarda
+suscripcion y ningun boton hace nada. El estado se lee de `?estado=` en la URL porque
+todavia no hay tabla. Cuando exista, el servidor leera el estado del usuario y ese
+parametro desaparecera: la pantalla no tendra que cambiar.
+
+Lo que NO existe todavia: recuperar contrasena, y el motor de suscripciones entero.
 
 ### `/` — la landing
 
@@ -131,8 +144,13 @@ note.
 ya sale en el idioma correcto: no hay destello a espanol cuando estas en ingles.
 
 **El guard de traduccion** (`npm run test:traduccion`) falla si queda una
-palabra visible escrita a mano en vez de pasar por el diccionario. Vigila nueve
+palabra visible escrita a mano en vez de pasar por el diccionario. Vigila quince
 ficheros.
+
+Ademas hay un test que comprueba que cada `t("clave")` pasa todas las variables que
+pide la clave en el diccionario. Se llama **"ningun t() se deja un hueco del
+diccionario sin sustituir"** y existe porque una vez se quedo un `{dias}` escrito
+en pantalla sin que nadie lo viera: compilaba, los tests pasaban y la app arrancaba.
 
 ## 5. Donde se guarda
 
@@ -156,12 +174,12 @@ Ya no esta lo del registro: **probado de punta a punta**, cuenta creada, sesion
 iniciada sola y entrada al dashboard. Lo que queda:
 
 - [ ] **No existen los terminos ni la politica de privacidad**, y el login dice
-      que los aceptas (`login.terms`). Solo hay tres rutas: `/`, `/login` y
-      `/dashboard`. Es lo unico de esta lista que no se resuelve solo el dia de
-      publicar.
+      que los aceptas (`login.terms`). Ya existen las tres rutas, pero **faltan los
+      cinco datos que no se pueden inventar**. Es lo unico de esta lista que no se
+      resuelve solo el dia de publicar.
 
       **LO QUE FALTA RELLENAR (pendiente a proposito):** los tres documentos se
-      pueden escribir casi enteros, pero hay tres datos que **no se pueden
+      pueden escribir casi enteros, pero hay cinco datos que **no se pueden
       inventar**. Cuando llegue el momento de escribirlos, estan aqui:
 
       1. **Nombre** del titular o de la empresa, y si tiene **NIF**
@@ -174,9 +192,14 @@ iniciada sola y entrada al dashboard. Lo que queda:
 - [x] **Cerrar sesion.** Hecho: el icono de usuario abre un menu con el email de
       la cuenta y la salida. Al cerrar borra el token, el email y la cuenta activa,
       y vuelve al login.
+- [x] **Registro.** Hecho y probado de punta a punta: cuenta creada, sesion
+      iniciada sola y entrada al dashboard.
 - [ ] **"He olvidado mi contrasena"** es `href="#"`.
 - [ ] **Google** avisa de que aun no esta. Sin decision.
 - [ ] **Los mensajes de validacion de Pydantic** llegan en ingles fijo.
+- [ ] **El motor de suscripciones no existe.** Las cinco pantallas del flujo son una
+      maqueta: no hay tabla, no hay cobro y ningun boton hace nada. Es lo que decide
+      si esto se lanza o no.
 
 ## A. La landing
 
@@ -257,7 +280,43 @@ estado REAL, no el que parecia.
       a `Numeric`. **Decides tu**, y de nuevo: es cosa de cuando haya ingresos,
       no de ahora.
 
-## A2. Lo que falta antes de lanzar
+## A2. El flujo de suscripción
+
+Las cinco rutas nuevas. **Ninguna cobra**: son el diseño montado, para recorrerlo y
+decidir. Cada una se comprueba en los dos idiomas.
+
+- [ ] `/plan`: el precio sale de `lib/plan/datos.ts`, no está escrito en el texto
+- [ ] `/plan`: los tres momentos de la prueba (hoy, día 5, día 7) salen de las
+      mismas cifras, no de un 5 y un 7 escritos a mano
+- [ ] `/pago`: el email va relleno y solo se puede leer; el total de hoy es $0,00
+- [ ] `/pago`: el formulario no envia a ningun sitio y el boton es un enlace
+- [ ] `/bienvenida`: al cambiar de idioma, la fecha entera cambia de mes
+- [ ] `/facturacion?estado=en-prueba`: dice "Dia 3 de 7" y "termina en 4 dias", y
+      las dos cifras cuadran entre si
+- [ ] `/facturacion?estado=termina-pronto`: dice "Dia 5 de 7" y "termina en 2 dias"
+- [ ] `/facturacion?estado=activa`: no se ve el aviso de arriba ni la barra
+- [ ] `/facturacion?estado=cancelada`: se ve el boton de reactivar y no el de cancelar
+- [ ] `/facturacion?estado=pago-fallido`: la tarjeta dice que el banco rechazo el cobro
+- [ ] `/facturacion?estado=no-existe`: cae en el estado por defecto, no en blanco
+- [ ] El cuadro de cancelar se abre y se cierra, pero no cancela nada
+- [ ] `/acceso-pausado`: los dos motivos cambian el icono, el titulo y el boton
+- [ ] Las cinco rutas se ven bien a 1440, 1200, 900, 760, 620, 520 y 375 px
+
+## A2b. Las fuentes
+
+Las pantallas pedian dos tipografias que nunca se cargaban: **Bricolage Grotesque**
+para los titulos e **Instrument Sans** para el texto. Sin ellas todo caia en
+`system-ui`, que en Windows es Segoe UI: mas ancha, mas alta, y sin las formas del
+diseno. Por eso las pantallas se veian mas grandes de lo que estaban disenadas.
+
+**Resuelto el 10 oct:** las dos familias estan en el `<link>` de `layout.tsx`, sin
+quitar Space Grotesk (que el dashboard si usa). Cambian la landing, el login, las
+legales y las cinco del flujo. El dashboard no se toca.
+
+- [ ] La landing y el login se ven como las diseno Claude, no como antes
+- [ ] No se ha roto nada al cambiar la letra: comprobar la curva y el calendario
+
+## A3. Lo que falta antes de lanzar
 
 De una segunda revisión, posterior a la de los cinco puntos. Ninguna comprobada
 con tests: se dedujo leyendo el código.
@@ -464,7 +523,7 @@ de arriba:
 
 ```
 .\venv\Scripts\python.exe -m pytest     -> 261 tests de backend
-cd web; npm test                         -> 123 tests de frontend
+cd web; npm test                         -> 167 tests de frontend
 cd web; npm run test:traduccion          -> el guard de las cadenas sueltas
 cd web; npx tsc --noEmit                 -> los tipos
 cd web; npm run build                    -> que compile de verdad
@@ -516,3 +575,23 @@ Si algo se rompe, mira estos primero. Son el cuello de botella.
 | `web/lib/legal/datos.ts` | **Los cinco huecos por rellenar** |
 | `web/app/legal/` · `privacidad/` · `terminos/` | Las tres páginas legales |
 | `web/app/login.css` | El diseño del login y de las páginas legales |
+
+### El flujo de suscripción (10 oct)
+
+| Fichero | Para qué |
+|---|---|
+| `web/lib/plan/datos.ts` | Precio, días de prueba y la aritmética de fechas |
+| `web/lib/plan/estados.ts` | Los cinco estados y qué pinta cada uno |
+| `web/app/flujo.css` | Todo el estilo del flujo, bajo `.fl` |
+| `web/app/components/CabeceraFlujo.tsx` | Logo e idioma, compartidos |
+| `web/app/components/PasosFlujo.tsx` | Los tres pasos, compartidos |
+| `web/app/components/PantallaPlan.tsx` | `/plan` |
+| `web/app/components/PantallaPago.tsx` | `/pago` |
+| `web/app/components/PantallaBienvenida.tsx` | `/bienvenida` |
+| `web/app/components/PantallaFacturacion.tsx` | `/facturacion`, cinco estados |
+| `web/app/components/PantallaAccesoPausado.tsx` | `/acceso-pausado`, dos motivos |
+| `web/app/plan/` · `pago/` · `bienvenida/` · `facturacion/` · `acceso-pausado/` | Las cinco rutas |
+| `web/tests/planDatos.test.mjs` | La aritmética de fechas |
+| `web/tests/estados.test.mjs` | Los estados y sus valores |
+| `web/tests/traduccion.test.mjs` | Que ningún `t()` se deje un hueco sin sustituir |
+| `web/app/layout.tsx` | Las dos tipografías que faltaban |

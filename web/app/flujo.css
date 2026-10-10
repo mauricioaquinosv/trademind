@@ -1,0 +1,962 @@
+/* ===================================================================
+   FLUJO DE SUSCRIPCION (/plan, /bienvenida, y las que vengan)
+   Todo esta bajo .fl para no tocar ni la landing (.lp), ni el login
+   (.lg), ni el dashboard, que tienen sus propias reglas globales.
+
+   POR QUE ESTO EXISTE
+
+   Son las pantallas del diseno que hizo Claude para el flujo de pago. De
+   momento son solo diseno: no hay motor de suscripciones detras. Se montan
+   para poder recorrer el flujo y decidir, no porque hagan falta todavia.
+
+   DE DONDE SALE EL ASPECTO
+
+   Del fichero de referencia que traia el diseno, que traia sus propias
+   clases (.go, .seg, .btn, .chip...). Aqui estan renombradas con prefijo .fl
+   porque esas clases sin prefijo chocarian con las del dashboard: el
+   comentario de arriba de landing.css ya documenta una vez que paso por
+   exactamente eso. Los estilos se hanmovido de las etiquetas a aqui; en el
+   HTML de referencia iban todos en linea.
+   =================================================================== */
+
+.fl {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #05060B;
+  color: #F1F2F6;
+  font-family: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.fl *,
+.fl *::before,
+.fl *::after { box-sizing: border-box; }
+.fl a { color: inherit; text-decoration: none; }
+.fl button { font-family: inherit; }
+/* El reset de las etiquetas va con :where() y NO sin el.
+   Sin el, `.fl h1` (especificidad 0,1,1) gana a `.fl-h1` (0,1,0) y todos los
+   margenes de abajo se quedan en 0: la pagina se ve pegada, sin respiracion.
+   Con :where() el selector vale 0,0,0, asi que manda la clase utilitaria,
+   que es la que lleva el valor real. */
+.fl :where(h1, h2, p, dl, dd, ol, ul) { margin: 0; padding: 0; }
+.fl :where(ol, ul) { list-style: none; }
+
+/* Las mismas dos familias que usa la landing, para que las tres paginas se
+   vean como la misma pagina y no como tres productos pegados. */
+.fl .disp {
+  font-family: 'Bricolage Grotesque', 'Instrument Sans', system-ui, sans-serif;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+.fl .mono {
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- los dos brillos de fondo ---------------------------------------- */
+.fl-glow { position: absolute; border-radius: 50%; pointer-events: none; }
+.fl-glow.a {
+  width: 760px; height: 760px; left: -220px; top: -300px;
+  background: radial-gradient(circle, rgba(47,216,200,0.20), transparent 68%);
+}
+.fl-glow.b {
+  width: 820px; height: 820px; right: -260px; bottom: -320px;
+  background: radial-gradient(circle, rgba(226,47,160,0.18), transparent 68%);
+}
+/* El de la bienvenida va centrado arriba, no en una esquina. */
+.fl-centro .fl-glow.a {
+  width: 820px; height: 820px; left: 50%; top: -380px; margin-left: -410px;
+  background: radial-gradient(circle, rgba(47,216,200,0.24), transparent 68%);
+}
+.fl-centro .fl-glow.b {
+  width: 760px; height: 760px; right: -260px; bottom: -300px;
+  background: radial-gradient(circle, rgba(226,47,160,0.16), transparent 68%);
+}
+
+.fl-in {
+  position: relative;
+  z-index: 1;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 22px 24px 56px;
+}
+/* La Bienvenida es mas estrecha: es una columna de texto. */
+.fl-centro .fl-in { max-width: 1100px; }
+
+/* --- cabecera: logo e idioma ------------------------------------------ */
+.fl-cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.fl-brand { display: flex; align-items: center; gap: 10px; }
+.fl-brand span { font-size: 21px; font-weight: 700; }
+
+/* --- los tres pasos: Cuenta / Plan / Listo ---------------------------- */
+.fl-pasos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 34px;
+}
+.fl-paso { display: flex; align-items: center; gap: 10px; }
+.fl-paso-num {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12.5px; font-weight: 600;
+  /* Por defecto, el paso que todavia no ha pasado. */
+  background: transparent;
+  color: #8E93A6;
+  border: 1px solid rgba(255,255,255,0.20);
+}
+/* El paso en el que se esta: el numero se ve y el circulo se ilumina. */
+.fl-paso.hoy .fl-paso-num {
+  background: rgba(47,216,200,0.16);
+  color: #7DF0DE;
+  border-color: #2FD8C8;
+}
+/* El paso ya superado: el circulo va lleno y con un visto. */
+.fl-paso.hecho .fl-paso-num {
+  background: #2FD8C8;
+  color: #04211E;
+  border-color: #2FD8C8;
+}
+.fl-paso-label { font-size: 14px; font-weight: 600; color: #8E93A6; }
+.fl-paso.hoy .fl-paso-label,
+.fl-paso.hecho .fl-paso-label { color: #F1F2F6; }
+/* El palito que une los pasos. El ultimo paso no lo lleva. */
+.fl-paso-linea {
+  display: inline-block;
+  width: 40px; height: 1px;
+  background: rgba(255,255,255,0.18);
+  margin-left: 4px;
+}
+.fl-paso-linea.oculta { display: none; }
+
+/* --- el boton grande --------------------------------------------------- */
+.fl-go {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 54px;
+  border-radius: 12px;
+  border: 0;
+  background: #2FD8C8;
+  color: #04211E;
+  font-size: 16.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 30px -10px rgba(47,216,200,0.55);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.fl-go:hover { background: #5BE6D8; transform: translateY(-1px); }
+
+.fl a:focus-visible,
+.fl button:focus-visible {
+  outline: 2px solid #2FD8C8;
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fl-go { transition: none; }
+  .fl-go:hover { transform: none; }
+}
+
+/* ===================================================================
+   /plan
+   =================================================================== */
+.fl-plan {
+  margin-top: 46px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px 56px;
+  align-items: flex-start;
+  justify-content: center;
+}
+.fl-plan-texto { flex: 1 1 440px; min-width: 0; max-width: 560px; }
+.fl-kicker {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #2FD8C8;
+}
+.fl-h1 {
+  margin-top: 12px;
+  font-size: clamp(34px, 5vw, 54px);
+  line-height: 1.04;
+  font-weight: 700;
+}
+.fl-lead {
+  margin-top: 18px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: #A3A8BC;
+  max-width: 500px;
+}
+.fl-h2 {
+  margin-top: 44px;
+  font-size: 19px;
+  font-weight: 600;
+  color: #D7DAE6;
+}
+
+/* --- los tres momentos de la prueba ---------------------------------- */
+.fl-linea-t { margin-top: 18px; display: flex; flex-direction: column; }
+.fl-linea-t li { display: flex; gap: 16px; }
+.fl-linea-t-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* El punto de color. */
+.fl-linea-t-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  margin-top: 5px;
+  background: #2FD8C8;
+}
+/* El hilo que baja al siguiente punto. El ultimo no lo lleva. */
+.fl-linea-t-hilo {
+  flex: 1 1 0%;
+  width: 1px;
+  margin-top: 6px;
+  background: rgba(255,255,255,0.14);
+}
+.fl-linea-t-hilo.oculto { display: none; }
+.fl-linea-t-cuerpo { padding-bottom: 22px; }
+.fl-linea-t li:last-child .fl-linea-t-cuerpo { padding-bottom: 0; }
+.fl-linea-t-cuando {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #2FD8C8;
+}
+.fl-linea-t-que {
+  margin-top: 4px;
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: #C9CCDA;
+}
+
+/* --- la tarjeta del plan ---------------------------------------------- */
+.fl-precio {
+  flex: 1 1 400px;
+  min-width: 0;
+  max-width: 460px;
+  position: relative;
+  padding: 34px 32px 30px;
+  border-radius: 22px;
+  background: linear-gradient(rgba(22,24,38,0.88), rgba(11,12,20,0.92));
+  border: 1px solid rgba(47,216,200,0.38);
+  box-shadow:
+    rgba(255,255,255,0.08) 0 1px 0 inset,
+    rgba(0,0,0,0.9) 0 40px 100px -30px,
+    rgba(47,216,200,0.35) 0 0 90px -30px;
+}
+.fl-precio-badge {
+  position: absolute;
+  top: -13px;
+  left: 32px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #2FD8C8;
+  color: #04211E;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.fl-precio-nombre {
+  margin-top: 6px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #D7DAE6;
+}
+.fl-precio-cifra {
+  margin-top: 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.fl-precio-cantidad { font-size: 64px; line-height: 1; font-weight: 700; }
+.fl-precio-periodo { font-size: 16px; color: #8E93A6; }
+.fl-precio-nota {
+  margin-top: 10px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: #7DF0DE;
+}
+.fl-ventas {
+  margin-top: 26px;
+  padding-top: 26px;
+  border-top: 1px solid rgba(255,255,255,0.10);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.fl-ventas li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #D7DAE6;
+}
+.fl-ventas svg { flex: 0 0 auto; margin-top: 2px; }
+.fl-plan-pie {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #8E93A6;
+}
+
+/* ===================================================================
+   /bienvenida
+   =================================================================== */
+.fl-bien {
+  margin: 44px auto 0;
+  max-width: 640px;
+  text-align: center;
+}
+.fl-sello {
+  width: 76px; height: 76px;
+  margin: 0 auto;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(47,216,200,0.14);
+  border: 1px solid rgba(47,216,200,0.50);
+  box-shadow: rgba(47,216,200,0.55) 0 0 60px -8px;
+}
+.fl-bien h1 {
+  margin-top: 26px;
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 1.05;
+  font-weight: 700;
+}
+.fl-bien-lead {
+  margin: 16px auto 0;
+  font-size: 17px;
+  line-height: 1.6;
+  color: #A3A8BC;
+  max-width: 520px;
+}
+
+/* --- las tres filas del resumen --------------------------------------- */
+.fl-datos {
+  margin-top: 34px;
+  padding: 6px 26px;
+  border-radius: 18px;
+  text-align: left;
+  background: linear-gradient(rgba(22,24,38,0.84), rgba(11,12,20,0.88));
+  border: 1px solid rgba(255,255,255,0.10);
+}
+.fl-datos > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: baseline;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+/* La ultima fila no deja el filete colgando. */
+.fl-datos > div:last-child { border-bottom: 0; }
+.fl-datos dt { font-size: 14.5px; color: #8E93A6; }
+.fl-datos dd {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #F1F2F6;
+  text-align: right;
+}
+/* El primer cobro va en ambar: es el dato que hay que mirar. */
+.fl-datos dd.aviso { color: #FFC400; }
+
+.fl-bien-h2 {
+  margin-top: 44px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #D7DAE6;
+  text-align: left;
+}
+.fl-pasos-inicio {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+.fl-pasos-inicio li {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.fl-paso-num-caja {
+  flex: 0 0 auto;
+  width: 30px; height: 30px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  background: rgba(47,216,200,0.14);
+  color: #7DF0DE;
+}
+.fl-paso-inicio-titulo { font-size: 15.5px; font-weight: 600; }
+.fl-paso-inicio-cuerpo {
+  margin-top: 3px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #A3A8BC;
+}
+.fl-bien .fl-go { margin-top: 32px; }
+.fl-bien-pie {
+  margin-top: 18px;
+  font-size: 14px;
+  color: #8E93A6;
+}
+.fl-enlace { color: #7DF0DE; font-size: 14.5px; font-weight: 600; }
+.fl-enlace:hover { color: #B5F7EC; text-decoration: underline; }
+
+/* ===================================================================
+   /pago
+   =================================================================== */
+.fl-volver {
+  margin-top: 34px;
+  color: #8E93A6;
+  font-size: 14px;
+  font-weight: 600;
+}
+.fl-volver:hover { color: #F1F2F6; }
+
+.fl-pago {
+  margin-top: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 36px 48px;
+  align-items: flex-start;
+}
+.fl-pago-res { flex: 1 1 380px; min-width: 0; }
+.fl-pago-h1 {
+  font-size: clamp(30px, 4.2vw, 44px);
+  line-height: 1.06;
+  font-weight: 700;
+}
+.fl-pago-lead {
+  margin-top: 14px;
+  font-size: 16.5px;
+  line-height: 1.6;
+  color: #A3A8BC;
+  max-width: 460px;
+}
+
+/* --- el recuadro del resumen del pedido --- */
+.fl-resumen {
+  margin-top: 30px;
+  padding: 26px 26px 22px;
+  border-radius: 18px;
+  background: linear-gradient(rgba(22,24,38,0.84), rgba(11,12,20,0.88));
+  border: 1px solid rgba(255,255,255,0.10);
+}
+.fl-resumen-titulo {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8E93A6;
+  font-weight: 500;
+}
+.fl-resumen-fila {
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: baseline;
+}
+.fl-resumen-plan { font-size: 20px; font-weight: 600; }
+.fl-resumen-plan-nota {
+  margin-top: 3px;
+  font-size: 14px;
+  color: #8E93A6;
+}
+/* El precio original va tachado: es lo que se paga AL MES, no hoy. */
+.fl-resumen-tachado {
+  font-size: 15px;
+  color: #A3A8BC;
+  text-decoration: line-through;
+}
+.fl-resumen-prueba {
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  font-size: 14.5px;
+  color: #7DF0DE;
+}
+.fl-resumen-total {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255,255,255,0.10);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+.fl-resumen-total-etq { font-size: 16px; font-weight: 600; }
+.fl-resumen-total-cifra { font-size: 34px; font-weight: 700; }
+/* El aviso del dia del cobro, en ambar: es la fecha que el usuario no debe
+   dejar pasar. */
+.fl-aviso-cobro {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255,196,0,0.08);
+  border: 1px solid rgba(255,196,0,0.22);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #E9D9A6;
+}
+.fl-impuestos {
+  margin-top: 16px;
+  margin-left: 4px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #7B8199;
+  max-width: 460px;
+}
+
+/* --- el formulario --- */
+.fl-form {
+  flex: 1 1 400px;
+  min-width: 0;
+  max-width: 500px;
+  padding: 30px 30px 26px;
+  border-radius: 22px;
+  background: linear-gradient(rgba(22,24,38,0.88), rgba(11,12,20,0.92));
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow:
+    rgba(255,255,255,0.08) 0 1px 0 inset,
+    rgba(0,0,0,0.9) 0 40px 100px -30px,
+    rgba(47,216,200,0.22) 0 0 80px -30px;
+}
+.fl-form-titulo { font-size: 22px; font-weight: 600; }
+.fl-form-campos {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.fl-campo { display: block; }
+.fl-campo-etq {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #B9BDCF;
+  margin-bottom: 7px;
+}
+.fl-input {
+  display: block;
+  width: 100%;
+  height: 50px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.05);
+  color: #F1F2F6;
+  font-size: 15.5px;
+  outline: 0;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.fl-input::placeholder { color: #6B7088; }
+.fl-input:focus {
+  border-color: #2FD8C8;
+  background: rgba(47,216,200,0.06);
+  box-shadow: 0 0 0 3px rgba(47,216,200,0.22);
+}
+/* El email viene relleno de la cuenta: no se puede cambiar aqui. */
+.fl-input[readonly] { color: #A3A8BC; background: rgba(255,255,255,0.03); }
+.fl-campo-par { display: flex; gap: 14px; flex-wrap: wrap; }
+.fl-campo-par > div { flex: 1 1 130px; min-width: 0; }
+.fl-seguro {
+  margin-top: 16px;
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #8E93A6;
+}
+.fl-seguro svg { flex: 0 0 auto; margin-top: 1px; }
+
+/* ===================================================================
+   /facturacion
+   =================================================================== */
+
+/* Esta pantalla es la unica con lateral fijo: es la unica que se parece al
+   dashboard. Por eso el fondo y el ancho los lleva .fl-lateral-envoltura y no
+   .fl-in. */
+.fl-lateral-envoltura {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  min-height: 100vh;
+}
+.fl-lateral {
+  flex: 0 0 232px;
+  padding: 22px 16px;
+  border-right: 1px solid rgba(255,255,255,0.07);
+  background: rgba(8,9,15,0.7);
+}
+.fl-lateral-marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 22px;
+}
+.fl-lateral-marca span { font-size: 19px; font-weight: 700; }
+.fl-lateral-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fl-nav-item {
+  display: block;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #A3A8BC;
+}
+.fl-nav-item:hover { background: rgba(255,255,255,0.05); color: #F1F2F6; }
+.fl-nav-item.actual {
+  background: rgba(47,216,200,0.12);
+  color: #7DF0DE;
+  font-weight: 600;
+}
+
+.fl-fact-cuerpo { flex: 999 1 560px; min-width: 0; }
+
+/* El aviso de arriba. Cada estado tiene su color; ver .fl-fact-aviso en
+   estados.ts y los valores en la pantalla. */
+.fl-fact-aviso {
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  padding: 13px 28px;
+  display: flex;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: #FFFFFF;
+}
+.fl-fact-aviso b { font-weight: 700; }
+
+.fl-fact-in { padding: 28px 28px 64px; max-width: 900px; }
+.fl-fact-cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.fl-fact-h1 { font-size: 32px; font-weight: 700; }
+
+/* --- los paneles --- */
+.fl-panel {
+  border-radius: 18px;
+  background: linear-gradient(rgba(22,24,38,0.84), rgba(11,12,20,0.9));
+  border: 1px solid rgba(255,255,255,0.10);
+}
+.fl-panel-sub { margin-top: 22px; padding: 26px 28px; }
+.fl-panel-fila {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 18px;
+}
+.fl-panel-cab {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.fl-panel-titulo { font-size: 22px; font-weight: 600; }
+/* La insignia del estado: verde, ambar, gris o rojo segun como va. */
+.fl-insignia {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.fl-panel-desc {
+  margin-top: 10px;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: #C9CCDA;
+  max-width: 520px;
+}
+.fl-panel-precio { text-align: right; }
+.fl-panel-precio-cifra { font-size: 34px; font-weight: 700; line-height: 1; }
+.fl-panel-precio-nota { margin-top: 4px; font-size: 13.5px; color: #8E93A6; }
+.fl-panel-acciones {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255,255,255,0.09);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* --- la barra de la prueba --- */
+.fl-progreso { margin-top: 20px; }
+.fl-progreso-pista {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  overflow: hidden;
+}
+.fl-progreso-relleno { height: 100%; border-radius: 999px; }
+.fl-progreso-pie {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13.5px;
+  color: #8E93A6;
+}
+
+/* --- la tarjeta de pago --- */
+.fl-tarjeta {
+  margin-top: 18px;
+  padding: 22px 28px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.fl-tarjeta-izq {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+.fl-tarjeta-icono {
+  width: 52px; height: 36px;
+  border-radius: 7px;
+  border: 1px solid rgba(255,255,255,0.20);
+  background: rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.fl-tarjeta-dato { margin-top: 5px; font-size: 15px; }
+.fl-tarjeta-caduca { margin-top: 3px; font-size: 13px; color: #8E93A6; }
+/* Cuando el banco rechaza el cobro, el motivo va en rojo y no en gris. */
+.fl-tarjeta-caduca.roja { color: #FF8FA6; }
+
+/* --- los botones --- */
+.fl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 11px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: transparent;
+  color: #F1F2F6;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.fl-btn:hover { background: rgba(255,255,255,0.07); }
+.fl-btn-p { background: #2FD8C8; border-color: #2FD8C8; color: #04211E; font-weight: 700; }
+.fl-btn-p:hover { background: #5BE6D8; border-color: #5BE6D8; }
+.fl-btn-d { border-color: rgba(255,92,122,0.45); color: #FF8FA6; }
+.fl-btn-d:hover { background: rgba(255,92,122,0.10); }
+
+/* --- las facturas --- */
+.fl-facturas { margin-top: 18px; padding: 22px 28px 10px; }
+.fl-facturas ul { margin-top: 6px; }
+.fl-facturas li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 14px 0;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.fl-facturas .fecha { font-size: 14.5px; color: #D7DAE6; }
+.fl-facturas .estado-pagada {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #2FD8C8;
+}
+.fl-facturas .estado-fallida {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #FF8FA6;
+}
+.fl-facturas-vacio {
+  padding: 18px 0 4px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: #8E93A6;
+}
+
+/* --- el cuadro de confirmar la cancelacion --- */
+.fl-modal-fondo {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: rgba(3,4,8,0.72);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.fl-modal {
+  width: 100%;
+  max-width: 470px;
+  padding: 30px 30px 26px;
+  border-radius: 20px;
+  background: linear-gradient(rgba(22,24,38,0.96), rgba(11,12,20,0.98));
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: rgba(0,0,0,0.7) 0 40px 100px -30px;
+}
+.fl-modal h2 { font-size: 21px; font-weight: 600; }
+.fl-modal p {
+  margin-top: 10px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #A3A8BC;
+}
+.fl-modal ul {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.fl-modal li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: #C9CCDA;
+}
+.fl-modal li svg { flex: 0 0 auto; margin-top: 2px; }
+.fl-modal-acciones {
+  margin-top: 26px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* ===================================================================
+   /acceso-pausado
+   =================================================================== */
+.fl-pausa {
+  margin: 38px auto 0;
+  max-width: 600px;
+  text-align: center;
+}
+.fl-pausa-sello {
+  width: 72px; height: 72px;
+  margin: 0 auto;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(226,47,160,0.14);
+  border: 1px solid rgba(226,47,160,0.50);
+}
+.fl-pausa h1 {
+  margin-top: 24px;
+  font-size: clamp(32px, 5vw, 48px);
+  line-height: 1.06;
+  font-weight: 700;
+}
+.fl-pausa-lead {
+  margin: 16px auto 0;
+  font-size: 17px;
+  line-height: 1.6;
+  color: #A3A8BC;
+  max-width: 500px;
+}
+.fl-datos-salvos {
+  margin-top: 32px;
+  padding: 20px 24px;
+  border-radius: 16px;
+  text-align: left;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: rgba(47,216,200,0.07);
+  border: 1px solid rgba(47,216,200,0.24);
+}
+.fl-datos-salvos svg { flex: 0 0 auto; margin-top: 1px; }
+.fl-datos-salvos-titulo { font-size: 15.5px; font-weight: 600; }
+.fl-datos-salvos-cifra {
+  margin-top: 6px;
+  font-size: 13.5px;
+  color: #7DF0DE;
+}
+.fl-datos-salvos-nota {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #A3A8BC;
+}
+.fl-pausa-precio {
+  margin-top: 30px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+}
+.fl-pausa-precio-cifra { font-size: 44px; font-weight: 700; line-height: 1; }
+.fl-pausa-precio-nota { font-size: 15px; color: #8E93A6; }
+.fl-pausa .fl-go { margin-top: 18px; }
+.fl-pausa-pie {
+  margin-top: 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #8E93A6;
+}
+.fl-pausa-salir { margin-top: 26px; }
+.fl-lnk {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: #8E93A6;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.fl-lnk:hover { color: #F1F2F6; text-decoration: underline; }

@@ -376,6 +376,8 @@
 
     <a href="#seguridad">Seguridad del backend</a>
 
+    <a href="#suscripcion">El flujo de suscripción</a>
+
     <a href="#notas">Cómo se prueba</a>
 
   </nav>
@@ -402,7 +404,7 @@
 
     <div class="meta">
 
-      <span class="tag t-azul">6 rutas</span>
+      <span class="tag t-azul">11 rutas</span>
 
       <span class="tag t-azul">5 vistas</span>
 
@@ -410,9 +412,9 @@
 
       <span class="tag t-azul">3 tablas</span>
 
-      <span class="tag t-azul">423 claves × 2 idiomas</span>
+      <span class="tag t-azul">523 claves × 2 idiomas</span>
 
-      <span class="tag t-verde">261 + 123 tests</span>
+      <span class="tag t-verde">261 + 167 tests</span>
 
       <span class="tag t-rojo">5 bloqueos</span>
 
@@ -511,6 +513,47 @@
           <div class="flecha">▼</div>
 
           <div class="txt">email + contraseña → el token se guarda en el navegador</div>
+
+        <div class="nodo">
+          <div class="ruta">/plan</div>
+
+          <div class="que">El plan, el paso 2 de 3</div>
+
+          <div class="det">Un solo plan: <strong>7 días gratis y después $9,99 al mes</strong>. A la
+            izquierda, cómo funciona la prueba (hoy, día 5, día 7). A la derecha, la tarjeta con el
+            precio y las siete ventajas. Arriba, los tres pasos: Cuenta, Plan, Listo.</div>
+
+          <div class="tags">
+            <span class="tag t-verde">diseño montado</span>
+            <span class="tag t-rojo">el botón no cobra</span>
+          </div>
+        </div>
+
+        <div class="conector">
+          <div class="flecha">▼</div>
+          <div class="txt">hoy va a /bienvenida · cuando exista /pago, irá ahí</div>
+        </div>
+
+        <div class="nodo">
+          <div class="ruta">/bienvenida</div>
+
+          <div class="que">El paso 3 de 3: ya está dentro</div>
+
+          <div class="det">Dice cuándo acaba la prueba y cuándo es el primer cobro, y da los tres
+            pasos para empezar. La fecha se calcula en el servidor y el mes se traduce en el
+            cliente, para que cambiar de idioma cambie la fecha entera.</div>
+
+          <div class="tags">
+            <span class="tag t-verde">diseño montado</span>
+            <span class="tag t-rojo">no se guarda ninguna suscripción</span>
+          </div>
+        </div>
+
+        <div class="conector">
+          <div class="flecha">▼</div>
+          <div class="txt">el botón lleva al dashboard</div>
+        </div>
+
 
         </div>
 
@@ -1646,6 +1689,86 @@
   }, { rootMargin: '-15% 0px -75% 0px' });
 
   document.querySelectorAll('section[id]').forEach((s) => obs.observe(s));
+
+
+  <!-- ==================== 10. EL FLUJO DE SUSCRIPCION ==================== -->
+
+  <section id="suscripcion">
+
+    <h3><span class="n">10</span> El flujo de suscripción</h3>
+
+    <p class="lead">Las ocho pantallas del diseño, montadas como maqueta. <strong>Ninguna cobra.</strong>
+    El estado se lee de la URL porque todavía no hay tabla de suscripciones.</p>
+
+    <div class="card">
+
+      <div class="tw">
+      <table>
+        <thead><tr><th>Ruta</th><th>Pantalla</th><th>Qué pinta</th><th>Estado</th></tr></thead>
+        <tbody>
+
+          <tr><td class="ruta">/plan</td><td>El plan</td>
+            <td>Precio, días de prueba y las siete ventajas. Los pasos 2 de 3</td>
+            <td><span class="tag t-verde">montada</span></td></tr>
+
+          <tr><td class="ruta">/pago</td><td>El pago</td>
+            <td>Resumen del pedido y el formulario de tarjeta. Los pasos 2 de 3</td>
+            <td><span class="tag t-verde">montada</span> <span class="tag t-rojo">no cobra</span></td></tr>
+
+          <tr><td class="ruta">/bienvenida</td><td>La bienvenida</td>
+            <td>Cuándo acaba la prueba y cuándo es el primer cobro. Los pasos 3 de 3</td>
+            <td><span class="tag t-verde">montada</span></td></tr>
+
+          <tr><td class="ruta">/facturacion</td><td>Facturación</td>
+            <td>Cinco estados: en prueba, termina pronto, activa, cancelada, pago fallido.
+            Con lateral, insignia de color, barra de progreso, tarjeta y facturas</td>
+            <td><span class="tag t-verde">montada</span></td></tr>
+
+          <tr><td class="ruta">/acceso-pausado</td><td>Acceso pausado</td>
+            <td>Dos motivos: se acabó la prueba o el cobro fue rechazado. "Tus datos están a salvo"</td>
+            <td><span class="tag t-verde">montada</span></td></tr>
+
+        </tbody>
+      </table>
+      </div>
+
+      <div class="nota rojo">
+        <strong>LO QUE NO HACE NADA, Y ES LO SIGUIENTE.</strong> Ningún botón de estas cinco rutas
+        funciona: cancelar abre un cuadro pero no cancela, reactivar no reactiva, y el formulario de
+        pago no cobra. Lo que toca ahora es el <strong>motor de suscripciones</strong>: la tabla, el
+        cobro de verdad y el aviso del día 5. Sin eso, estas pantallas son un recorrido bonito que no
+        cobra ni un euro.
+      </div>
+
+      <div class="nota oro">
+        <strong>CÓMO SE ELIGE EL ESTADO.</strong> Con <code>?estado=</code> en la URL:
+        <code>/facturacion?estado=activa</code>. Los cinco valores válidos están en
+        <code>lib/plan/estados.ts</code>. Cuando exista la tabla, el servidor leerá el estado del
+        usuario y ese parámetro desaparecerá: <strong>la pantalla no tendrá que cambiar.</strong>
+      </div>
+
+      <div class="tw">
+      <table>
+        <thead><tr><th>Fichero</th><th>Para qué</th></tr></thead>
+        <tbody>
+          <tr><td><code>web/lib/plan/datos.ts</code></td>
+            <td>Precio, días de prueba y la aritmética de fechas. Sin React, para poder testearla</td></tr>
+          <tr><td><code>web/lib/plan/estados.ts</code></td>
+            <td>Los cinco estados y qué pinta cada uno. La lista que evita que un estado nuevo se quede fuera</td></tr>
+          <tr><td><code>web/app/flujo.css</code></td>
+            <td>Todo el estilo del flujo, bajo <code>.fl</code> para no chocar con el dashboard</td></tr>
+          <tr><td><code>app/components/CabeceraFlujo.tsx</code></td>
+            <td>Logo e idioma, compartidos por las cinco rutas</td></tr>
+          <tr><td><code>app/components/PasosFlujo.tsx</code></td>
+            <td>Los tres pasos (Cuenta, Plan, Listo), compartidos</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+    </div>
+
+  </section>
+
 
 </script>
 

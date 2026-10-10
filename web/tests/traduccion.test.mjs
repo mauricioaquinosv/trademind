@@ -1,0 +1,195 @@
+/**
+ * NINGUNA LLAVE SE QUEDA SIN SUSTITUIR EN PANTALLA.
+ *
+ * QUE FALLA Y POR QUE EXISTE
+ *
+ * Este test existe porque pasó. Al montar la pantalla del plan se escribió
+ *
+ *     "plan.subtitle": "cancelas antes del día {dias} y no pagas nada."
+ *
+ * y se llamó con `t("plan.subtitle")`, sin pasar `dias`. El typecheck no dice
+ * nada: los huecos son cadenas de texto, no tipos. Los tests que había tampoco.
+ * Y la aplicación arrancaba, compilaba y se veía bien.
+ *
+ * Lo que se veía en pantalla era, literalmente: "cancelas antes del día {dias}".
+ *
+ * ES ESTO LO QUE IMPIDE QUE VOLVA A PASAR
+ *
+ * Se recorre cada llamada `t("clave", {...})` del código, se mira qué huecos
+ * tiene la clave en los dos idiomas, y se comprueba que la llamada los pasa
+ * todos. Si mañana alguien añade un hueco al diccionario y olvida la variable,
+ * esto se pone rojo antes de que llegue a un usuario.
+ *
+ * POR QUE UN TEST Y NO UN TIPO
+ *
+ * Porque `{dias}` es texto dentro de una cadena. TypeScript no mira dentro de
+ * las cadenas, y aunque lo hiciera no sabría de dónde sale el valor.
+ */
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+import { test } from "node:test";
+
+import { es } from "../lib/i18n/es.ts";
+import { en } from "../lib/i18n/en.ts";
+
+const RAIZ = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+/* Los mismos ficheros que revisa el guard de traduccion, mas los del flujo. */
+const FICHEROS = [
+  "app/page.tsx",
+  "app/dashboard/page.tsx",
+  "app/login/page.tsx",
+  "app/components/Landing.tsx",
+  "app/components/SummaryView.tsx",
+  "app/components/AnalyticsView.tsx",
+  "app/components/CfControls.tsx",
+  "app/components/PanelAnimado.tsx",
+  "app/components/AvisoImportacion.tsx",
+  "app/components/CabeceraFlujo.tsx",
+  "app/components/PasosFlujo.tsx",
+  "app/components/PantallaPlan.tsx",
+  "app/components/PantallaBienvenida.tsx",
+  "app/plan/page.tsx",
+  "app/bienvenida/page.tsx",
+  "app/layout.tsx",
+];
+
+/** Los huecos de un valor: `{n}`, `{dias}`, `{fecha}`... */
+function huecos(valor) {
+  if (typeof valor === "string") {
+    return new Set(Array.from(valor.matchAll(/\{(\w+)\}/g), (m) => m[1]));
+  }
+  // { one: "...", other: "..." }: se miran las dos formas.
+  if (valor && typeof valor === "object") {
+    const juntos = new Set();
+    for (const v of Object.values(valor)) {
+      for (const h of huecos(v)) juntos.add(h);
+    }
+    return juntos;
+  }
+  return new Set();
+}
+
+/**
+ * Una llamada `t("clave")` o `t("clave", { a: 1, b: 2 })`.
+ *
+ * El segundo grupo es el texto del objeto de variables, o null si no se pasa
+ * ninguna. Se para en la primera `}` por simplicidad: los valores que se pasan
+ * aqui son todos escalares o llamadas, y ningún objeto de variables lleva un
+ * objeto dentro.
+ */
+const LLAMADA = /\bt\(\s*"([a-zA-Z][\w.]*)"\s*(?:,\s*\{([^}]*)\})?\s*\)/g;
+
+/**
+ * Las claves que se pasan en el segundo argumento.
+ *
+ * Se aceptan las DOS formas que admite JavaScript:
+ *   - explícita: `{ n: contador, fecha: fecha }`
+ *   - abreviatura: `{ n }` y `{ total }`
+ *
+ * Buscar solo `nombre:` daba un falso rojo con la abreviatura, que es como se
+ * escribe la mitad de las llamadas de este proyecto. Un test que da falsos
+ * rojos se deja de mirar, y este es justo el que no se puede dejar de mirar.
+ */
+function variablesPasadas(cuerpo) {
+  if (cuerpo === undefined) return new Set();
+  const claves = new Set();
+  for (const parte of cuerpo.split(",")) {
+    const m = parte.match(/^\s*([A-Za-z_$][\w$]*)\s*:?/);
+    if (m) claves.add(m[1]);
+  }
+  return claves;
+}
+
+test("ningun t() se deja un hueco del diccionario sin sustituir", () => {
+  const fallos = [];
+  let llamadas = 0;
+
+  for (const rel of FICHEROS) {
+    const fuente = readFileSync(join(RAIZ, rel), "utf8");
+
+    for (const m of fuente.matchAll(LLAMADA)) {
+      const [, clave, vars] = m;
+      llamadas++;
+
+      if (!(clave in es)) continue; // lo comprueba chk_traduccion.py
+
+      /* Se miran los huecos de los DOS idiomas. Puede que en español uno se
+         llame {fecha} y en ingles {date}: basta con que se pasen los dos. */
+      const pedidos = new Set([...huecos(es[clave]), ...huecos(en[clave])]);
+      const pasadas = variablesPasadas(vars);
+
+      for (const h of pedidos) {
+        if (!pasadas.has(h)) {
+          const linea = fuente.slice(0, m.index).split("\n").length;
+          fallos.push(
+            `${rel}:${linea}  t("${clave}") no pasa {${h}}; en pantalla sale la llave`
+          );
+        }
+      }
+    }
+  }
+
+  assert.ok(llamadas > 0, "el recorrido no ha encontrado ninguna llamada t(): el regex esta roto");
+  assert.equal(fallos.length, 0, "\n  " + fallos.join("\n  "));
+});
+
+test("las llaves que usan las pantallas del flujo se sustituyen de verdad", () => {
+  // El caso de la clave dinamica, que el recorrido de arriba no puede ver
+  // porque la clave no es un literal sino `plan.step.${momento}Body`.
+  //
+  // Se comprueba a mano lo que se pasa en esa llamada, para que el dia que se
+  // anada un hueco a cualquiera de los tres cuerpos, alguien mire aqui.
+  const cuerpo = readFileSync(join(RAIZ, "app/components/PantallaPlan.tsx"), "utf8");
+
+  /* Se acepta las dos formas de pasar una variable: `{ precio: x }` y el
+     atajo `{ precio }`. Buscar solo "precio:" daria un falso rojo con el
+     atajo, que es justo como esta escrito. */
+  const pasada = (nombre) => new RegExp(`\\b${nombre}\\s*[:,]`).test(cuerpo);
+
+  for (const clave of ["plan.step.hoyBody", "plan.step.avisoBody", "plan.step.finBody"]) {
+    const pedidos = huecos(es[clave]);
+    for (const h of pedidos) {
+      assert.ok(
+        pasada(h),
+        `PantallaPlan.tsx no pasa {${h}} a la clave dinamica ${clave}`
+      );
+    }
+  }
+});
+
+test("las tres pantallas del flujo tienen sus claves en los dos idiomas", () => {
+  const claves = [
+    ...Object.keys(es).filter((k) => k.startsWith("plan.")),
+    ...Object.keys(es).filter((k) => k.startsWith("welcome.")),
+    ...Object.keys(es).filter((k) => k.startsWith("flujo.")),
+  ];
+  assert.ok(claves.length > 0, "no hay claves de flujo: se han borrado del diccionario");
+
+  const faltan = claves.filter((k) => !(k in en));
+  assert.equal(faltan.length, 0, `claves sin traducir: ${faltan.join(", ")}`);
+});
+
+test("el precio del plan no esta escrito a mano en el diccionario", () => {
+  // El motivo de usar {precio}: si el precio aparece escrito dentro de una
+  // cadena, cambiar PRECIO_MENSUAL en lib/plan/datos.ts deja de cambiar la
+  // pantalla. Esto falla si alguien lo vuelve a escribir.
+  //
+  // Solo mira las claves del flujo. En la landing hay cantidades escritas a
+  // proposito (los ejemplos del panel), y no es lo mismo: PRECIO_MENSUAL es una
+  // cifra que se cobra, esas son de un grafico de ejemplo.
+  const conPrecio = Object.entries(es).filter(
+    ([k, v]) =>
+      (k.startsWith("plan.") || k.startsWith("welcome.")) &&
+      typeof v === "string" &&
+      /\d+[.,]\d{2}/.test(v)
+  );
+
+  assert.deepEqual(
+    conPrecio.map(([k]) => k),
+    [],
+    "hay cantidades escritas dentro del diccionario: usa {precio} y pasalo desde lib/plan/datos.ts"
+  );
+});

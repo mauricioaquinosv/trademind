@@ -648,6 +648,204 @@ export const es = {
   "legal.terms.accept": "Al usar TradeMind aceptas estas condiciones y la política de privacidad.",
 
   // ------------------------------------------------------------------
+  // Flujo de suscripción (/plan y /bienvenida)
+  //
+  // Los números del plan (precio, días de prueba) NO están escritos aquí: se
+  // interpolan desde lib/plan/datos.ts. Si el precio cambia, se cambia en un
+  // sitio y no en seis claves de dos idiomas.
+  //
+  // Lo que hay que mirar: "día 5" y "día 7" se construyen con {n} y no como
+  // "Día 5" y "Día 7" fijos. Si la prueba pasara a 14 días, el aviso tiene que
+  // saltar al día 12 solo, sin tocar el diccionario.
+  // ------------------------------------------------------------------
+  "flujo.steps": "Pasos del alta",
+  "flujo.step.account": "Cuenta",
+  "flujo.step.plan": "Plan",
+  "flujo.step.ready": "Listo",
+
+  "plan.kicker": "Un solo plan, todo incluido",
+  "plan.title": {
+    one: "Prueba TradeMind {n} día gratis",
+    other: "Prueba TradeMind {n} días gratis",
+  },
+  "plan.subtitle":
+    "Entras con todo desbloqueado desde hoy. Si no te convence, cancelas antes del día {dias} y no pagas nada.",
+  "plan.howTitle": "Así funciona la prueba",
+  "plan.step.today": "Hoy",
+  "plan.step.dayN": { one: "Día {n}", other: "Día {n}" },
+  "plan.step.hoyBody":
+    "Acceso completo, sin cobro. Subes tu reporte y ves tus números.",
+  "plan.step.avisoBody":
+    "Te avisamos por email de que la prueba termina en dos días.",
+  "plan.step.finBody":
+    "Se cobran {precio} y sigues sin interrupción. Si cancelaste antes, tu acceso se pausa y tus datos se conservan.",
+  "plan.badge": {
+    one: "{n} día gratis",
+    other: "{n} días gratis",
+  },
+  "plan.name": "TradeMind",
+  "plan.perMonth": "al mes",
+  "plan.noChargeToday": "Hoy pagas {precio}. El primer cobro es dentro de {dias} días.",
+  "plan.feature.import": "Importa tu reporte de MT5 o la plantilla de Excel",
+  "plan.feature.accounts": "Varias cuentas, cada una con su saldo y su moneda",
+  "plan.feature.calendar": "Calendario de trading con resumen semanal",
+  "plan.feature.metrics": "Ocho métricas y puntaje del trader en seis ejes",
+  "plan.feature.analytics": "Analytics por símbolo",
+  "plan.feature.languages": "Español e inglés",
+  "plan.feature.cancel": "Sin permanencia: cancelas cuando quieras",
+  "plan.cta": { one: "Empezar mi día gratis", other: "Empezar mis {n} días gratis" },
+  "plan.ctaNote": "Te pedimos la tarjeta en el siguiente paso. No se cobra nada hasta el día {dias}.",
+
+  "welcome.title": "Tu prueba ya empezó",
+  "welcome.body":
+    "Tienes acceso completo hasta el {fecha}. Te avisamos por email dos días antes de que termine.",
+  "welcome.row.plan": "Plan",
+  "welcome.row.planValue": "TradeMind · todo incluido",
+  "welcome.row.ends": "La prueba termina",
+  "welcome.row.charge": "Primer cobro",
+  "welcome.row.chargeValue": "{precio} el {fecha}",
+  "welcome.startTitle": "Para empezar",
+  "welcome.step1.title": "Sube tu reporte",
+  "welcome.step1.body":
+    "El de MT5 o la plantilla de Excel. Si algo no entra, te decimos qué fila y por qué.",
+  "welcome.step2.title": "Mira tus ocho métricas",
+  "welcome.step2.body":
+    "Balance, winrate, profit factor, expected value y el resto, con tus datos reales.",
+  "welcome.step3.title": "Abre el calendario",
+  "welcome.step3.body":
+    "Cada día con su resultado, el total del mes y tu mejor y peor día.",
+  "welcome.cta": "Ir a mi dashboard",
+  "welcome.changeMind": "¿Cambias de idea?",
+  "welcome.manageSub": "Gestiona tu suscripción",
+
+  // ------------------------------------------------------------------
+  // Pago (/pago)
+  //
+  // El formulario no cobra nada todavia. Las frases que prometen seguridad
+  // ("pago.secure") solo son verdad cuando el pago lo hace un tercero.
+  // ------------------------------------------------------------------
+  "pago.back": "Cambiar de plan",
+  "pago.title": {
+    one: "Empieza tu prueba de {n} día gratis",
+    other: "Empieza tu prueba de {n} días gratis",
+  },
+  "pago.lead":
+    "Añade una tarjeta para activar tus {dias} días. No se cobra nada hoy.",
+  "pago.summary": "Resumen",
+  "pago.planNote": "Plan único, todo incluido · al mes",
+  "pago.trialLine": {
+    one: "Prueba gratuita de {n} día",
+    other: "Prueba gratuita de {n} días",
+  },
+  "pago.zero": "$0,00",
+  "pago.totalToday": "Total a pagar hoy",
+  "pago.chargeOn":
+    "El {fecha} se cobran {precio} y después cada mes. Cancelas cuando quieras, y si lo haces antes de esa fecha no pagas nada.",
+  "pago.taxes":
+    "Si en tu país aplican impuestos, se muestran antes de confirmar y se suman al precio.",
+  "pago.method": "Método de pago",
+  "pago.email": "Email",
+  "pago.emailEjemplo": "tu@email.com",
+  "pago.cardName": "Nombre en la tarjeta",
+  "pago.cardNamePh": "Como aparece en la tarjeta",
+  "pago.cardNumber": "Número de tarjeta",
+  "pago.expiry": "Caducidad",
+  "pago.cvc": "CVC",
+  "pago.postalCode": "Código postal",
+  "pago.postalCodePh": "Tu código postal",
+  "pago.cta": {
+    one: "Empezar prueba de {n} día gratis",
+    other: "Empezar prueba de {n} días gratis",
+  },
+  "pago.secure":
+    "Pago seguro. TradeMind no guarda los datos de tu tarjeta: los procesa el servicio de cobro.",
+
+  // ------------------------------------------------------------------
+  // Facturación (/facturacion)
+  //
+  // Una pantalla con cinco estados. Las claves de cada estado van con el
+  // prefijo del estado, asi que añadir uno nuevo es añadir un bloque y no
+  // tocar los otros cuatro.
+  // ------------------------------------------------------------------
+  "nav.billing": "Facturación",
+  "billing.sections": "Secciones",
+  "billing.title": "Facturación",
+  "billing.planName": "TradeMind · todo incluido",
+  "billing.badge.en-prueba": "En prueba",
+  "billing.badge.termina-pronto": "Termina pronto",
+  "billing.badge.activa": "Activa",
+  "billing.badge.cancelada": "Cancelada",
+  "billing.badge.pago-fallido": "Pago fallido",
+  "billing.desc.en-prueba":
+    "Primer cobro de {precio} el {fecha}. Hoy no pagas nada y puedes cancelar antes sin coste.",
+  "billing.desc.termina-pronto":
+    "Tu prueba termina en {quedan} días. El {fecha} se cobran {precio} y sigues sin interrupción.",
+  "billing.desc.activa":
+    "Próximo cobro: {precio} el {fecha}. Cancelas cuando quieras.",
+  "billing.desc.cancelada":
+    "Tienes acceso hasta el {fecha}. No se cobrará más y tus datos se conservan.",
+  "billing.desc.pago-fallido":
+    "No pudimos cobrar los {precio} del {fecha}. Volveremos a intentarlo en 3 días; si tampoco funciona, tu acceso se pausa.",
+  "billing.banner.en-prueba.lead": "Prueba gratuita",
+  "billing.banner.en-prueba.body":
+    "Día {n} de {dias}. Termina el {fecha}.",
+  "billing.banner.en-prueba.cta": "Ver mi plan",
+  "billing.banner.termina-pronto.lead": "Tu prueba termina en {quedan} días",
+  "billing.banner.termina-pronto.body":
+    "El {fecha} se cobran {precio}.",
+  "billing.banner.termina-pronto.cta": "Ver mi plan",
+  "billing.banner.cancelada.lead": "Suscripción cancelada",
+  "billing.banner.cancelada.body": "Tienes acceso hasta el {fecha}.",
+  "billing.banner.cancelada.cta": "Reactivar",
+  "billing.banner.pago-fallido.lead": "No pudimos cobrar tu tarjeta",
+  "billing.banner.pago-fallido.body":
+    "Actualízala para no perder el acceso.",
+  "billing.banner.pago-fallido.cta": "Actualizar tarjeta",
+  "billing.progress": "Progreso de la prueba",
+  "billing.dayOf": "Día {n} de {dias}",
+  "billing.endsOn": "Termina el {fecha}",
+  "billing.paymentMethod": "Método de pago",
+  "billing.cardSample": "Visa ···· 4242",
+  "billing.cardExpires": "Caduca {fecha}",
+  "billing.cardDeclined": "Tu banco rechazó el cobro",
+  "billing.changeCard": "Cambiar tarjeta",
+  "billing.invoices": "Facturas",
+  "billing.paid": "Pagada",
+  "billing.failed": "Fallida",
+  "billing.noInvoices":
+    "Aún no hay facturas. La primera llega con el primer cobro, el {fecha}.",
+  "billing.noInvoicesCancel": "No hay facturas pendientes.",
+  "billing.reactivate": "Reactivar suscripción",
+  "billing.cancel": "Cancelar suscripción",
+  "billing.confirm.title": "¿Cancelar tu suscripción?",
+  "billing.confirm.body":
+    "Si cancelas ahora, tu prueba sigue hasta el {fecha} y no se cobra nada.",
+  "billing.confirm.keep1": "Conservas todos tus datos.",
+  "billing.confirm.keep2": "Puedes volver cuando quieras.",
+  "billing.confirm.yes": "Sí, cancelar",
+  "billing.confirm.keep": "Mantener mi plan",
+
+  // ------------------------------------------------------------------
+  // Acceso pausado (/acceso-pausado)
+  //
+  // Dos motivos, una sola pantalla. Solo cambian el icono, el titulo, el
+  // parrafo y el boton.
+  // ------------------------------------------------------------------
+  "pausa.prueba-terminada.title": "Tu prueba gratuita terminó",
+  "pausa.prueba-terminada.lead":
+    "Fueron {dias} días con todo desbloqueado. Para seguir viendo tus métricas y subiendo reportes, activa el plan.",
+  "pausa.prueba-terminada.cta": "Activar TradeMind",
+  "pausa.pago-no-recibido.title": "Tu acceso está en pausa",
+  "pausa.pago-no-recibido.lead":
+    "No pudimos cobrar la suscripción y se acabaron los reintentos. Actualiza tu tarjeta y vuelves a entrar al momento.",
+  "pausa.pago-no-recibido.cta": "Actualizar tarjeta y reactivar",
+  "pausa.safeTitle": "Tus datos están a salvo",
+  "pausa.safeCount": "{n} operaciones · {cuentas} cuenta",
+  "pausa.safeBody":
+    "No borramos nada. En cuanto reactives el plan, lo encuentras todo como lo dejaste.",
+  "logout": "Cerrar sesión",
+
+  // ------------------------------------------------------------------
   // Nombres de meses y días (para calendarios y fechas)
   // ------------------------------------------------------------------
   "months.full": [
