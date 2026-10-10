@@ -171,8 +171,9 @@ iniciada sola y entrada al dashboard. Lo que queda:
 
       Mientras tanto, **no escribir nada de esto**: un aviso legal con datos
       inventados es peor que no tener ninguno.
-- [ ] **No hay cerrar sesion.** El boton de la esquina del dashboard solo cambia
-      el tema.
+- [x] **Cerrar sesion.** Hecho: el icono de usuario abre un menu con el email de
+      la cuenta y la salida. Al cerrar borra el token, el email y la cuenta activa,
+      y vuelve al login.
 - [ ] **"He olvidado mi contrasena"** es `href="#"`.
 - [ ] **Google** avisa de que aun no esta. Sin decision.
 - [ ] **Los mensajes de validacion de Pydantic** llegan en ingles fijo.
