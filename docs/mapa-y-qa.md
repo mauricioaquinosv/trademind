@@ -462,8 +462,8 @@ Esto no lo pruebas tu, corre solo. Sirve para saber si se ha roto algo de lo
 de arriba:
 
 ```
-.\venv\Scripts\python.exe -m pytest     -> 216 tests de backend
-cd web; npm test                         -> 106 tests de frontend
+.\venv\Scripts\python.exe -m pytest     -> 261 tests de backend
+cd web; npm test                         -> 123 tests de frontend
 cd web; npm run test:traduccion          -> el guard de las cadenas sueltas
 cd web; npx tsc --noEmit                 -> los tipos
 cd web; npm run build                    -> que compile de verdad
@@ -482,3 +482,36 @@ cd web; npm run build                    -> que compile de verdad
   hay que chamarles al manejador a mano desde el DOM
 - Los servidores que hay levantados ahora: 3000 (desarrollo), 3100 (produccion),
   8000 (backend)
+
+---
+
+# PARTE 3 — DONDE ESTA CADA COSA
+
+## Los ficheros que importan
+
+Si algo se rompe, mira estos primero. Son el cuello de botella.
+
+| Fichero | Qué lleva |
+|---|---|
+| `app/parsers/mt5_parser.py` | Lee el reporte de MT5. Dice de qué fila salió cada operación |
+| `app/parsers/manual_template_parser.py` | Lee la plantilla de Excel |
+| `app/parsers/file_reader.py` | Decide cómo abrir el fichero según su extensión |
+| `app/import_validacion.py` | Separa lo bueno de lo malo, **y lo repetido de lo nuevo** |
+| `app/login_freno.py` | Cuenta los intentos fallidos del login |
+| `app/security.py` | El recorte a 72 bytes de bcrypt |
+| `app/schemas.py` | Valida lo que llega del formulario |
+| `app/errors.py` | Los 15 códigos de error y cómo se forman |
+
+## Lo nuevo de esta última tanda
+
+| Fichero | Para qué |
+|---|---|
+| `app/login_freno.py` | El freno de intentos del login |
+| `app/models.py` → `LoginFallido` | La tabla donde se cuentan |
+| `tests/test_contrasenas.py` | Los 72 bytes de bcrypt y el mínimo de 8 |
+| `tests/test_limite_subida.py` | El tope de 25 MB |
+| `tests/test_login_freno.py` | El freno de intentos |
+| `tests/test_import_parcial.py` | La importación parcial y los duplicados |
+| `web/lib/legal/datos.ts` | **Los cinco huecos por rellenar** |
+| `web/app/legal/` · `privacidad/` · `terminos/` | Las tres páginas legales |
+| `web/app/login.css` | El diseño del login y de las páginas legales |

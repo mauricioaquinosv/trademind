@@ -1,704 +1,1661 @@
 <!doctype html>
+
 <html lang="es">
+
 <head>
+
 <meta charset="utf-8" />
+
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+
 <title>TradeMind — Mapa del sitio y plan de QA</title>
+
 <style>
+
   :root{
+
     --bg:#05060B; --panel:rgba(19,21,32,.72); --solid:#14151F; --solid2:#1A1C28;
+
     --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.16);
+
     --text:#F1F2F6; --muted:#8E93A6; --muted2:#5C6178;
+
     --green:#2FD8B8; --red:#FF4D6D; --gold:#F2A93B; --pink:#E22FA0; --teal:#2FD8C8;
+
     --sans:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+
     --mono:"IBM Plex Mono",ui-monospace,"Cascadia Code",Consolas,monospace;
+
   }
+
   *{box-sizing:border-box}
+
   html{scroll-behavior:smooth;scroll-padding-top:24px}
+
   body{
+
     margin:0;background:var(--bg);color:var(--text);
+
     font-family:var(--sans);font-size:15px;line-height:1.6;
+
     -webkit-font-smoothing:antialiased;
+
   }
+
   code{font-family:var(--mono);font-size:.88em;color:var(--teal);background:rgba(47,216,200,.08);padding:1px 5px;border-radius:4px}
 
+
+
   /* ---------- disposicion ---------- */
+
   .app{display:grid;grid-template-columns:250px 1fr;gap:0;max-width:1500px;margin:0 auto}
+
   @media(max-width:1000px){.app{grid-template-columns:1fr}.side{position:static!important;height:auto!important}}
 
+
+
   .side{
+
     position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+
     border-right:1px solid var(--line);padding:26px 18px;background:rgba(10,11,18,.6);
+
   }
+
   .side h1{font-size:19px;margin:0;letter-spacing:-.01em}
+
   .side .sub{color:var(--muted2);font-size:12px;font-family:var(--mono);margin:3px 0 22px}
+
   .side nav a{
+
     display:block;padding:6px 10px;margin:1px 0;border-radius:7px;color:var(--muted);
+
     text-decoration:none;font-size:13.5px;border-left:2px solid transparent;
+
   }
+
   .side nav a:hover{background:var(--panel2);color:var(--text)}
+
   .side nav a.on{background:rgba(47,216,200,.10);color:var(--teal);border-left-color:var(--teal)}
+
   .side nav .grp{margin:16px 0 5px;padding:0 10px;font-size:10.5px;letter-spacing:.09em;
+
     text-transform:uppercase;color:var(--muted2);font-family:var(--mono)}
 
+
+
   .main{padding:34px 40px 100px;min-width:0}
+
   @media(max-width:640px){.main{padding:22px 16px 70px}}
 
+
+
   /* ---------- cabecera ---------- */
+
   .cab{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:30px}
+
   .cab h2{font-size:30px;margin:0 0 8px;letter-spacing:-.02em}
+
   .cab p{margin:0;color:var(--muted);font-size:14px;max-width:70ch}
+
   .meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 
+
+
   /* ---------- secciones ---------- */
+
   section{margin-bottom:44px;scroll-margin-top:20px}
+
   section > h3{
+
     font-size:20px;margin:0 0 4px;letter-spacing:-.01em;
+
     display:flex;align-items:center;gap:10px;
+
   }
+
   section > h3 .n{
+
     font-family:var(--mono);font-size:11px;color:var(--muted2);
+
     border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-weight:400;
+
   }
+
   section > .lead{margin:0 0 18px;color:var(--muted);font-size:14px;max-width:78ch}
 
+
+
   .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+
   .card + .card{margin-top:14px}
+
   .card.rojo{border-color:rgba(255,77,109,.45);background:rgba(255,77,109,.07)}
 
+
+
   /* ---------- etiquetas ---------- */
+
   .tag{
+
     display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;
+
     padding:2px 8px;border-radius:6px;letter-spacing:.02em;
+
   }
+
   .t-verde{background:rgba(47,216,184,.14);color:var(--green)}
+
   .t-rojo{background:rgba(255,77,109,.16);color:var(--red)}
+
   .t-oro{background:rgba(242,169,59,.16);color:var(--gold)}
+
   .t-azul{background:rgba(47,216,200,.14);color:var(--teal)}
+
   .t-gris{background:var(--panel2);color:var(--muted)}
+
   .tag.metodo{font-weight:600}
+
   .met-POST{background:rgba(47,216,184,.14);color:var(--green)}
+
   .met-GET{background:rgba(47,216,200,.14);color:var(--teal)}
+
   .met-PUT{background:rgba(242,169,59,.16);color:var(--gold)}
+
   .met-DELETE{background:rgba(255,77,109,.16);color:var(--red)}
 
+
+
   /* ---------- recorrido ---------- */
+
   .flow{display:flex;flex-direction:column;align-items:center}
+
   .nodo{
+
     width:100%;max-width:700px;background:var(--solid);border:1px solid var(--line);
+
     border-left:3px solid var(--teal);border-radius:12px;padding:14px 18px;
+
   }
+
   .nodo.roto{border-left-color:var(--red)}
+
   .nodo .ruta{font-family:var(--mono);font-size:12.5px;color:var(--teal)}
+
   .nodo .que{font-weight:600;margin:2px 0 4px;font-size:15.5px}
+
   .nodo .det{color:var(--muted);font-size:13.5px}
+
   .nodo .tags{margin-top:9px;display:flex;gap:6px;flex-wrap:wrap}
 
+
+
   .conector{height:30px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+
   .conector .flecha{color:var(--muted2);font-size:15px;line-height:1}
+
   .conector .txt{font-family:var(--mono);font-size:10.5px;color:var(--muted2);text-align:center;max-width:90ch}
+
   .conector.rojo .txt{color:var(--red)}
 
+
+
   /* ---------- rejillas ---------- */
+
   .rej{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(228px,1fr))}
+
   .rej.c2{grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+
   .t-caja{background:var(--solid);border:1px solid var(--line);border-radius:11px;padding:14px 16px}
+
   .t-caja .cab2{font-family:var(--mono);font-size:11px;color:var(--muted2);display:flex;justify-content:space-between;gap:8px}
+
   .t-caja h4{margin:3px 0 6px;font-size:15px;font-weight:600}
+
   .t-caja p{margin:0 0 8px;color:var(--muted);font-size:13px}
+
   .t-caja ul{margin:0;padding-left:17px;color:var(--muted);font-size:12.5px}
+
   .t-caja li{margin:2px 0}
 
+
+
   /* ---------- tablas ---------- */
+
   .tw{overflow-x:auto;margin-top:4px}
+
   table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:560px}
+
   th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+
   th{
+
     color:var(--muted);font-weight:500;font-size:10.5px;letter-spacing:.08em;
+
     text-transform:uppercase;font-family:var(--mono);border-bottom-color:var(--line2);
+
   }
+
   td.ruta{font-family:var(--mono);font-size:12px;color:var(--teal);white-space:nowrap}
+
   tbody tr:hover{background:rgba(255,255,255,.02)}
+
   tbody tr:last-child td{border-bottom:none}
 
+
+
   /* ---------- capas ---------- */
+
   .capas{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+
   .capa{background:var(--solid);border:1px solid var(--line);border-radius:11px;padding:15px 16px;position:relative}
+
   .capa::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:2px;border-radius:2px}
+
   .capa.c1::before{background:var(--teal)} .capa.c2::before{background:var(--gold)}
+
   .capa.c3::before{background:var(--pink)} .capa.c4::before{background:var(--green)}
+
   .capa .cnum{font-family:var(--mono);font-size:10.5px;color:var(--muted2)}
+
   .capa h4{margin:2px 0 7px;font-size:15px}
+
   .capa ul{margin:0;padding-left:16px;color:var(--muted);font-size:12.5px}
+
   .capa li{margin:2px 0}
+
   .capa li code{font-size:11px}
 
+
+
   /* ---------- QA ---------- */
+
   .qa{display:grid;gap:9px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+
   .qa-i{display:flex;gap:10px;align-items:flex-start;background:var(--solid);
+
     border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+
   .qa-i .L{
+
     flex-shrink:0;width:23px;height:23px;border-radius:7px;display:flex;align-items:center;
+
     justify-content:center;font-family:var(--mono);font-size:11.5px;font-weight:600;
+
     background:rgba(47,216,184,.14);color:var(--green);margin-top:1px;
+
   }
+
   .qa-i.human .L{background:rgba(242,169,59,.16);color:var(--gold)}
+
   .qa-i.auto  .L{background:rgba(255,255,255,.06);color:var(--muted)}
+
   .qa-i .txt{min-width:0}
+
   .qa-i .t{font-weight:600;font-size:13.5px;margin-bottom:2px}
+
   .qa-i .d{color:var(--muted);font-size:12.5px}
 
+
+
   /* ---------- nota ---------- */
+
   .nota{
+
     margin-top:14px;padding:11px 14px;border-left:2px solid var(--line2);
+
     background:var(--panel2);border-radius:0 8px 8px 0;color:var(--muted);font-size:13px;
+
   }
+
   .nota.oro{border-left-color:var(--gold)}
+
   .nota strong{color:var(--text)}
 
+
+
   /* ---------- leyenda ---------- */
+
   .leyenda{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+
   .leyenda span{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+
   .punto{width:8px;height:8px;border-radius:50%;display:inline-block}
+
   .p-verde{background:var(--green)} .p-rojo{background:var(--red)} .p-oro{background:var(--gold)}
+
   .p-azul{background:var(--teal)} .p-gris{background:var(--muted2)}
 
+
+
   footer{margin-top:50px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted2);font-size:12.5px}
+
 </style>
+
 </head>
+
 <body>
+
 <div class="app">
 
+
+
 <!-- ==================== NAVEGACION ==================== -->
+
 <aside class="side">
+
   <h1>TradeMind</h1>
+
   <div class="sub">mapa del sitio · QA</div>
+
   <nav id="nav">
+
     <div class="grp">Producto</div>
+
     <a href="#recorrido">El recorrido</a>
+
     <a href="#bloqueos">Lo que está roto</a>
+
     <div class="grp">Arquitectura</div>
+
     <a href="#capas">Las cuatro capas</a>
-    <a href="#api">Los 12 endpoints</a>
+
+    <a href="#api">Los 14 endpoints</a>
+
     <a href="#datos">El modelo de datos</a>
+
     <a href="#traduccion">La traducción</a>
+
     <a href="#navegador">Lo del navegador</a>
+
     <div class="grp">QA</div>
+
     <a href="#qa">Las doce zonas</a>
+
+    <a href="#qa2">La lista de pendientes</a>
+
+    <a href="#seguridad">Seguridad del backend</a>
+
     <a href="#notas">Cómo se prueba</a>
+
   </nav>
+
 </aside>
+
+
 
 <main class="main">
 
+
+
   <!-- ==================== CABECERA ==================== -->
+
   <div class="cab">
+
     <h2>Mapa del sitio y plan de QA</h2>
+
     <p>Qué hay, dónde está cada pieza, y qué hay que comprobar antes de lanzar.
+
        Los colores son el estado: rojo lo que no funciona, oro lo que está a medias,
+
        verde lo que sí.</p>
+
     <div class="meta">
-      <span class="tag t-azul">3 rutas</span>
+
+      <span class="tag t-azul">6 rutas</span>
+
       <span class="tag t-azul">5 vistas</span>
-      <span class="tag t-azul">12 endpoints</span>
+
+      <span class="tag t-azul">14 endpoints</span>
+
       <span class="tag t-azul">3 tablas</span>
+
       <span class="tag t-azul">423 claves × 2 idiomas</span>
-      <span class="tag t-verde">250 + 123 tests</span>
+
+      <span class="tag t-verde">261 + 123 tests</span>
+
       <span class="tag t-rojo">5 bloqueos</span>
+
     </div>
+
   </div>
 
+
+
   <!-- ==================== 1. RECORRIDO ==================== -->
+
   <section id="recorrido">
+
     <h3><span class="n">01</span> El recorrido de una persona</h3>
+
     <p class="lead">De dónde entra a dónde sale. Las líneas rojas son donde se rompe el camino.</p>
 
+
+
     <div class="card">
+
       <div class="flow">
+
         <div class="nodo">
+
           <div class="ruta">/</div>
+
           <div class="que">La landing pública</div>
+
           <div class="det">Todo el mundo, sin cuenta. Seis bloques: hero, el problema, cómo funciona,
+
             el producto, las formas de importar, las preguntas frecuentes y el cierre. El diseño
+
             entero vive en <code>components/Landing.tsx</code> con sus animaciones en
+
             <code>landingFx.ts</code>.</div>
+
           <div class="tags">
+
             <span class="tag t-gris">6 bloques</span>
+
+            <span class="tag t-gris">6 rutas en total</span>
+
             <span class="tag t-gris">5 cortes: 900, 760, 620, 520</span>
+
             <span class="tag t-verde">los 8 botones llevan a algún sitio</span>
+
           </div>
+
         </div>
 
+
+
         <div class="conector">
+
           <div class="flecha">▼</div>
+
           <div class="txt">"Crear cuenta" → /login en modo registro &nbsp;·&nbsp; "Log in" → /login?modo=entrar</div>
+
         </div>
 
+
+
         <div class="nodo">
+
           <div class="ruta">/login</div>
+
           <div class="que">Entrar y registrarse, en la misma pantalla</div>
+
           <div class="det">Dos modos según el parámetro: sin él, registro; con
+
             <code>?modo=entrar</code>, entrar. Tras registrarse <strong>entra solo</strong>, sin
+
             escribir los datos dos veces. El fondo es el de la landing: la misma rejilla turquesa
+
             que sigue al ratón. Google avisa de que aún no está.</div>
+
           <div class="tags">
+
             <span class="tag t-verde">registro funcionando</span>
+
             <span class="tag t-verde">probado de punta a punta</span>
+
             <span class="tag t-rojo">olvidé mi contraseña muerto</span>
+
             <span class="tag t-oro">Google sin hacer</span>
+
           </div>
+
         </div>
 
+
+
         <div class="conector">
+
           <div class="flecha">▼</div>
+
           <div class="txt">email + contraseña → el token se guarda en el navegador</div>
+
         </div>
+
+
 
         <div class="nodo">
+
           <div class="ruta">/dashboard</div>
+
           <div class="que">La aplicación</div>
+
           <div class="det">Una sola página con cinco vistas. <strong>No son cinco rutas</strong>: es la
+
             misma página cambiando de contenido con un botón de la barra lateral. Por eso una
+
             vista sigue existiendo aunque no la mires.</div>
+
           <div class="tags">
+
             <span class="tag t-azul">5 vistas</span>
+
             <span class="tag t-verde">funcionando</span>
+
             <span class="tag t-oro">sin cerrar sesión</span>
+
           </div>
+
         </div>
 
+
+
         <div class="conector">
+
           <div class="flecha">▼</div>
+
           <div class="txt">el aviso de operaciones no importadas vive FUERA de las cinco vistas</div>
+
         </div>
+
+
 
         <div class="rej" style="width:100%">
+
           <div class="t-caja"><div class="cab2"><span>vista 1</span><span class="tag t-verde">ok</span></div><h4>Resumen</h4><p>Lo primero que ve.</p><ul><li>8 cifras animadas</li><li>Calendario mensual con navegación</li><li>Balance acumulado</li><li>Barra de winrate</li></ul></div>
+
           <div class="t-caja"><div class="cab2"><span>vista 2</span><span class="tag t-verde">ok</span></div><h4>Trades</h4><p>La lista de todo.</p><ul><li>Tabla con columnas configurables</li><li>Filtros por fecha, símbolo y tipo</li><li>Paginación 10/20/50/todas</li><li>Modales de añadir, editar y borrar</li></ul></div>
+
           <div class="t-caja"><div class="cab2"><span>vista 3</span><span class="tag t-verde">ok</span></div><h4>Cuentas</h4><p>Una cuenta = un broker.</p><ul><li>Crear, editar, borrar</li><li>No deja borrar con operaciones dentro</li><li>Se recuerda la activa</li></ul></div>
+
           <div class="t-caja"><div class="cab2"><span>vista 4</span><span class="tag t-verde">ok</span></div><h4>Analytics</h4><p>Dónde ganas.</p><ul><li>Rendimiento por símbolo</li><li>Selector de métrica</li><li>Orden ascendente y descendente</li></ul></div>
+
           <div class="t-caja"><div class="cab2"><span>vista 5</span><span class="tag t-oro">nuevo</span></div><h4>Importar</h4><p>Por dónde entran los datos.</p><ul><li>Subir CSV/Excel</li><li>Descargar plantilla</li><li>Avisa de lo que no entra</li></ul></div>
+
         </div>
+
       </div>
 
+
+
       <div class="nota oro">
+
         <strong>Por qué importa lo de "una sola página":</strong> el código salta a la vista de
+
         <em>trades</em> en cuanto termina de importar. Un mensaje puesto dentro de la vista de
+
         <em>importar</em> se queda en una pantalla que ya no se está mirando. Por eso el aviso
+
         de rechazos está fuera de las cinco.
+
       </div>
+
     </div>
+
   </section>
+
+
 
   <!-- ==================== 2. BLOQUEOS ==================== -->
+
   <section id="bloqueos">
+
     <h3><span class="n">02</span> Lo que está roto</h3>
+
     <p class="lead">No son mejoras. Sin esto, un usuario nuevo no puede llegar a nada de lo demás.</p>
 
+
+
     <div class="card rojo">
+
       <h4 style="margin:0 0 4px;font-size:16px">Lo que impide llegar a nada de lo demás</h4>
+
       <p style="margin:0;color:var(--muted);font-size:13.5px">Sin esto, un usuario nuevo no puede entrar.</p>
+
       <div class="tw">
+
       <table>
+
         <thead><tr><th>Qué</th><th>Estado</th><th>Por qué importa</th></tr></thead>
+
         <tbody>
+
           <tr>
+
             <td class="ruta">crear cuenta</td>
+
             <td><span class="tag t-verde">resuelto</span></td>
+
             <td>El login tiene los dos modos y registra de verdad contra
+
                 <code>POST /auth/register</code>. <strong>Probado de punta a punta</strong>: cuenta
+
                 creada, sesión iniciada sola y entrada al dashboard sin escribir los datos dos veces.</td>
+
           </tr>
+
           <tr>
+
             <td class="ruta">términos y privacidad</td>
+
             <td><span class="tag t-rojo">bloqueante</span></td>
+
             <td>El login dice "aceptas los Términos y la Política de privacidad"
+
                 (<code>login.terms</code>) y <strong>ninguno de los dos documentos existe</strong>:
+
                 solo hay tres rutas, <code>/</code>, <code>/login</code> y <code>/dashboard</code>.
+
                 Es lo único de esta lista que no se resuelve solo el día de publicar.</td>
+
           </tr>
+
           <tr>
+
             <td class="ruta">cerrar sesión</td>
+
             <td><span class="tag t-rojo">roto</span></td>
+
             <td>No existe en ninguna parte. El botón de la esquina superior derecha cambia el tema
+
                 y nada más. En un ordenador compartido, el siguiente que lo use entra con tu sesión.</td>
+
           </tr>
+
           <tr>
+
             <td class="ruta">olvidé mi contraseña</td>
+
             <td><span class="tag t-rojo">roto</span></td>
+
             <td><code>href="#"</code>. Sin cambio ni recuperación: quien la pierda, pierde la cuenta.</td>
+
           </tr>
+
           <tr>
+
             <td class="ruta">Google / Apple</td>
+
             <td><span class="tag t-oro">a medias</span></td>
+
             <td>El botón de Google está y avisa de que aún no está. Apple se descartó por coste
+
                 (99 USD/año) y ya no aparece en pantalla.</td>
+
           </tr>
+
           <tr>
+
             <td class="ruta">mensajes de validación</td>
+
             <td><span class="tag t-oro">conocido</span></td>
+
             <td>Los que genera Pydantic llegan en inglés fijo ("Input should be greater than 0")
+
                 y se saltan el guard de traducción. Los del usuario sí se traducen bien.</td>
+
           </tr>
+
         </tbody>
+
       </table>
+
       </div>
 
+
+
       <div class="nota">
+
         <strong>No todas estas son del mismo tipo</strong>, y por eso llevan etiquetas distintas:
+
         <span class="tag t-rojo">bloqueante</span> impide lanzar,
+
         <span class="tag t-rojo">roto</span> es un fallo con solución,
+
         <span class="tag t-oro">a medias</span> está a medias, y
+
         <span class="tag t-verde">resuelto</span> ya funciona. No todas se arreglan igual.
+
       </div>
+
     </div>
+
+
 
     <div class="card" style="margin-top:14px">
+
       <h4 style="margin:0 0 4px;font-size:16px">Lo que falta antes de lanzar</h4>
+
       <p style="margin:0 0 12px;color:var(--muted);font-size:13.5px">
+
         Una segunda revisión, posterior a la anterior. Ninguna comprobada con tests: se dedujo
+
         leyendo el código.</p>
+
       <div class="tw">
+
       <table>
+
         <thead><tr><th>Qué</th><th>Tipo</th><th>Dónde está</th><th>Por qué importa</th></tr></thead>
+
         <tbody>
+
           <tr>
+
             <td class="ruta">subir el mismo archivo dos veces</td>
+
             <td><span class="tag t-verde">resuelto</span></td>
+
             <td><code>models.py</code> — sin índice único</td>
+
             <td>
+
               <strong>Es lo más grave en el uso diario.</strong> El usuario sube el reporte, ve algo
+
               raro y lo vuelve a subir "por si acaso". Las 20 operaciones entran dos veces y todas las
+
               estadísticas quedan multiplicadas por dos: siguen cuadrando entre sí, así que no hay
+
               forma de saber que están mal.<br>
+
               Y no tiene arreglo: las operaciones no tienen identidad propia, así que no se puede
+
               borrar "la segunda subida" sin borrar la primera.
+
             </td>
+
           </tr>
+
           <tr>
+
             <td class="ruta">tamaño de la subida</td>
+
             <td><span class="tag t-verde">resuelto</span></td>
+
             <td><code>trades.py</code> — 25 MB, contando al copiar</td>
+
             <td>Ya está. Se corta al pasar de 25 MB, tanto contando lo que llega como mirando la cabecera.</td>
+
           </tr>
+
           <tr>
+
             <td class="ruta">freno en el login</td>
+
             <td><span class="tag t-verde">resuelto</span></td>
+
             <td><code>auth.py:31</code></td>
+
             <td>Ya está: 10 intentos y 15 minutos, contados en la base por email y por IP. El bloqueo da 429.</td>
+
           </tr>
+
           <tr>
+
             <td class="ruta">dirección del backend escrita a mano</td>
+
             <td><span class="tag t-oro">despliegue</span></td>
+
             <td><code>dashboard/page.tsx</code> y <code>login/page.tsx</code> — <code>"http://127.0.0.1:8000"</code></td>
+
             <td>
+
               <strong>No da ningún problema mientras se use en local</strong>: el navegador busca
+
               en el propio ordenador y ahí está el backend. El día que haya un dominio, el
+
               visitante buscará en <em>su</em> ordenador y no habrá nada: la web le saldrá vacía.<br>
+
               Lo peligroso es que <strong>ninguna comprobación automática lo detecta</strong>: los
+
               tipos son válidos, los tests usan el servidor real y el build compila. Solo se ve
+
               probándolo desde fuera.
+
             </td>
+
           </tr>
+
           <tr>
+
             <td class="ruta">SECRET_KEY</td>
+
             <td><span class="tag t-oro">despliegue</span></td>
+
             <td><code>security.py:10</code> — <code>os.getenv</code> y ya</td>
+
             <td>Si falta en <code>.env</code>, la app <strong>arranca igual</strong> y revienta en el
+
                 primer login, con un error que no dice qué pasa. Debería fallar al arrancar, que es
+
                 cuando se arregla.</td>
+
           </tr>
+
           <tr>
+
             <td class="ruta">instalar el backend</td>
+
             <td><span class="tag t-oro">despliegue</span></td>
+
             <td>No existe <code>requirements.txt</code>, ni <code>Dockerfile</code>, ni CI</td>
+
             <td><strong>Bloquea el lanzamiento.</strong> Nadie puede instalar el backend desde cero:
+
                     no hay forma de saber qué paquetes hacen falta ni con qué versiones.</td>
+
           </tr>
+
           <tr>
+
             <td class="ruta">puerto 5432 abierto</td>
+
             <td><span class="tag t-oro">despliegue</span></td>
+
             <td><code>docker-compose.yml:15</code></td>
+
             <td>Fine en desarrollo. En un servidor, la base de datos queda expuesta a internet. Se
+
                 arregla escribiendo <code>127.0.0.1:5432:5432</code>.</td>
+
           </tr>
+
           <tr>
+
             <td class="ruta">crear cuenta desde la web</td>
+
             <td><span class="tag t-verde">resuelto</span></td>
+
             <td><code>login/page.tsx</code></td>
+
             <td>El login tiene los dos modos y registra contra <code>POST /auth/register</code>.
+
                 <strong>Probado de punta a punta.</strong> No aparece como pendiente.</td>
+
           </tr>
+
         </tbody>
+
       </table>
+
       </div>
 
+
+
       <div class="nota oro">
+
         <strong>Por qué el duplicado se salió de la revisión anterior:</strong> se miró si
+
         algo se rompía, no si algo se repetía. El resto de esta lista es de otra clase:
+
         <strong>falta una pieza</strong> de despliegue. Son cosas que se construyen sin que nadie
+
         lo note, hasta el día que hay que instalarlo en un servidor y no hay forma.
+
       </div>
+
     </div>
+
   </section>
+
+
 
   <!-- ==================== 3. CAPAS ==================== -->
+
   <section id="capas">
+
     <h3><span class="n">03</span> Las cuatro capas</h3>
+
     <p class="lead">De fuera hacia dentro. Cada capa habla con la de abajo por un contrato: rutas HTTP, códigos de error y códigos de rechazo.</p>
 
+
+
     <div class="capas">
+
       <div class="capa c1">
+
         <div class="cnum">capa 1</div>
+
         <h4>Lo que ve la persona</h4>
+
         <ul>
+
           <li><code>app/page.tsx</code> — la landing, pero solo la monta</li>
+
           <li><code>components/Landing.tsx</code> — el diseño entero</li>
+
           <li><code>components/landingFx.ts</code> — sus animaciones</li>
+
           <li><code>lib/landing/datos.ts</code> — las cifras de ejemplo</li>
+
           <li><code>app/login/page.tsx</code> — entrar y registrarse</li>
+
+          <li><code>app/legal/</code>, <code>app/privacidad/</code>, <code>app/terminos/</code> — los tres textos legales, con <code>PaginaLegal.tsx</code></li>
+
+          <li><code>lib/legal/datos.ts</code> — los cinco huecos por rellenar</li>
+
           <li><code>app/dashboard/page.tsx</code> — las 5 vistas</li>
+
           <li><code>SummaryView</code>, <code>AnalyticsView</code>, <code>AvisoImportacion</code></li>
+
         </ul>
+
       </div>
+
       <div class="capa c2">
+
         <div class="cnum">capa 2</div>
+
         <h4>La traducción</h4>
+
         <ul>
+
           <li><code>lib/i18n/es.ts</code> — la fuente de verdad</li>
+
           <li><code>lib/i18n/en.ts</code> — tipado contra el español</li>
+
           <li><code>config.ts</code> — lógica, sin React</li>
+
           <li><code>LocaleProvider.tsx</code> — el contexto</li>
+
           <li><code>apiErrors.ts</code> — traduce códigos de error</li>
+
           <li><code>importRechazos.ts</code> — traduce rechazos</li>
+
         </ul>
+
       </div>
+
       <div class="capa c3">
+
         <div class="cnum">capa 3</div>
+
         <h4>La API</h4>
+
         <ul>
+
           <li><code>app/main.py</code> — monta todo y el CORS</li>
+
           <li><code>auth.py</code>, <code>accounts.py</code>, <code>trades.py</code></li>
-          <li><code>errors.py</code> — los 17 códigos</li>
+
+          <li><code>errors.py</code> — los 15 códigos</li>
+
+          <li><code>login_freno.py</code> — el freno de intentos del login</li>
+
           <li><code>dependencies.py</code> — quién es el usuario</li>
+
         </ul>
+
       </div>
+
       <div class="capa c4">
+
         <div class="cnum">capa 4</div>
+
         <h4>Los datos</h4>
+
         <ul>
+
           <li><code>models.py</code> — 3 tablas</li>
+
           <li><code>parsers/</code> — lee MT5, Excel y plantilla</li>
-          <li><code>import_validacion.py</code> — separa lo bueno de lo malo</li>
+
+          <li><code>import_validacion.py</code> — separa lo bueno de lo malo, y lo repetido de lo nuevo</li>
+
           <li><code>fifo_engine.py</code> — calculates el resultado</li>
+
           <li>PostgreSQL</li>
+
         </ul>
+
       </div>
+
     </div>
+
+
 
     <div class="nota">
+
       <strong>La regla que atraviesa las cuatro capas:</strong> el backend nunca manda frases,
+
       solo <em>códigos</em>. El motivo es doble: el usuario puede estar en inglés, y si cada
+
       mensaje viviera en dos ficheros de Python no habría forma de comprobar que están los dos.
+
     </div>
+
   </section>
+
+
 
   <!-- ==================== 4. API ==================== -->
+
   <section id="api">
-    <h3><span class="n">04</span> Los 12 endpoints</h3>
+
+    <h3><span class="n">04</span> Los 14 endpoints</h3>
+
     <p class="lead">Tres grupos de prefijos, más <code>/health</code>. Ninguno pide el token por decorador: lo comprueban a mano. Lo que impide ver las cuentas de otro usuario es <code>get_current_user</code>, no la ruta.</p>
 
+
+
     <div class="card">
+
       <div class="tw">
+
       <table>
+
         <thead><tr><th>Método y ruta</th><th>Qué hace</th><th>Quién lo llama</th><th>Si falla</th></tr></thead>
+
         <tbody>
+
           <tr><td class="ruta"><span class="tag metodo met-POST">POST</span> /auth/register</td><td>Crea un usuario</td><td><span class="tag t-rojo">nadie todavía</span></td><td>auth_email_taken</td></tr>
+
           <tr><td class="ruta"><span class="tag metodo met-POST">POST</span> /auth/login</td><td>Devuelve el token</td><td>El formulario del login</td><td>auth_bad_credentials</td></tr>
+
           <tr><td class="ruta"><span class="tag metodo met-GET">GET</span> /accounts/</td><td>Las cuentas del usuario</td><td>Al abrir el dashboard</td><td>session_invalid</td></tr>
+
           <tr><td class="ruta"><span class="tag metodo met-POST">POST</span> /accounts/</td><td>Crea una cuenta</td><td>El onboarding y el modal</td><td>validation_*</td></tr>
+
           <tr><td class="ruta"><span class="tag metodo met-GET">GET</span> /accounts/{id}</td><td>Una cuenta</td><td>Al editarla</td><td>account_not_found</td></tr>
+
           <tr><td class="ruta"><span class="tag metodo met-PUT">PUT</span> /accounts/{id}</td><td>Cambia nombre o balance</td><td>El modal de editar</td><td>account_not_found</td></tr>
+
           <tr><td class="ruta"><span class="tag metodo met-DELETE">DELETE</span> /accounts/{id}</td><td>Borra, si está vacía</td><td>El modal de borrar</td><td>account_has_trades</td></tr>
-          <tr><td class="ruta"><span class="tag metodo met-POST">POST</span> /trades/upload</td><td>Sube un archivo. <strong>Siempre acepta</strong></td><td>La vista de importar</td><td>file_* (7 códigos)</td></tr>
+
+          <tr><td class="ruta"><span class="tag metodo met-POST">POST</span> /trades/upload</td><td>Sube un archivo. <strong>Siempre acepta</strong></td><td>La vista de importar</td><td>file_* (8 códigos)</td></tr>
+
           <tr><td class="ruta"><span class="tag metodo met-GET">GET</span> /trades/</td><td>Las operaciones de una cuenta</td><td>Al cambiar de cuenta</td><td>session_invalid</td></tr>
+
           <tr><td class="ruta"><span class="tag metodo met-POST">POST</span> /trades/</td><td>Crea una operación</td><td>El modal de añadir</td><td>validación de Pydantic</td></tr>
+
           <tr><td class="ruta"><span class="tag metodo met-PUT">PUT</span> /trades/{id}</td><td>Edita una operación</td><td>El modal de editar</td><td>trade_not_found</td></tr>
+
+          <tr><td class="ruta"><span class="tag metodo met-DELETE">DELETE</span> /trades/?account_id</td><td>Borra <strong>todas</strong> las operaciones de una cuenta</td><td>Solo desde "borrar todo y volver a importar"</td><td>—</td></tr>
+
           <tr><td class="ruta"><span class="tag metodo met-DELETE">DELETE</span> /trades/{id}</td><td>Borra una operación</td><td>La fila y "borrar todo"</td><td>trade_not_found</td></tr>
+
           <tr><td class="ruta"><span class="tag metodo met-GET">GET</span> /health</td><td>Que el backend vive</td><td>Nadie todavía</td><td>—</td></tr>
+
         </tbody>
+
       </table>
+
       </div>
 
+
+
       <div class="nota">
-        <strong>El caso raro:</strong> <code>POST /trades/upload</code> es el único que no falla
-        nunca por datos malos. Se importan las operaciones buenas y las malas vuelven en una
-        lista con su número de fila, su campo, el motivo y qué hacer. Es la decisión de producto
-        que convierte "el archivo no sirve" en "498 de 502, y aquí están las 4 que faltan".
+
+        <strong>Dos casos raros:</strong> <code>POST /trades/upload</code> acepta siempre
+        el archivo, y no falla nunca por datos malos: se importan las operaciones buenas y las
+        malas vuelven en una lista con su número de fila, su campo, el motivo y qué hacer. Es
+        lo que convierte "el archivo no sirve" en "498 de 502, y aquí están las 4 que faltan".
+        Si el archivo pesa 100 MB contesta <code>413</code> en vez de llenar el disco.
+        Y <code>POST /auth/login</code> devuelve <code>429</code> a partir del décimo fallo, en
+        vez de permitir miles.
+
       </div>
+
     </div>
+
   </section>
+
+
 
   <!-- ==================== 5. DATOS ==================== -->
+
   <section id="datos">
+
     <h3><span class="n">05</span> El modelo de datos</h3>
+
     <p class="lead">Tres tablas. La relación es Usuario → Cuenta → Trade, y cada una lleva su <code>user_id</code> para que el aislamiento no dependa de la cuenta.</p>
 
+
+
     <div class="card">
+
       <div class="tw">
+
       <table>
+
         <thead><tr><th>Tabla</th><th>Columnas</th><th>Notas</th></tr></thead>
+
         <tbody>
+
           <tr>
+
             <td class="ruta">users</td>
+
             <td><code>id</code>, <code>email</code> (único), <code>hashed_password</code>, <code>created_at</code></td>
+
             <td>El email es único e indexado: no se pueden tener dos cuentas con el mismo.</td>
+
           </tr>
+
           <tr>
+
             <td class="ruta">accounts</td>
+
             <td><code>id</code>, <code>user_id</code>, <code>name</code>, <code>initial_balance</code>, <code>currency</code>, <code>source</code>, <code>created_at</code></td>
+
             <td><code>source</code> es <em>manual</em> o <em>csv</em>. Es lo que decide si en la cabecera pone "MT5" o el nombre de la cuenta.</td>
+
           </tr>
+
           <tr>
+
             <td class="ruta">trades</td>
+
             <td><code>id</code>, <code>user_id</code>, <code>account_id</code>, <code>position</code>, <code>symbol</code>, <code>direction</code>, <code>quantity</code>, <code>entry_price</code>, <code>exit_price</code>, <code>entry_time</code>, <code>exit_time</code>, <code>sl</code>, <code>tp</code>, <code>commission</code>, <code>swap</code>, <code>pnl_bruto</code>, <code>pnl_neto</code>, <code>created_at</code></td>
+
             <td>
+
               <code>direction</code> es <em>long</em> o <em>short</em>.<br>
+
               <code>pnl_neto</code> es el único que se puede editar a mano: si es <code>null</code>,
+
               se calcula como bruto + comisión + swap.
+
             </td>
+
           </tr>
+
         </tbody>
+
       </table>
+
       </div>
+
     </div>
+
   </section>
 
+
+
   <!-- ==================== 6. TRADUCCION ==================== -->
+
   <section id="traduccion">
+
     <h3><span class="n">06</span> La traducción</h3>
+
     <p class="lead"><strong>El español manda.</strong> Su tipo define qué claves existen, y el inglés está tipado contra él. Añadir una clave en español y no traducirla hace fallar la compilación. Es imposible que se escape sin que se note.</p>
 
+
+
     <div class="card">
+
       <div class="tw">
+
       <table>
+
         <thead><tr><th>Fichero</th><th>Qué hace</th></tr></thead>
+
         <tbody>
+
           <tr><td class="ruta">es.ts</td><td>423 claves. La fuente de verdad: su tipo define el contrato.</td></tr>
+
           <tr><td class="ruta">en.ts</td><td>Las mismas 423. Si sobra o falta una, TypeScript lo dice.</td></tr>
+
           <tr><td class="ruta">config.ts</td><td>La lógica: traducir, interpolar, plurales. Sin dependencias de React, para poder llamarla desde el servidor.</td></tr>
+
           <tr><td class="ruta">LocaleProvider.tsx</td><td>El contexto de React. Es lo único que lleva "use client".</td></tr>
-          <tr><td class="ruta">apiErrors.ts</td><td>Traduce los 17 códigos de error de la API, y los de Pydantic.</td></tr>
+
+          <tr><td class="ruta">apiErrors.ts</td><td>Traduce los 15 códigos de error de la API, y los de Pydantic.</td></tr>
+
           <tr><td class="ruta">importRechazos.ts</td><td>Traduce los 9 códigos de rechazo de la importación.</td></tr>
+
         </tbody>
+
       </table>
+
+      </div>
+
+
+
+      <div class="nota">
+
+        <strong>El idioma se lee en el servidor</strong>, de una cookie, y se pasa al cliente como
+
+        valor inicial. Por eso la primera pintura ya sale en el idioma correcto: no hay destello a
+
+        español cuando el usuario está en inglés. Si el idioma se leyera en el navegador, ese
+
+        destello sería inevitable.
+
+      </div>
+
+
+
+      <div class="nota oro">
+
+        <strong>El guard</strong> (<code>npm run test:traduccion</code>) falla si queda una palabra
+
+        visible escrita a mano en vez de pasar por el diccionario. Vigila nueve ficheros. Lo
+
+        encontró por sorpresa: el panel de métricas de la landing estaba en español fijo y el
+
+        guard no lo miraba.
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- ==================== 7. NAVEGADOR ==================== -->
+
+  <section id="navegador">
+
+    <h3><span class="n">07</span> Lo que se guarda en el navegador</h3>
+
+    <p class="lead">Sin servidor de sesiones. Cinco claves en <code>localStorage</code>, y el idioma también en cookie.</p>
+
+
+
+    <div class="card">
+
+      <div class="tw">
+
+      <table>
+
+        <thead><tr><th>Clave</th><th>Guarda</th><th>Qué pasa si no está</th></tr></thead>
+
+        <tbody>
+
+          <tr><td class="ruta">trademind_email</td><td>El email de la cuenta abierta, para enseñarlo en el menú de cerrar sesión. Lo guarda el login al entrar</td><td>Sin él, el menú sale sin email. Es una mejora, no un fallo</td></tr>
+
+          <tr><td class="ruta">token</td><td>El token de sesión</td><td>El dashboard echa a /login. Es lo único imprescindible.</td></tr>
+
+          <tr><td class="ruta">trademind_current_account</td><td>La cuenta activa</td><td>Se elige la primera de la lista. No es un problema.</td></tr>
+
+          <tr><td class="ruta">trademind_theme</td><td>Claro u oscuro</td><td>Se usa el del sistema. No es un problema.</td></tr>
+
+          <tr><td class="ruta">trademind_locale</td><td>El idioma, en localStorage <em>y</em> en cookie</td><td>Manda la cookie. El localStorage es la red de seguridad.</td></tr>
+
+          <tr><td class="ruta">trademind_columns</td><td>Qué columnas se ven en la tabla</td><td>Se ven todas. No es un problema.</td></tr>
+
+        </tbody>
+
+      </table>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- ==================== 8. QA ==================== -->
+
+  <section id="qa">
+
+    <h3><span class="n">08</span> La QA, por zonas</h3>
+
+    <p class="lead">La lista entera, con casillas para tachar, está en <code>docs/mapa-y-qa.md</code>. Esto es el índice. No lleva orden ni prioridades: el recorrido es tuyo.</p>
+
+
+
+    <div class="qa">
+
+      <div class="qa-i"><div class="L">A</div><div class="txt"><div class="t">La landing</div><div class="d">Los ocho botones, los dos idiomas enteros, y los cinco cortes de columna (900, 760, 620 y 520). Las tarjetas con las cifras tienen que verse bien en todas.</div></div></div>
+
+      <div class="qa-i"><div class="L">B</div><div class="txt"><div class="t">El login</div><div class="d">Los dos modos, entrar bien y entrar mal, el registro con email repetido, la contraseña de menos de 8, y el fallo conocido de Pydantic en inglés.</div></div></div>
+
+      <div class="qa-i"><div class="L">C</div><div class="txt"><div class="t">La primera vez</div><div class="d">El onboarding, sus dos caminos, y el balance que pide antes de dejar continuar.</div></div></div>
+
+      <div class="qa-i"><div class="L">D</div><div class="txt"><div class="t">Importar un archivo</div><div class="d">El reporte bueno, uno con una celda vacía, y los nueve archivos raros. Lo nuevo.</div></div></div>
+
+      <div class="qa-i"><div class="L">E</div><div class="txt"><div class="t">Trades</div><div class="d">Añadir, editar, borrar, filtrar, paginar, y que los datos malos no se guarden.</div></div></div>
+
+      <div class="qa-i"><div class="L">F</div><div class="txt"><div class="t">Cuentas</div><div class="d">Crear, editar, y que no deje borrar una con operaciones dentro.</div></div></div>
+
+      <div class="qa-i"><div class="L">G</div><div class="txt"><div class="t">Analytics</div><div class="d">Con datos y <strong>sin</strong> datos. Lo vacío es donde se rompen las gráficas.</div></div></div>
+
+      <div class="qa-i"><div class="L">H</div><div class="txt"><div class="t">El resumen y el calendario</div><div class="d">Meses vacíos, meses de un solo día, y que las cifras cuadren con lo importado.</div></div></div>
+
+      <div class="qa-i"><div class="L">I</div><div class="txt"><div class="t">Los dos idiomas, entero</div><div class="d">Si algo sale en español con la app en inglés, es un fallo. Los números también cambian de formato.</div></div></div>
+
+      <div class="qa-i"><div class="L">J</div><div class="txt"><div class="t">Lo que se rompe con facilidad</div><div class="d">Recargar a mitad de una subida, backend caído, sin conexión, dos pestañas con cuentas distintas.</div></div></div>
+
+      <div class="qa-i human"><div class="L">K</div><div class="txt"><div class="t">Lo que necesita tus ojos</div><div class="d">Que los textos estén bien redactados, que el inglés suene natural, que nada quede torcido. <strong>No lo puedo hacer yo.</strong></div></div></div>
+
+      <div class="qa-i auto"><div class="L">L</div><div class="txt"><div class="t">Lo que ya corre solo</div><div class="d">261 tests de backend, 123 de frontend, el guard de traducción, los tipos y el build. No lo pruebas tú: sirve para saber si se ha roto algo de arriba.</div></div></div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- ==================== 9. NOTAS ==================== -->
+
+    <section id="seguridad">
+
+    <h3><span class="n">09</span> Seguridad del backend</h3>
+
+    <p class="lead">Revisada punto por punto contra el código. Cada uno lleva su estado real, no el que parecía.</p>
+
+
+
+    <div class="tw">
+
+    <table>
+
+      <thead><tr><th>Punto</th><th>Estado</th><th>Dónde</th></tr></thead>
+
+      <tbody>
+
+        <tr><td class="ruta">Contraseñas</td><td><span class="tag t-verde">resuelto</span></td><td><code>security.py</code>, <code>schemas.py</code></td></tr>
+
+        <tr><td class="ruta">Tamaño de la subida</td><td><span class="tag t-verde">resuelto</span></td><td><code>trades.py</code>, 25 MB</td></tr>
+
+        <tr><td class="ruta">Intentos en el login</td><td><span class="tag t-verde">resuelto</span></td><td><code>login_freno.py</code>, 10 / 15 min</td></tr>
+
+        <tr><td class="ruta">Operaciones duplicadas</td><td><span class="tag t-verde">resuelto</span></td><td><code>import_validacion.py</code></td></tr>
+
+        <tr><td class="ruta">SECRET_KEY</td><td><span class="tag t-rojo">pendiente</span></td><td><code>security.py:10</code></td></tr>
+
+        <tr><td class="ruta">GET /trades/ sin paginar</td><td><span class="tag t-rojo">pendiente</span></td><td><code>trades.py</code></td></tr>
+
+        <tr><td class="ruta">Puerto 5432 abierto</td><td><span class="tag t-rojo">pendiente</span></td><td><code>docker-compose.yml:15</code></td></tr>
+
+        <tr><td class="ruta">Token en localStorage</td><td><span class="tag t-oro">decisión</span></td><td>login y dashboard</td></tr>
+
+        <tr><td class="ruta">Importes en Float</td><td><span class="tag t-oro">decisión</span></td><td><code>models.py</code></td></tr>
+
+      </tbody>
+
+    </table>
+
+    </div>
+
+
+
+    <div class="card" style="margin-top:14px">
+
+      <h4 style="margin:0 0 6px;font-size:16px">El límite de 72 bytes de bcrypt</h4>
+
+      <p style="margin:0 0 10px;color:var(--muted);font-size:13.5px">
+
+        El más raro de los ocho, y el que menos se esperaba. Comprobado, no supuesto.</p>
+
+      <div class="tw">
+
+      <table>
+
+        <thead><tr><th>Longitud</th><th>Qué pasaba</th><th>Qué pasa ahora</th></tr></thead>
+
+        <tbody>
+
+          <tr><td class="ruta">menos de 72 bytes</td><td>Normal</td><td>Igual</td></tr>
+
+          <tr><td class="ruta">de 72 a 72 bytes</td><td><strong>Dos contraseñas distintas dan el MISMO hash.</strong> Escribir 28 caracteres más no protege nada, y el usuario cree que sí</td><td>Se recortan. Documentado con un test</td></tr>
+
+          <tr><td class="ruta">más de 72 bytes</td><td><span class="tag t-rojo">500</span> — <code>passlib</code> lanza <code>PasswordSizeError</code></td><td>Se recorta antes. Nunca hay 500</td></tr>
+
+        </tbody>
+
+      </table>
+
       </div>
 
       <div class="nota">
-        <strong>El idioma se lee en el servidor</strong>, de una cookie, y se pasa al cliente como
-        valor inicial. Por eso la primera pintura ya sale en el idioma correcto: no hay destello a
-        español cuando el usuario está en inglés. Si el idioma se leyera en el navegador, ese
-        destello sería inevitable.
+
+        El recorte es en <strong>bytes</strong>, no en caracteres, porque un emoji ocupa cuatro:
+
+        contando caracteres, 72 emojis serían 288 bytes y bcrypt reventaría. Hay un test con
+
+        18 y 19 emojis.
+
       </div>
 
-      <div class="nota oro">
-        <strong>El guard</strong> (<code>npm run test:traduccion</code>) falla si queda una palabra
-        visible escrita a mano en vez de pasar por el diccionario. Vigila nueve ficheros. Lo
-        encontró por sorpresa: el panel de métricas de la landing estaba en español fijo y el
-        guard no lo miraba.
-      </div>
     </div>
-  </section>
 
-  <!-- ==================== 7. NAVEGADOR ==================== -->
-  <section id="navegador">
-    <h3><span class="n">07</span> Lo que se guarda en el navegador</h3>
-    <p class="lead">Sin servidor de sesiones. Cinco claves en <code>localStorage</code>, y el idioma también en cookie.</p>
 
-    <div class="card">
+
+    <div class="card" style="margin-top:14px">
+
+      <h4 style="margin:0 0 6px;font-size:16px">Los dos que son decisión, no fallo</h4>
+
       <div class="tw">
+
       <table>
-        <thead><tr><th>Clave</th><th>Guarda</th><th>Qué pasa si no está</th></tr></thead>
+
+        <thead><tr><th>Punto</th><th>El problema</th><th>Por qué no se toca</th></tr></thead>
+
         <tbody>
-          <tr><td class="ruta">token</td><td>El token de sesión</td><td>El dashboard echa a /login. Es lo único imprescindible.</td></tr>
-          <tr><td class="ruta">trademind_current_account</td><td>La cuenta activa</td><td>Se elige la primera de la lista. No es un problema.</td></tr>
-          <tr><td class="ruta">trademind_theme</td><td>Claro u oscuro</td><td>Se usa el del sistema. No es un problema.</td></tr>
-          <tr><td class="ruta">trademind_locale</td><td>El idioma, en localStorage <em>y</em> en cookie</td><td>Manda la cookie. El localStorage es la red de seguridad.</td></tr>
-          <tr><td class="ruta">trademind_columns</td><td>Qué columnas se ven en la tabla</td><td>Se ven todas. No es un problema.</td></tr>
+
+          <tr>
+
+            <td class="ruta">Token en localStorage</td>
+
+            <td>Vulnerable si algún día hay un XSS</td>
+
+            <td>Una cookie <code>HttpOnly</code> lo evita, pero obliga a rehacer la autenticación
+
+                y a tocar el CORS, porque el navegador dejaría de mandar la cabecera
+
+                <code>Authorization</code>. Medio día de trabajo, y solo protege si ya hubo un XSS.</td>
+
+          </tr>
+
+          <tr>
+
+            <td class="ruta">Importes en Float</td>
+
+            <td>Para dinero, lo correcto es <code>Numeric</code></td>
+
+            <td>Para un diario de trading es tolerable: los errores de coma flotante son de
+
+                milésimas y las estadísticas no se ven. Es cosa de cuando haya ingresos.</td>
+
+          </tr>
+
         </tbody>
+
       </table>
+
       </div>
+
     </div>
+
   </section>
 
-  <!-- ==================== 8. QA ==================== -->
-  <section id="qa">
-    <h3><span class="n">08</span> La QA, por zonas</h3>
-    <p class="lead">La lista entera, con casillas para tachar, está en <code>docs/mapa-y-qa.md</code>. Esto es el índice. No lleva orden ni prioridades: el recorrido es tuyo.</p>
 
-    <div class="qa">
-      <div class="qa-i"><div class="L">A</div><div class="txt"><div class="t">La landing</div><div class="d">Los ocho botones, los dos idiomas enteros, y los cinco cortes de columna (900, 760, 620 y 520). Las tarjetas con las cifras tienen que verse bien en todas.</div></div></div>
-      <div class="qa-i"><div class="L">B</div><div class="txt"><div class="t">El login</div><div class="d">Los dos modos, entrar bien y entrar mal, el registro con email repetido, la contraseña de menos de 8, y el fallo conocido de Pydantic en inglés.</div></div></div>
-      <div class="qa-i"><div class="L">C</div><div class="txt"><div class="t">La primera vez</div><div class="d">El onboarding, sus dos caminos, y el balance que pide antes de dejar continuar.</div></div></div>
-      <div class="qa-i"><div class="L">D</div><div class="txt"><div class="t">Importar un archivo</div><div class="d">El reporte bueno, uno con una celda vacía, y los nueve archivos raros. Lo nuevo.</div></div></div>
-      <div class="qa-i"><div class="L">E</div><div class="txt"><div class="t">Trades</div><div class="d">Añadir, editar, borrar, filtrar, paginar, y que los datos malos no se guarden.</div></div></div>
-      <div class="qa-i"><div class="L">F</div><div class="txt"><div class="t">Cuentas</div><div class="d">Crear, editar, y que no deje borrar una con operaciones dentro.</div></div></div>
-      <div class="qa-i"><div class="L">G</div><div class="txt"><div class="t">Analytics</div><div class="d">Con datos y <strong>sin</strong> datos. Lo vacío es donde se rompen las gráficas.</div></div></div>
-      <div class="qa-i"><div class="L">H</div><div class="txt"><div class="t">El resumen y el calendario</div><div class="d">Meses vacíos, meses de un solo día, y que las cifras cuadren con lo importado.</div></div></div>
-      <div class="qa-i"><div class="L">I</div><div class="txt"><div class="t">Los dos idiomas, entero</div><div class="d">Si algo sale en español con la app en inglés, es un fallo. Los números también cambian de formato.</div></div></div>
-      <div class="qa-i"><div class="L">J</div><div class="txt"><div class="t">Lo que se rompe con facilidad</div><div class="d">Recargar a mitad de una subida, backend caído, sin conexión, dos pestañas con cuentas distintas.</div></div></div>
-      <div class="qa-i human"><div class="L">K</div><div class="txt"><div class="t">Lo que necesita tus ojos</div><div class="d">Que los textos estén bien redactados, que el inglés suene natural, que nada quede torcido. <strong>No lo puedo hacer yo.</strong></div></div></div>
-      <div class="qa-i auto"><div class="L">L</div><div class="txt"><div class="t">Lo que ya corre solo</div><div class="d">250 tests de backend, 123 de frontend, el guard de traducción, los tipos y el build. No lo pruebas tú: sirve para saber si se ha roto algo de arriba.</div></div></div>
+
+  <section id="qa2">
+
+    <h3><span class="n">10</span> Los pendientes, en una lista</h3>
+
+    <p class="lead">Todo lo que queda, ordenado por lo que estorba. La versión para tachar, con el detalle de cada uno, está en <code>docs/mapa-y-qa.md</code>.</p>
+
+
+
+    <div class="card rojo">
+
+      <b style="color:var(--red)">Impide publicar</b>
+
+      <div class="tw">
+
+      <table>
+
+        <thead><tr><th>Qué</th><th>Nota</th></tr></thead>
+
+        <tbody>
+
+          <tr><td class="ruta">Los cinco datos legales</td><td>Están con huecos en <code>web/lib/legal/datos.ts</code>. El test avisa pero no bloquea</td></tr>
+
+          <tr><td class="ruta">Dirección del backend</td><td>Solo importa el día que haya dominio</td></tr>
+
+        </tbody>
+
+      </table>
+
+      </div>
+
     </div>
+
+
+
+    <div class="card" style="margin-top:14px">
+
+      <b style="color:var(--gold)">Pendientes de código</b>
+
+      <div class="tw">
+
+      <table>
+
+        <thead><tr><th>Qué</th><th>Dónde</th></tr></thead>
+
+        <tbody>
+
+          <tr><td class="ruta">SECRET_KEY sin validar</td><td><code>security.py:10</code></td></tr>
+
+          <tr><td class="ruta">GET /trades/ sin paginar</td><td><code>trades.py</code></td></tr>
+
+          <tr><td class="ruta">Puerto 5432 abierto</td><td><code>docker-compose.yml:15</code></td></tr>
+
+          <tr><td class="ruta">Cerrar sesión</td><td class="t-verde">hecho</td></tr>
+
+          <tr><td class="ruta">Olvidé mi contraseña</td><td><code>href="#"</code> en el login</td></tr>
+
+          <tr><td class="ruta">Mensajes de Pydantic en inglés</td><td>Los que genera la librería, no los nuestros</td></tr>
+
+          <tr><td class="ruta">requirements.txt y Dockerfile</td><td>No existen. Bloquea instalar en un servidor limpio</td></tr>
+
+        </tbody>
+
+      </table>
+
+      </div>
+
+    </div>
+
+
+
+    <div class="card" style="margin-top:14px">
+
+      <b style="color:var(--muted)">Sin prisa, pero pendiente</b>
+
+      <div class="tw">
+
+      <table>
+
+        <thead><tr><th>Qué</th><th>Nota</th></tr></thead>
+
+        <tbody>
+
+          <tr><td class="ruta">Aviso de "datos de ejemplo"</td><td>Las cifras son las tuyas reales y no se dice</td></tr>
+
+          <tr><td class="ruta">Google OAuth</td><td>Sin decisión. Apple ya se descartó</td></tr>
+
+          <tr><td class="ruta">direction: normalizado o estricto</td><td>Decisión tuya, pendiente desde hace tiempo</td></tr>
+
+          <tr><td class="ruta">Ficheros que ya no se usan</td><td><code>PanelAnimado.tsx</code> y los 4 PNG, ~360 KB</td></tr>
+
+          <tr><td class="ruta">La QA por zonas</td><td>Doce zonas para tachar en el Markdown. Ninguna probada</td></tr>
+
+        </tbody>
+
+      </table>
+
+      </div>
+
+    </div>
+
   </section>
 
-  <!-- ==================== 9. NOTAS ==================== -->
-  <section id="notas">
-    <h3><span class="n">09</span> Cómo se prueba</h3>
+
+
+<section id="notas">
+
+    <h3><span class="n">11</span> Cómo se prueba</h3>
+
     <p class="lead">Las trampas del entorno, para no perder tiempo con ellas.</p>
 
+
+
     <div class="card">
+
       <div class="tw">
+
       <table>
+
         <thead><tr><th>Trampa</th><th>Qué pasa</th><th>Qué hacer</th></tr></thead>
+
         <tbody>
+
           <tr><td class="ruta">animaciones</td><td>El contador no avanza en mi pestaña</td><td>No lo puedo ver. Lo compruebas tú.</td></tr>
+
           <tr><td class="ruta">capturas</td><td>Fallo al pedir la captura si la pestaña no está visible</td><td>Reintentar abriendo y enfocando la pestaña. Si no, medir por el DOM.</td></tr>
+
           <tr><td class="ruta">botón N</td><td>Sale grabado en las fotos si se hace en desarrollo</td><td>Hacerlas siempre en producción (puerto 3100).</td></tr>
+
           <tr><td class="ruta">el raton</td><td>Los manejadores que dependen del ratón no se disparan con la tecla de Play</td><td>Chamarles al manejador a mano desde el DOM.</td></tr>
+
           <tr><td class="ruta">scripts rotos</td><td>Fallo al correr código en la página si lleva paréntesis descompensados</td><td>Escribirlo con <code>function(){}</code> en vez de una flecha.</td></tr>
+
         </tbody>
+
       </table>
+
       </div>
+
+
 
       <div class="leyenda">
+
         <span><i class="punto p-rojo"></i> roto o bloqueante</span>
+
         <span><i class="punto p-oro"></i> a medias o conocido</span>
+
         <span><i class="punto p-verde"></i> funcionando</span>
+
         <span><i class="punto p-azul"></i> estructura</span>
+
         <span><i class="punto p-gris"></i> neutro</span>
+
       </div>
+
     </div>
+
   </section>
 
+
+
   <footer>
+
     Mapa generado el mismo día que <code>docs/mapa-y-qa.md</code>. El texto largo de la QA vive
+
     en el Markdown, que es lo que se tacha; este fichero es el índice y el dibujo.
+
   </footer>
 
+
+
 </main>
+
 </div>
 
+
+
 <script>
+
   // Marca en la barra lateral la sección que se está leyendo.
+
   const enlaces = [...document.querySelectorAll('#nav a')];
+
   const obs = new IntersectionObserver((entradas) => {
+
     entradas.forEach((e) => {
+
       if (!e.isIntersecting) return;
+
       enlaces.forEach((a) => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id));
+
     });
+
   }, { rootMargin: '-15% 0px -75% 0px' });
+
   document.querySelectorAll('section[id]').forEach((s) => obs.observe(s));
+
 </script>
+
 </body>
+
 </html>
