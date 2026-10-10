@@ -26,26 +26,28 @@ Lo que NO existe todavia: registro, recuperar contrasena, cerrar sesion.
 
 ### `/` — la landing
 
-Nueve secciones, en este orden:
+Seis bloques, en este orden:
 
-1. Barra de navegacion (con el selector de idioma)
-2. Hero — titulo, subtitulo, dos botones
+1. Navegacion (con el selector de idioma, "Log in" y "Create account")
+2. Hero — titulo, subtitulo, dos botones y tres avales
 3. El problema — tres tarjetas
-4. Las cuatro fichas — la escena 3D con los paneles del producto
-5. Como importar — cuatro vias (MT5, Excel, manual, universal)
-6. Como funciona — tres pasos
-7. Preguntas frecuentes — seis
-8. Cierre — titulo y boton
-9. Pie con el aviso legal
+4. Como funciona — tres pasos
+5. El producto — las tarjetas grandes con el panel de verdad
+6. Como importar, preguntas frecuentes (seis) y cierre
 
-Los dos botones del nav y el del cierre **no van a ninguna parte**: los tres
-apuntan a `/login`.
+Los ocho botones llevan a algun sitio: "Log in" a `/login?modo=entrar`, "Create
+account" a `/login`, y los de seccion a sus anclas (`#producto`, `#importar`,
+`#preguntas`, `#como`).
 
-### `/login` — iniciar sesion
+### `/login` — entrar y registrarse
 
-Un formulario: email y contrasena. Abajo, los botones de Google y de Apple, que
-**no hacen nada todavia** (son esqueletos, y Apple se descarto por coste: 99 USD
-al ano).
+Una sola pantalla con dos modos. Sin parametro se abre en registro; con
+`?modo=entrar`, en entrar. El enlace de abajo cambia de uno a otro. Tras
+registrarse **entra solo**, sin escribir los datos dos veces.
+
+El fondo es el de la landing: la misma rejilla turquesa que sigue al raton. El
+boton de Google **avisa de que aun no esta**; Apple se descarto por coste (99 USD
+al ano) y ya no aparece.
 
 ### `/dashboard` — la aplicacion
 
@@ -148,35 +150,35 @@ Todo en `localStorage`, en el navegador:
 
 # PARTE 2 — LO QUE HAY QUE COMPROBAR
 
-## Lo primero: lo que bloquea
+## Lo primero: lo que sigue bloqueando
 
-Antes de probar nada mas, esto. No es una mejora, es que **hoy un usuario nuevo
-no puede entrar**.
+Ya no esta lo del registro: **probado de punta a punta**, cuenta creada, sesion
+iniciada sola y entrada al dashboard. Lo que queda:
 
-- [ ] **No hay formulario de registro.** El backend tiene `/auth/register` y
-      funciona, pero el enlace "Crear cuenta" del login es `href="#"`. El boton
-      "Empezar ahora" de la landing lleva a `/login`, donde no hay forma de
-      crear una cuenta. **No se puede lanzar asi.**
-- [ ] **No hay cerrar sesion.** El boton de la esquina solo cambia el tema.
+- [ ] **No existen los terminos ni la politica de privacidad**, y el login dice
+      que los aceptas (`login.terms`). Solo hay tres rutas: `/`, `/login` y
+      `/dashboard`. Es lo unico de esta lista que no se resuelve solo el dia de
+      publicar.
+- [ ] **No hay cerrar sesion.** El boton de la esquina del dashboard solo cambia
+      el tema.
 - [ ] **"He olvidado mi contrasena"** es `href="#"`.
-- [ ] **Google y Apple** no hacen nada. Entendido para Apple; Google no.
-- [ ] **El boton "Preguntar a la IA"** no hace nada. Fase E, detenida.
+- [ ] **Google** avisa de que aun no esta. Sin decision.
+- [ ] **Los mensajes de validacion de Pydantic** llegan en ingles fijo.
 
 ## A. La landing
 
-- [ ] Los tres botones ("Entrar", "Empezar ahora", los dos del nav) llevan a
-      `/login`
-- [ ] El selector de idioma cambia **todo**, incluida la escena 3D
+- [ ] Los ocho botones llevan a su sitio: "Log in" a `/login?modo=entrar`,
+      "Create account" a `/login`, y los cuatro de seccion a sus anclas
+- [ ] El selector de idioma cambia **todo**, las cifras del panel incluidas
 - [ ] Al cambiar de idioma no hay destello: la primera pintura ya sale bien
-- [ ] Las cuatro fichas se ven completas, sin recortes raros, a 1440, 1200, 1000,
-      800, 540 y 375 px. Los cortes de columna estan en 1012 y 540
-- [ ] El panel de metricas cuenta desde $10.000 al pasar el raton, y se para al
-      salir
-- [ ] Las cifras del panel no son las mismas que las del dashboard, y se ve que
-      son un ejemplo
+- [ ] Los bloques se ven completos, sin recortes raros, a 1440, 1200, 900, 760,
+      620, 520 y 375 px. Los cortes de columna estan en 900, 760, 620 y 520
+- [ ] El panel de metricas cuenta al pasar el raton y se para al salir
+- [ ] Las cifras del panel se ve que son de ejemplo (hoy **no se dice**, y
+      Claude quito el aviso porque el diseño no lo traia)
 - [ ] El aviso legal se lee entero, sin cortarse
 - [ ] Las seis preguntas frecuentes se abren y se cierran
-- [ ] El boton de Google es de la marca y el de Apple tambien
+- [ ] El boton de Google es de la marca y lleva el logotipo bien
 
 ## A2. Lo que falta antes de lanzar
 
@@ -194,7 +196,8 @@ etiquetas distintas. Mezclarlas hizo que parecieran todas igual de urgentes.
 | `SECRET_KEY` | **despliegue** | `security.py:10` |
 | Instalar el backend | **despliegue** | no hay `requirements.txt` |
 | Puerto 5432 abierto | **despliegue** | `docker-compose.yml:15` |
-| Crear cuenta desde la web | **característica** | `login/page.tsx` |
+| Crear cuenta desde la web | **resuelto** | ya no aplica: `login/page.tsx` |
+| Dirección del backend escrita a mano | **despliegue** | `dashboard/page.tsx` y `login/page.tsx` |
 
 - [ ] **Subir el mismo archivo dos veces no duplica.** Es el más grave en el uso
       diario: el usuario sube el reporte, ve algo raro y lo vuelve a subir "por
@@ -210,6 +213,14 @@ etiquetas distintas. Mezclarlas hizo que parecieran todas igual de urgentes.
       primer login, que es el peor momento para descubrirlo.
 - [ ] **Se puede instalar el backend desde cero**, con las versiones fijadas.
 - [ ] **En producción, Postgres no está abierto a internet.**
+- [ ] **La dirección del backend sale de una variable de entorno.** Hoy está
+      escrita a mano (`"http://127.0.0.1:8000"`) en el login y en el dashboard.
+      **En local no da ningún problema**: el navegador busca en el propio
+      ordenador y ahí está el backend. Con un dominio, el visitante buscará en
+      *su* ordenador y le saldrá la web vacía. Lo peligroso es que **ninguna
+      comprobación automática lo detecta**: los tipos son válidos, los tests
+      usan el servidor real y el build compila. Solo se ve probándolo desde
+      fuera.
 
 ## B. El login
 
@@ -221,8 +232,7 @@ etiquetas distintas. Mezclarlas hizo que parecieran todas igual de urgentes.
       entendible
 - [ ] El boton "He olvidado mi contrasena" y el de "Crear cuenta": los dos
       estan muertos
-- [ ] Los botones de Google y de Apple no hacen nada al pulsarlos (hoy es lo
-      esperado; si aparece algo, es un fallo)
+- [ ] El boton de Google avisa de que aun no esta, y no rompe nada
 
 ## C. La primera vez que entras
 
@@ -349,7 +359,7 @@ de arriba:
 
 ```
 .\venv\Scripts\python.exe -m pytest     -> 216 tests de backend
-cd web; npm test                         -> 98 tests de frontend
+cd web; npm test                         -> 106 tests de frontend
 cd web; npm run test:traduccion          -> el guard de las cadenas sueltas
 cd web; npx tsc --noEmit                 -> los tipos
 cd web; npm run build                    -> que compile de verdad

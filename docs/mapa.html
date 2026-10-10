@@ -218,32 +218,34 @@
         <div class="nodo">
           <div class="ruta">/</div>
           <div class="que">La landing pública</div>
-          <div class="det">Todo el mundo, sin cuenta. Nueve secciones seguidas: navegación, hero, el
-            problema, las cuatro fichas en 3D, las cuatro formas de importar, cómo funciona,
-            seis preguntas frecuentes, cierre y aviso legal.</div>
+          <div class="det">Todo el mundo, sin cuenta. Seis bloques: hero, el problema, cómo funciona,
+            el producto, las formas de importar, las preguntas frecuentes y el cierre. El diseño
+            entero vive en <code>components/Landing.tsx</code> con sus animaciones en
+            <code>landingFx.ts</code>.</div>
           <div class="tags">
-            <span class="tag t-gris">9 secciones</span>
-            <span class="tag t-gris">6 cortes de columna</span>
-            <span class="tag t-oro">botones sin destino</span>
+            <span class="tag t-gris">6 bloques</span>
+            <span class="tag t-gris">5 cortes: 900, 760, 620, 520</span>
+            <span class="tag t-verde">los 8 botones llevan a algún sitio</span>
           </div>
         </div>
 
-        <div class="conector rojo">
+        <div class="conector">
           <div class="flecha">▼</div>
-          <div class="txt">"Empezar ahora" → /login &nbsp;·&nbsp; aquí se rompe: no hay forma de crear una cuenta</div>
+          <div class="txt">"Crear cuenta" → /login en modo registro &nbsp;·&nbsp; "Log in" → /login?modo=entrar</div>
         </div>
 
-        <div class="nodo roto">
+        <div class="nodo">
           <div class="ruta">/login</div>
-          <div class="que">Iniciar sesión</div>
-          <div class="det">Un formulario con email y contraseña. Debajo, los botones de Google y de
-            Apple, que no hacen nada. Y dos enlaces muertos: "olvidé mi contraseña" y
-            "crear cuenta".</div>
+          <div class="que">Entrar y registrarse, en la misma pantalla</div>
+          <div class="det">Dos modos según el parámetro: sin él, registro; con
+            <code>?modo=entrar</code>, entrar. Tras registrarse <strong>entra solo</strong>, sin
+            escribir los datos dos veces. El fondo es el de la landing: la misma rejilla turquesa
+            que sigue al ratón. Google avisa de que aún no está.</div>
           <div class="tags">
-            <span class="tag t-verde">el login funciona</span>
-            <span class="tag t-rojo">sin registro</span>
-            <span class="tag t-rojo">Google y Apple muertos</span>
-            <span class="tag t-oro">sin cerrar sesión</span>
+            <span class="tag t-verde">registro funcionando</span>
+            <span class="tag t-verde">probado de punta a punta</span>
+            <span class="tag t-rojo">olvidé mi contraseña muerto</span>
+            <span class="tag t-oro">Google sin hacer</span>
           </div>
         </div>
 
@@ -637,8 +639,8 @@
     <p class="lead">La lista entera, con casillas para tachar, está en <code>docs/mapa-y-qa.md</code>. Esto es el índice. No lleva orden ni prioridades: el recorrido es tuyo.</p>
 
     <div class="qa">
-      <div class="qa-i"><div class="L">A</div><div class="txt"><div class="t">La landing</div><div class="d">Los tres botones, los dos idiomas enteros, la escena 3D y los seis anchos de pantalla (1012 y 540 son los cortes de columna).</div></div></div>
-      <div class="qa-i"><div class="L">B</div><div class="txt"><div class="t">El login</div><div class="d">Entrar bien, entrar mal, y los mensajes raros. Aquí está el fallo conocido de Pydantic en inglés.</div></div></div>
+      <div class="qa-i"><div class="L">A</div><div class="txt"><div class="t">La landing</div><div class="d">Los ocho botones, los dos idiomas enteros, y los cinco cortes de columna (900, 760, 620 y 520). Las tarjetas con las cifras tienen que verse bien en todas.</div></div></div>
+      <div class="qa-i"><div class="L">B</div><div class="txt"><div class="t">El login</div><div class="d">Los dos modos, entrar bien y entrar mal, el registro con email repetido, la contraseña de menos de 8, y el fallo conocido de Pydantic en inglés.</div></div></div>
       <div class="qa-i"><div class="L">C</div><div class="txt"><div class="t">La primera vez</div><div class="d">El onboarding, sus dos caminos, y el balance que pide antes de dejar continuar.</div></div></div>
       <div class="qa-i"><div class="L">D</div><div class="txt"><div class="t">Importar un archivo</div><div class="d">El reporte bueno, uno con una celda vacía, y los nueve archivos raros. Lo nuevo.</div></div></div>
       <div class="qa-i"><div class="L">E</div><div class="txt"><div class="t">Trades</div><div class="d">Añadir, editar, borrar, filtrar, paginar, y que los datos malos no se guarden.</div></div></div>
@@ -648,7 +650,7 @@
       <div class="qa-i"><div class="L">I</div><div class="txt"><div class="t">Los dos idiomas, entero</div><div class="d">Si algo sale en español con la app en inglés, es un fallo. Los números también cambian de formato.</div></div></div>
       <div class="qa-i"><div class="L">J</div><div class="txt"><div class="t">Lo que se rompe con facilidad</div><div class="d">Recargar a mitad de una subida, backend caído, sin conexión, dos pestañas con cuentas distintas.</div></div></div>
       <div class="qa-i human"><div class="L">K</div><div class="txt"><div class="t">Lo que necesita tus ojos</div><div class="d">Que los textos estén bien redactados, que el inglés suene natural, que nada quede torcido. <strong>No lo puedo hacer yo.</strong></div></div></div>
-      <div class="qa-i auto"><div class="L">L</div><div class="txt"><div class="t">Lo que ya corre solo</div><div class="d">216 tests de backend, 98 de frontend, el guard de traducción, los tipos y el build. No lo pruebas tú: sirve para saber si se ha roto algo de arriba.</div></div></div>
+      <div class="qa-i auto"><div class="L">L</div><div class="txt"><div class="t">Lo que ya corre solo</div><div class="d">216 tests de backend, 106 de frontend, el guard de traducción, los tipos y el build. No lo pruebas tú: sirve para saber si se ha roto algo de arriba.</div></div></div>
     </div>
   </section>
 
