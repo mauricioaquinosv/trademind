@@ -21,12 +21,13 @@ RAIZ = pathlib.Path(__file__).resolve().parent.parent
 FICHEROS = [
     "app/page.tsx",
     "app/dashboard/page.tsx",
+    "app/login/page.tsx",
+    "app/components/Landing.tsx",
     "app/components/SummaryView.tsx",
     "app/components/AnalyticsView.tsx",
     "app/components/CfControls.tsx",
     "app/components/PanelAnimado.tsx",
     "app/components/AvisoImportacion.tsx",
-    "app/login/page.tsx",
     "app/layout.tsx",
 ]
 
@@ -36,6 +37,7 @@ PLACEHOLDER = re.compile(r"^(hover:|focus:|sm:|md:|lg:|xl:|2xl:|dark:|group-|pee
 # Nombres propios, marcas y valores que no se traducen.
 PROPIO = re.compile(
     r"TradeMind|EURUSD|USDJPY|GBPUSD|XAUUSD|Facebook|Twitter|LinkedIn|"
+    r"ReportHistory\.xlsx|"
     r"Moon|Sun|Star|var\(--|&nbsp;|^\s*$|^\d",
     re.I,
 )
@@ -45,7 +47,17 @@ CODIGO = re.compile(r"[?=&|{}();]|\bt\.\w|^\s*(const|let|var|return|if|for|map|i
 
 # Cadidas tecnicas que se leen igual en los dos idiomas. Estan aqui a proposito:
 # permitir que se declaren una vez en el diccionario en vez de escribirlas a mano.
-NEUTRAS = {"Hr", "Min", "Auto", "Swap", "P&L", "USD", "EUR", "MT5", "CSV", "XLSX", "ID"}
+NEUTRAS = {
+    "Hr", "Min", "Auto", "Swap", "P&L", "USD", "EUR", "MT5", "CSV", "XLSX", "ID", "FIFO",
+    # Las extensiones de archivo son universales: traducirlas no aportaria nada
+    # y solo abriria la puerta a escribirlas distintas en cada idioma.
+    ".xlsx · .xls · .csv",
+    # Etiqueta del grupo de botones que cambian de idioma. Es bilingue a proposito
+    # y por eso es IGUAL en los dos idiomas: quien lee la pagina en cualquiera de
+    # los dos tiene que reconocer las dos palabras. No es un texto sin traducir,
+    # es un texto que no tiene traduccion. Ya estaba en LanguageSwitcher.tsx.
+    "Idioma / Language",
+}
 
 
 defines = pathlib.Path(RAIZ / "lib/i18n/es.ts").read_text(encoding="utf-8")
