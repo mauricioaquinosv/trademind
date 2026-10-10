@@ -178,6 +178,39 @@ no puede entrar**.
 - [ ] Las seis preguntas frecuentes se abren y se cierran
 - [ ] El boton de Google es de la marca y el de Apple tambien
 
+## A2. Lo que falta antes de lanzar
+
+De una segunda revisión, posterior a la de los cinco puntos. Ninguna comprobada
+con tests: se dedujo leyendo el código.
+
+Lo importante es que **no son las seis del mismo tipo**, y por eso llevan
+etiquetas distintas. Mezclarlas hizo que parecieran todas igual de urgentes.
+
+| Qué | Tipo | Dónde |
+|---|---|---|
+| Subir el mismo archivo dos veces | **defecto** | `models.py`, sin índice único |
+| Tamaño de la subida | **defecto** | `trades.py:83`, `copyfileobj` sin tope |
+| Freno en el login | **defecto** | `auth.py:31` |
+| `SECRET_KEY` | **despliegue** | `security.py:10` |
+| Instalar el backend | **despliegue** | no hay `requirements.txt` |
+| Puerto 5432 abierto | **despliegue** | `docker-compose.yml:15` |
+| Crear cuenta desde la web | **característica** | `login/page.tsx` |
+
+- [ ] **Subir el mismo archivo dos veces no duplica.** Es el más grave en el uso
+      diario: el usuario sube el reporte, ve algo raro y lo vuelve a subir "por
+      si acaso". Las operaciones entran dos veces y las estadísticas quedan
+      multiplicadas por dos. **Sigue cuadrando entre sí**, así que no hay forma
+      de saber que están mal. Y no tiene arreglo: las operaciones no tienen
+      identidad propia, así que no se puede borrar la segunda subida sin borrar
+      la primera. Esto no estaba en la revisión anterior porque allí se miró si
+      algo se rompía, no si algo se repetía.
+- [ ] **La subida tiene un tope de tamaño.** Hoy se copia entero al disco.
+- [ ] **El login tiene freno de intentos.**
+- [ ] **La app no arranca si falta `SECRET_KEY`.** Ahora arranca y revienta en el
+      primer login, que es el peor momento para descubrirlo.
+- [ ] **Se puede instalar el backend desde cero**, con las versiones fijadas.
+- [ ] **En producción, Postgres no está abierto a internet.**
+
 ## B. El login
 
 - [ ] Entra con un email y una contrasena correctos y salta al dashboard
