@@ -565,6 +565,87 @@ export const es = {
   "landing.footer.rights": "Todos los derechos reservados.",
 
   // ------------------------------------------------------------------
+  // Aviso legal, privacidad y terminos  (/legal, /privacidad, /terminos)
+  // ------------------------------------------------------------------
+  // LOS CINCO HUECOS: son datos que no se pueden inventar. Se substituyen en
+  // es.ts y en en.ts a la vez, y se buscan por la cadena "[PENDIENTE".
+  // Hay un test (tests/legal.test.mjs) que falla si queda alguno.
+  //
+  //   [PENDIENTE: nombre]  nombre del titular o de la empresa
+  //   [PENDIENTE: nif]     NIF o CIF. Si es persona fisica, el nombre basta
+  //   [PENDIENTE: email]   email de contacto
+  //   [PENDIENTE: lugar]   ciudad y pais
+  //   [PENDIENTE: fecha]   fecha de entrada en vigor
+  "legal.backHome": "Volver al inicio",
+  "login.termsRead": "Los términos",
+  "login.termsAnd": "y",
+  "login.privacyRead": "la política de privacidad",
+  "legal.lastUpdate": "Última actualización: {fecha}",
+  "legal.sections": "En esta página",
+  "legal.toCta": "Empezar a usarlo",
+
+  "legal.legal.title": "Aviso legal",
+  "legal.legal.h1": "Aviso legal",
+  "legal.legal.who": "Quiénes somos",
+  "legal.legal.whoBody":
+    "Este sitio web es operado por {nombre}, identificado con el número {nif} y con domicilio en {lugar}. Puedes escribirnos a {email}.",
+  "legal.legal.use": "Condiciones de uso",
+  "legal.legal.useBody":
+    "El acceso y el uso de este sitio web implican la aceptación de estas condiciones. Si no estás de acuerdo con alguna de ellas, debes dejar de usar el sitio.",
+  "legal.legal.ip": "Propiedad intelectual",
+  "legal.legal.ipBody":
+    "El nombre, el diseño, los textos y el código de este sitio pertenecen a {nombre}. Queda prohibida su reproducción sin autorización previa.",
+  "legal.legal.liability": "Limitación de responsabilidad",
+  "legal.legal.liabilityBody":
+    "TradeMind se ofrece tal cual. No garantizamos que el servicio esté disponible sin interrupciones ni que los resultados mostrados sean exactos. No nos hacemos responsables de los daños derivados del uso del sitio.",
+
+  "legal.privacy.title": "Política de privacidad",
+  "legal.privacy.h1": "Política de privacidad",
+  "legal.privacy.who": "Responsable del tratamiento",
+  "legal.privacy.whoBody":
+    "{nombre}, con domicilio en {lugar} y correo {email}, es responsable de los datos que se tratan en este sitio.",
+  "legal.privacy.data": "Qué datos recogemos",
+  "legal.privacy.dataBody":
+    "Solo recogemos dos cosas: el email con el que creas una cuenta y una contraseña que guardamos cifrada, nunca en texto legible. Y las operaciones que tú subes desde el archivo de tu broker, que se quedan en tu cuenta.",
+  "legal.privacy.why": "Para qué los usamos",
+  "legal.privacy.whyBody":
+    "Para crear tu cuenta, que se pueda iniciar sesión y para mostrarte tus propias estadísticas. No usamos tus datos para nada más.",
+  "legal.privacy.keep": "Cuánto tiempo los guardamos",
+  "legal.privacy.keepBody":
+    "Mientras tu cuenta exista. Si nos pides que la borremos, la eliminamos de nuestra base de datos en un plazo máximo de treinta días.",
+  "legal.privacy.third": "Con quién los compartimos",
+  "legal.privacy.thirdBody":
+    "Con nadie. No vendemos, alquilamos ni cedemos tus datos a terceros, y no los usamos para publicidad.",
+  "legal.privacy.rights": "Tus derechos",
+  "legal.privacy.rightsBody":
+    "Puedes pedirnos en cualquier momento que te enseñemos qué datos tuyos tenemos, que los corrijamos o que los eliminemos. Para ejercer esos derechos, escribe a {email}.",
+  "legal.privacy.cookies": "Cookies",
+  "legal.privacy.cookiesBody":
+    "No usamos cookies publicitarias ni de seguimiento. Solo guardamos en tu navegador la sesión iniciada, el idioma y tus preferencias de visualización. Nada de eso sale de tu dispositivo.",
+
+  "legal.terms.title": "Términos y condiciones",
+  "legal.terms.h1": "Términos y condiciones",
+  "legal.terms.service": "Qué es el servicio",
+  "legal.terms.serviceBody":
+    "TradeMind es una herramienta de registro y análisis de operaciones de trading. Subes el archivo que exporta tu broker y la aplicación calcula estadísticas a partir de tus datos: resultados, días, horas y riesgo.",
+  "legal.terms.advice": "No damos asesoramiento financiero",
+  "legal.terms.adviceBody":
+    "TradeMind no ofrece recomendaciones de inversión, asesoría financiera ni estrategias de trading, y nunca opera en tu nombre. Todo lo que ves son números calculados sobre tus operaciones, no predicciones.",
+  "legal.terms.risk": "Riesgo",
+  "legal.terms.riskBody":
+    "El trading con apalancamiento conlleva un alto nivel de riesgo y puede provocar la pérdida total del capital invertido. Ninguna estadística ni ningún resultado mostrado en este sitio es una promesa de rendimiento futuro.",
+  "legal.terms.account": "Tu cuenta",
+  "legal.terms.accountBody":
+    "Eres responsable de mantener tu contraseña a salvo y de lo que se haga con tu cuenta. Debes ser mayor de edad o tener autorización para contratar en tu nombre.",
+  "legal.terms.data": "Tus datos",
+  "legal.terms.dataBody":
+    "El archivo que subes es tuyo, y puedes borrar cuando quieras todas tus operaciones. Si borras tu cuenta, se borran también.",
+  "legal.terms.law": "Ley aplicable",
+  "legal.terms.lawBody":
+    "Estas condiciones se rigen por la legislación española. Cualquier controversia se someterá a los juzgados y tribunales que correspondan a {lugar}.",
+  "legal.terms.accept": "Al usar TradeMind aceptas estas condiciones y la política de privacidad.",
+
+  // ------------------------------------------------------------------
   // Nombres de meses y días (para calendarios y fechas)
   // ------------------------------------------------------------------
   "months.full": [

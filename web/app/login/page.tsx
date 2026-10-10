@@ -238,7 +238,21 @@ function Acceso() {
             </button>
           </form>
 
-          {esRegistro && <p className="lg-hint" style={{ marginTop: 14, textAlign: "center" }}>{t("login.terms")}</p>}
+          {esRegistro && (
+            <p className="lg-hint" style={{ marginTop: 14, textAlign: "center" }}>
+              {t("login.terms")}{" "}
+              {/* El texto de los terminos dice que se aceptan, asi que TIENEN que
+                  existir. Antes no lo hacia: era una promesa vacia. */}
+              <Link href="/terminos" style={{ color: "#7DF0DE" }}>
+                {t("login.termsRead")}
+              </Link>{" "}
+              {t("login.termsAnd")}{" "}
+              <Link href="/privacidad" style={{ color: "#7DF0DE" }}>
+                {t("login.privacyRead")}
+              </Link>
+              .
+            </p>
+          )}
 
           <div className="lg-alt">
             {esRegistro ? t("login.haveAccount") : t("login.newHere")}{" "}

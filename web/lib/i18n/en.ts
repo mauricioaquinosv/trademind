@@ -566,6 +566,87 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "landing.footer.rights": "All rights reserved.",
 
   // ------------------------------------------------------------------
+  // Legal notice, privacy and terms  (/legal, /privacy, /terms)
+  // ------------------------------------------------------------------
+  // The five placeholders: data that cannot be made up. They are replaced in
+  // en.ts and es.ts at the same time, and they are found by the string
+  // "[PENDING". There is a test (tests/legal.test.mjs) that fails if any is left.
+  //
+  //   [PENDING: name]    company or individual's name
+  //   [PENDING: taxid]    tax id. For an individual, the name is enough
+  //   [PENDING: email]   contact email
+  //   [PENDING: place]   city and country
+  //   [PENDING: date]    date of entry into force
+  "legal.backHome": "Back to home",
+  "login.termsRead": "the terms",
+  "login.termsAnd": "and",
+  "login.privacyRead": "the privacy policy",
+  "legal.lastUpdate": "Last updated: {fecha}",
+  "legal.sections": "On this page",
+  "legal.toCta": "Start using it",
+
+  "legal.legal.title": "Legal notice",
+  "legal.legal.h1": "Legal notice",
+  "legal.legal.who": "Who we are",
+  "legal.legal.whoBody":
+    "This website is operated by {nombre}, identified by the tax number {nif} and registered at {lugar}. You can write to us at {email}.",
+  "legal.legal.use": "Terms of use",
+  "legal.legal.useBody":
+    "Accessing and using this website means you accept these conditions. If you do not agree with any of them, you must stop using the site.",
+  "legal.legal.ip": "Intellectual property",
+  "legal.legal.ipBody":
+    "The name, design, text and code of this site belong to {nombre}. Reproducing them without prior permission is not allowed.",
+  "legal.legal.liability": "Limitation of liability",
+  "legal.legal.liabilityBody":
+    "TradeMind is provided as is. We do not guarantee that the service is available without interruptions, nor that the results shown are exact. We are not liable for any damage arising from the use of the site.",
+
+  "legal.privacy.title": "Privacy policy",
+  "legal.privacy.h1": "Privacy policy",
+  "legal.privacy.who": "Data controller",
+  "legal.privacy.whoBody":
+    "{nombre}, registered at {lugar}, reachable at {email}, is responsible for the data processed on this site.",
+  "legal.privacy.data": "What data we collect",
+  "legal.privacy.dataBody":
+    "Only two things: the email you use to create an account, and a password we store hashed, never in plain text. And the trades you upload from your broker's file, which stay in your account.",
+  "legal.privacy.why": "What we use it for",
+  "legal.privacy.whyBody":
+    "To create your account, to let you log in, and to show you your own statistics. We do not use your data for anything else.",
+  "legal.privacy.keep": "How long we keep it",
+  "legal.privacy.keepBody":
+    "As long as your account exists. If you ask us to delete it, we remove it from our database within thirty days.",
+  "legal.privacy.third": "Who we share it with",
+  "legal.privacy.thirdBody":
+    "Nobody. We do not sell, rent out or transfer your data to third parties, and we do not use it for advertising.",
+  "legal.privacy.rights": "Your rights",
+  "legal.privacy.rightsBody":
+    "You can ask us at any time to show you what data we hold about you, to correct it, or to delete it. To exercise those rights, write to {email}.",
+  "legal.privacy.cookies": "Cookies",
+  "legal.privacy.cookiesBody":
+    "We use no advertising or tracking cookies. We only store in your browser the logged-in session, the language and your display preferences. None of that leaves your device.",
+
+  "legal.terms.title": "Terms and conditions",
+  "legal.terms.h1": "Terms and conditions",
+  "legal.terms.service": "What the service is",
+  "legal.terms.serviceBody":
+    "TradeMind is a record-keeping and analysis tool for trading operations. You upload the file your broker exports and the app computes statistics from your data: results, days, times and risk.",
+  "legal.terms.advice": "We do not give financial advice",
+  "legal.terms.adviceBody":
+    "TradeMind does not offer investment recommendations, financial advice or trading strategies, and never trades on your behalf. Everything you see is a number computed from your own trades, not a prediction.",
+  "legal.terms.risk": "Risk",
+  "legal.terms.riskBody":
+    "Leveraged trading carries a high level of risk and can result in the total loss of your invested capital. No statistic or result shown on this site is a promise of future performance.",
+  "legal.terms.account": "Your account",
+  "legal.terms.accountBody":
+    "You are responsible for keeping your password safe and for what is done with your account. You must be of legal age or have authorisation to contract on your behalf.",
+  "legal.terms.data": "Your data",
+  "legal.terms.dataBody":
+    "The file you upload is yours, and you can delete all your trades at any time. If you delete your account, they are deleted too.",
+  "legal.terms.law": "Governing law",
+  "legal.terms.lawBody":
+    "These conditions are governed by Spanish law. Any dispute will be submitted to the courts of {lugar}.",
+  "legal.terms.accept": "By using TradeMind you accept these conditions and the privacy policy.",
+
+  // ------------------------------------------------------------------
   // Meses y días
   // ------------------------------------------------------------------
   "months.full": [

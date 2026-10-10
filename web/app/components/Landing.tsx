@@ -759,6 +759,17 @@ export default function Landing() {
               </div>
               <h4 style={{ margin: "28px 0 0", fontSize: 13, fontWeight: 600, color: "#D7DAE6" }}>{t("landing.legal.title")}</h4>
               <p style={{ margin: "8px 0 0", maxWidth: 760, fontSize: 13.5, lineHeight: 1.7, color: "#8E93A6" }}>{t("landing.legal.body")}</p>
+              {/* Enlaces a los tres documentos legales. El aviso de arriba es un
+                  resumen: los textos completos, con los datos del titular, estan
+                  en sus propias paginas. */}
+              <nav
+                className="mono"
+                style={{ margin: "16px 0 0", display: "flex", gap: 18, flexWrap: "wrap", fontSize: 12, color: "#7B8199" }}
+              >
+                <Link href="/legal">{t("legal.legal.title")}</Link>
+                <Link href="/privacidad">{t("legal.privacy.title")}</Link>
+                <Link href="/terminos">{t("legal.terms.title")}</Link>
+              </nav>
               <p className="mono" style={{ margin: "22px 0 0", fontSize: 12, color: "#7B8199" }}>
                 &copy; 2026 TradeMind &middot; {t("landing.footer.rights")}
               </p>

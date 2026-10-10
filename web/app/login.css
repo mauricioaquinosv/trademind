@@ -252,3 +252,105 @@
   .lg-title { font-size: 26px; }
   .lg-brand { top: 18px; left: 18px; }
 }
+
+/* ===================================================================
+   AVISO LEGAL, PRIVACIDAD Y TERMINOS
+   Siguen el diseno de la landing, pero SIN la rejilla que sigue al raton:
+   en un texto largo de veinte parrafos distrae, y estas paginas se leen.
+
+   Van bajo .lgl para no chocar con .lg (el login) ni con .lp (la landing).
+   =================================================================== */
+.lgl {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #05060B;
+  color: #F1F2F6;
+  font-family: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.lgl *, .lgl *::before, .lgl *::after { box-sizing: border-box; }
+
+.lgl-cab {
+  position: relative; z-index: 2;
+  display: flex; align-items: center;
+  padding: 22px 24px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.lgl .lg-brand { position: static; }
+
+.lgl-main {
+  position: relative; z-index: 2;
+  max-width: 760px; margin: 0 auto;
+  padding: 56px 24px 100px;
+}
+
+.lgl-h1 {
+  margin: 0 0 6px;
+  font-family: 'Bricolage Grotesque', 'Instrument Sans', system-ui, sans-serif;
+  font-size: clamp(30px, 4vw, 44px);
+  line-height: 1.08; font-weight: 700; letter-spacing: -.025em;
+}
+.lgl-fecha { margin: 0 0 34px; color: #5C6178; font-size: 13px; }
+
+/* --- El aviso de datos sin rellenar --- */
+.lgl-pendiente {
+  margin: 0 0 36px; padding: 16px 18px;
+  border: 1px solid rgba(242,169,59,.5); border-radius: 12px;
+  background: rgba(242,169,59,.09);
+}
+.lgl-pendiente b { display: block; color: var(--gold); font-size: 14.5px; margin-bottom: 8px; }
+.lgl-pendiente p { margin: 0 0 8px; color: #C9CDDC; font-size: 13.5px; }
+.lgl-pendiente ul { margin: 0; padding-left: 20px; }
+.lgl-pendiente li { color: #A3A8BC; font-size: 13px; margin: 3px 0; }
+.lgl-pendiente code {
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+  color: var(--gold); background: rgba(242,169,59,.12);
+  padding: 1px 5px; border-radius: 4px;
+}
+
+/* --- Sumario --- */
+.lgl-sumario {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin: 0 0 40px; padding: 16px 0;
+  border-top: 1px solid rgba(255,255,255,.08);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.lgl-sumario a {
+  font-size: 12.5px; color: #A3A8BC; text-decoration: none;
+  padding: 5px 11px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.03);
+  transition: background .15s ease, color .15s ease;
+}
+.lgl-sumario a:hover { background: rgba(255,255,255,.08); color: #F1F2F6; }
+
+/* --- Las secciones --- */
+.lgl-sec { margin-bottom: 34px; scroll-margin-top: 20px; }
+.lgl-sec h2 {
+  margin: 0 0 10px;
+  font-family: 'Bricolage Grotesque', 'Instrument Sans', system-ui, sans-serif;
+  font-size: 19px; font-weight: 600; letter-spacing: -.015em;
+}
+.lgl-sec p {
+  margin: 0; font-size: 15.5px; line-height: 1.75; color: #B4B9CC;
+}
+
+.lgl-cierre {
+  margin: 40px 0 0; padding: 16px 18px;
+  border-left: 2px solid #2FD8C8;
+  background: rgba(47,216,200,.06);
+  border-radius: 0 10px 10px 0;
+  font-size: 14px; color: #C9CDDC; font-style: italic;
+}
+
+.lgl-boton {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 46px; padding: 0 24px; margin-top: 40px;
+  border-radius: 12px; font-size: 15px; font-weight: 600;
+  text-decoration: none;
+}
+.lgl-vuelta { margin: 18px 0 0; font-size: 13.5px; color: #5C6178; }
+.lgl-vuelta a { color: #7DF0DE; text-decoration: none; }
+.lgl-vuelta a:hover { text-decoration: underline; }
+
+.lgl a:focus-visible { outline: 2px solid #2FD8C8; outline-offset: 3px; border-radius: 8px; }
