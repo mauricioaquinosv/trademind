@@ -192,6 +192,70 @@ iniciada sola y entrada al dashboard. Lo que queda:
 - [ ] Las seis preguntas frecuentes se abren y se cierran
 - [ ] El boton de Google es de la marca y lleva el logotipo bien
 
+## A3. Seguridad y robustez del backend
+
+Lista revisada punto por punto contra el codigo, el 10 oct. Cada uno lleva su
+estado REAL, no el que parecia.
+
+| Punto | Estado |
+|---|---|
+| `SECRET_KEY` sin validar | **pendiente** |
+| Contrasenas: minimo y limite de bcrypt | **resuelto** |
+| Limite del tamano de la subida | **resuelto** |
+| Limite de intentos en el login | **resuelto** |
+| Token en `localStorage` | **a decision** |
+| `GET /trades/` sin paginar | **pendiente** |
+| Importes en `Float` | **a decision** |
+| Postgres expone el 5432 | **pendiente** |
+
+### Lo que se ha resuelto
+
+- [x] **Contrasenas.** `UserCreate.password` es ahora `Field(min_length=8)`, que
+      es lo que ya pedia el navegador; asi tambien queda protegido quien llame a
+      la API directamente.
+- [x] **El limite de 72 bytes de bcrypt, que era un 500 real.** Confirmado y
+      probado: con mas de 72 bytes, `passlib` lanza `PasswordSizeError`. Sin
+      tratar, una contrasena larga decia "500 Internal Server Error" al
+      registrarse o al entrar. Y entre 72 y 72 bytes, dos contrasenas distintas
+      dan el MISMO hash: escribir un caracter mas alla del 72 no protege nada.
+
+      Ahora `_a_bcrypt` recorta a 72 bytes ANTES de pasar por bcrypt. El usuario
+      escribe la que quiera, nunca hay un 500, y no se finge que una contrasena
+      de 300 caracteres protege mas que una de 72. El recorte es en BYTES, no en
+      caracteres, porque un emoji ocupa cuatro.
+
+- [x] **Tope de 25 MB** en la subida. Corta al copiar y mira `Content-Length`.
+- [x] **10 intentos y 15 minutos** en el login, contados por email y por IP.
+
+### Lo que sigue pendiente
+
+- [ ] **`SECRET_KEY` se valida al arrancar.** Hoy `security.py:10` es
+      `os.getenv("SECRET_KEY")` y ya. Si falta, la app arranca bien y revienta en
+      el primer login. Lo que hay que hacer no es un 500 mas claro: es **fallar
+      al arrancar**, que es cuando se arregla.
+- [ ] **`GET /trades/` devuelve todas las operaciones sin paginar.** La paginacion
+      se hace en el navegador. Con 20 operaciones no se nota; con cinco mil, el
+      `GET` pesa y el navegador se atasca. Y no es solo rendimiento: es un payload
+      que puede acabar siendo megabytes.
+- [ ] **Postgres no expone el 5432.** Sigue siendo `"5432:5432"` en
+      `docker-compose.yml:15`, o sea que abre a todas las interfaces. En un
+      servidor hay que poner `127.0.0.1:5432:5432`.
+- [ ] **`version: "3.9"` de `docker-compose.yml` está obsoleto** y avisa. Es
+      cosmetico: la version ya no hace falta y Docker Compose moderno la ignora.
+
+### Los dos que son decision, no fallo
+
+- [ ] **El token va en `localStorage`.** Es vulnerable si algun dia hay un XSS.
+      Una cookie `HttpOnly` lo evita, pero obliga a rehacer la autenticacion y a
+      tocar el CORS, porque el navegador dejaria de mandar la cabecera
+      `Authorization`. Es un cambio de medio dia para algo que solo afecta si ya
+      hubo un XSS. **Decides tu**, y no lo mezclaria con lo otro.
+- [ ] **Los importes son `Float`.** Para un diario de trading es tolerable: los
+      errores de coma flotante son de milimasimas y las estadisticas no se ven.
+      Para cobrar suscripciones o cuadrar balances al centimo, habria que pasar
+      a `Numeric`. **Decides tu**, y de nuevo: es cosa de cuando haya ingresos,
+      no de ahora.
+
 ## A2. Lo que falta antes de lanzar
 
 De una segunda revisión, posterior a la de los cinco puntos. Ninguna comprobada

@@ -55,7 +55,7 @@ def test_registro_no_guarda_la_contrasena_en_claro(client_anonimo, db_session):
 
 def test_registro_con_email_repetido_da_400(client_anonimo):
     client_anonimo.post("/auth/register", json={"email": EMAIL, "password": PASSWORD})
-    r = client_anonimo.post("/auth/register", json={"email": EMAIL, "password": "Otra9"})
+    r = client_anonimo.post("/auth/register", json={"email": EMAIL, "password": "OtraContrasena9"})
 
     assert r.status_code == 400
     assert detalle(r).code == "auth_email_taken"
@@ -76,25 +76,18 @@ def test_registro_sin_contrasena_da_422(client_anonimo):
     assert r.status_code == 422
 
 
-def test_registro_acepta_contrasena_vacia(client_anonimo, db_session):
-    """
-    COMPROBADO, NO SUPONI: UserCreate no pone minimo de longitud, asi que una
-    contrasena vacia se registra y luego permite iniciar sesion.
+def test_registro_con_contrasena_corta_da_422(client_anonimo):
+    """Antiguamente este test afirmaba lo CONTRARIO: que una contrasena vacia se
+    aceptaba, y decia "el dia que se anada la validacion, este test falla y
+    avisa". Ese dia ha llegado: `UserCreate.password` es `Field(min_length=8)`.
 
-    No es un test que deberia pasar; es la prueba de que el hueco existe. Si
-    algun dia se anade la validacion, este test falla y avisa.
+    El 422 lo genera Pydantic, no errors.py, asi que el mensaje llega en el
+    formato de lista y `detalle()` no sirve aqui. Es el problema conocido de los
+    mensajes de validacion (ver `PydanticCustomError`).
     """
-    from app.models import User
-
     r = client_anonimo.post("/auth/register", json={"email": EMAIL, "password": ""})
-    assert r.status_code == 201
-
-    login = client_anonimo.post("/auth/login", json={"email": EMAIL, "password": ""})
-    assert login.status_code == 200
-    assert db_session.query(User).filter(User.email == EMAIL).count() == 1
-
-
-# --- login ----------------------------------------------------------------
+    assert r.status_code == 422
+    assert isinstance(r.json()["detail"], list)
 
 
 def test_login_devuelve_token(client_anonimo):
@@ -140,7 +133,7 @@ def test_el_error_de_login_devuelve_codigo_y_texto(client_anonimo):
     idiomas.
     """
     client_anonimo.post("/auth/register", json={"email": EMAIL, "password": PASSWORD})
-    r = client_anonimo.post("/auth/login", json={"email": EMAIL, "password": "mala"})
+    r = client_anonimo.post("/auth/login", json={"email": EMAIL, "password": "Incorrecta9"})
     d = detalle(r)
     assert d.code == "auth_bad_credentials"
     assert d.text, "el texto en espanol se queda para el que lee sin interfaz"

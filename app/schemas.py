@@ -6,7 +6,14 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str
+    # Minimo de 8, que es lo que ya pide el login en el navegador. Aqui se
+    # comprueba por si alguien llama a la API directamente, que se puede.
+    #
+    # NO hay maximo a proposito: bcrypt admite de 72 bytes en adelante, y el
+    # recorte lo hace `hash_password` (ver app/security.py). Poner un maximo
+    # aqui daria un 422 con un mensaje que nadie entiende ("String should have at
+    # most N characters" en ingles fijo).
+    password: str = Field(min_length=8)
 
 
 class UserOut(BaseModel):
