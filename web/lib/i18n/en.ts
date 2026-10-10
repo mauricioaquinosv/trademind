@@ -397,6 +397,7 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "header.dateRange": "Date range",
   "header.askAI": "Ask the AI",
   "header.changeTheme": "Change theme",
+  "header.logout": "Log out",
   "header.dashboard": "Dashboard",
 
   // ------------------------------------------------------------------

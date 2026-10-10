@@ -396,6 +396,7 @@ export const es = {
   "header.dateRange": "Rango de fechas",
   "header.askAI": "Preguntar a la IA",
   "header.changeTheme": "Cambiar tema",
+  "header.logout": "Cerrar sesión",
   "header.dashboard": "Dashboard",
 
   // ------------------------------------------------------------------

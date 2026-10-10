@@ -264,6 +264,14 @@ export default function DashboardPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [colsOpen, setColsOpen] = useState(false);
   const [pageSizeOpen, setPageSizeOpen] = useState(false);
+  /* Menu del icono de usuario. Va en el icono de la cabecera porque era el
+     unico hueco que quedaba libre sin mover el ancho de .hdr-right (ver el
+     comentario del boton de tema, mas abajo). */
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  /* El email con el que se ha entrado. Antes solo se guardaba el token, y con
+     el token no se puede saber que cuenta esta abierta: por eso hace falta
+     guardarlo aparte al iniciar sesion. */
+  const [emailSesion, setEmailSesion] = useState("");
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
   const [filterType, setFilterType] = useState("");
@@ -379,6 +387,47 @@ export default function DashboardPage() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
+
+  /* ---------------------------------------------------------- */
+  /* Sesion                                                      */
+  /* ---------------------------------------------------------- */
+
+  /* El email se lee al montar, no en cada render: leerlo cada vez
+     seria trabajo innecesario, y guardarlo en un estado es lo que permite
+     que aparezca en el menu. */
+  useEffect(() => {
+    setEmailSesion(localStorage.getItem("trademind_email") ?? "");
+  }, []);
+
+  /* El menu se cierra con Escape, como el resto de modales. Sin esto, en un
+     ordenador compartido el menu se queda abierto al pasar al raton por
+     encima, y el siguiente que lo use ve el boton de cerrar sesion. */
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setUserMenuOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [userMenuOpen]);
+
+  /* Cerrar sesion es BORRAR la llave de este navegador. No hay nada que
+     llamar al backend: el token es lo unico que autoriza, y mientras siga
+     en localStorage la sesion sigue viva.
+
+     Se borra tambien la cuenta activa. Si no, al volver a entrar, el
+     dashboard se saltaria el onboarding y abriria una cuenta de otro
+     usuario anterior. */
+  function cerrarSesion() {
+    setUserMenuOpen(false);
+    localStorage.removeItem("token");
+    localStorage.removeItem("trademind_email");
+    localStorage.removeItem("trademind_current_account");
+    setToken(null);
+    setEmailSesion("");
+    setCurrentAccountId(null);
+    router.push("/login");
+  }
 
   function switchAccount(id: string) {
     setCurrentAccountId(id);
@@ -960,9 +1009,58 @@ export default function DashboardPage() {
               >
                 <svg viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
-              <button className="icon-btn" title={t("accounts.headerAccount")}>
-                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8.5" r="3.2" stroke="currentColor" strokeWidth="1.6" /><path d="M5 20c1.3-3.4 4-5 7-5s5.7 1.6 7 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
-              </button>
+              {/* Menu del icono de usuario: el email con el que se ha entrado y
+                  el boton de cerrar sesion. El contenedor necesita position:relative
+                  porque el menu se coloca con top/bottom en coordenadas absolutas. */}
+              <div style={{ position: "relative", display: "flex" }}>
+                <button
+                  className="icon-btn"
+                  title={t("accounts.headerAccount")}
+                  aria-haspopup="menu"
+                  aria-expanded={userMenuOpen}
+                  onClick={() => setUserMenuOpen((v) => !v)}
+                >
+                  <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8.5" r="3.2" stroke="currentColor" strokeWidth="1.6" /><path d="M5 20c1.3-3.4 4-5 7-5s5.7 1.6 7 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+                </button>
+
+                {userMenuOpen && (
+                  <div
+                    role="menu"
+                    style={{
+                      position: "absolute", top: 40, right: 0, background: "var(--panel-solid)",
+                      border: "1px solid var(--line)", borderRadius: 12, padding: 6, zIndex: 30,
+                      minWidth: 240, boxShadow: "0 12px 32px rgba(0,0,0,.6)",
+                    }}
+                  >
+                    {/* El email va con fontSize chico y sin cortar: se leen
+                        seguidos varios, y un "..." en un email no sirve de nada. */}
+                    <div
+                      style={{
+                        padding: "9px 10px", fontSize: 12, color: "var(--muted)",
+                        borderBottom: "1px solid var(--line)", marginBottom: 6,
+                        wordBreak: "break-all",
+                      }}
+                    >
+                      {emailSesion || t("accounts.headerAccount")}
+                    </div>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={cerrarSesion}
+                      className="pill"
+                      style={{
+                        width: "100%", justifyContent: "flex-start", border: "none",
+                        background: "transparent", color: "var(--red)",
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
+                        <path d="M15 17l5-5-5-5M20 12H9M12 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      {t("header.logout")}
+                    </button>
+                  </div>
+                )}
+              </div>
               </div>
           </header>
 

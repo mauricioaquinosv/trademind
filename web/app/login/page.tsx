@@ -89,6 +89,10 @@ function Acceso() {
 
     const data = await response.json();
     localStorage.setItem("token", data.access_token);
+    /* El email tambien se guarda, aparte del token. Con el token no se puede
+       saber que cuenta esta abierta (es un JWT cifrado), y el menu del icono
+       de usuario lo ense\u00f1a para que se vea con quien se ha entrado. */
+    localStorage.setItem("trademind_email", email.trim());
     return true;
   }
 

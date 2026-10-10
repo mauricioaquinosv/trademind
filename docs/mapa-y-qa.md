@@ -159,6 +159,18 @@ iniciada sola y entrada al dashboard. Lo que queda:
       que los aceptas (`login.terms`). Solo hay tres rutas: `/`, `/login` y
       `/dashboard`. Es lo unico de esta lista que no se resuelve solo el dia de
       publicar.
+
+      **LO QUE FALTA RELLENAR (pendiente a proposito):** los tres documentos se
+      pueden escribir casi enteros, pero hay tres datos que **no se pueden
+      inventar**. Cuando llegue el momento de escribirlos, estan aqui:
+
+      1. **Nombre** del titular o de la empresa, y si tiene **NIF**
+      2. **Email de contacto** (si es el mismo que el del producto, se pone el mismo)
+      3. **Pais o comunidad donde se esta**, porque de ahi depende que ley se
+         aplica y por tanto que hay que incluir
+
+      Mientras tanto, **no escribir nada de esto**: un aviso legal con datos
+      inventados es peor que no tener ninguno.
 - [ ] **No hay cerrar sesion.** El boton de la esquina del dashboard solo cambia
       el tema.
 - [ ] **"He olvidado mi contrasena"** es `href="#"`.
@@ -190,7 +202,7 @@ etiquetas distintas. Mezclarlas hizo que parecieran todas igual de urgentes.
 
 | Qué | Tipo | Dónde |
 |---|---|---|
-| Subir el mismo archivo dos veces | **defecto** | `models.py`, sin índice único |
+| Subir el mismo archivo dos veces | **defecto** | `models.py`, sin índice único. Decidido, sin hacer |
 | Tamaño de la subida | **defecto** | `trades.py:83`, `copyfileobj` sin tope |
 | Freno en el login | **defecto** | `auth.py:31` |
 | `SECRET_KEY` | **despliegue** | `security.py:10` |
@@ -203,10 +215,36 @@ etiquetas distintas. Mezclarlas hizo que parecieran todas igual de urgentes.
       diario: el usuario sube el reporte, ve algo raro y lo vuelve a subir "por
       si acaso". Las operaciones entran dos veces y las estadísticas quedan
       multiplicadas por dos. **Sigue cuadrando entre sí**, así que no hay forma
-      de saber que están mal. Y no tiene arreglo: las operaciones no tienen
-      identidad propia, así que no se puede borrar la segunda subida sin borrar
-      la primera. Esto no estaba en la revisión anterior porque allí se miró si
-      algo se rompía, no si algo se repetía.
+      de saber que están mal. Esto no estaba en la revisión anterior porque allí
+      se miró si algo se rompía, no si algo se repetía.
+
+      **CÓMO SE RESOLVE (decidido el 10 oct, NO HECHO AÚN)**
+
+      Comparar lo que llega con lo que ya hay en la cuenta, operación por
+      operación, y tratarlas como el aviso de la importación parcial que ya
+      existe: mismo mecanismo, misma pantalla.
+
+      La comparación es por `position` (el ticket del broker), que en MT5
+      **siempre viene y nunca se repite**: comprobado en las 20 operaciones del
+      reporte de ejemplo. Donde el ticket venga vacío (plantilla manual) se usa
+      una huella: símbolo + tipo + hora de apertura + hora de cierre + precios.
+
+      Casos:
+      - Todas repetidas: "ya tienes estas 20, no hemos importado nada", y sale
+        el botón **"Borrar todo y volver a importar"**.
+      - Algunas nuevas: se importan solo las nuevas y se avisa de cuántas había
+        ya, **sin** botón de borrar.
+      - El botón de borrar **solo aparece en el primer caso**, y solo si los
+        datos coinciden en todos los campos. Así se puede prometer que reimportar
+      no pierde nada.
+
+      Dos decisiones ya tomadas y que no hay que volver a preguntar:
+      - **No se borra nada solo.** Siempre con el botón, porque `pnl_neto` es
+        editable a mano y perder esas correcciones sería peor que el duplicado.
+      - **No se añade un índice único a la base.** Con esto no hace falta, y un
+        `UNIQUE` que rechaza la fila entera traería de vuelta el problema de
+        "el archivo con una operación rara no carga".
+
 - [ ] **La subida tiene un tope de tamaño.** Hoy se copia entero al disco.
 - [ ] **El login tiene freno de intentos.**
 - [ ] **La app no arranca si falta `SECRET_KEY`.** Ahora arranca y revienta en el
