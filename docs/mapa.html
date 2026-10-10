@@ -594,15 +594,15 @@
 
     <h3><span class="n">02</span> Lo que está roto</h3>
 
-    <p class="lead">No son mejoras. Sin esto, un usuario nuevo no puede llegar a nada de lo demás.</p>
+    <p class="lead">Lo que queda sin terminar. El registro y el cierre de sesión ya no están aquí: los dos funcionan.</p>
 
 
 
     <div class="card rojo">
 
-      <h4 style="margin:0 0 4px;font-size:16px">Lo que impide llegar a nada de lo demás</h4>
+      <h4 style="margin:0 0 4px;font-size:16px">Lo que está sin terminar</h4>
 
-      <p style="margin:0;color:var(--muted);font-size:13.5px">Sin esto, un usuario nuevo no puede entrar.</p>
+      <p style="margin:0;color:var(--muted);font-size:13.5px">Ya no incluye el registro: se probó de punta a punta y funciona.</p>
 
       <div class="tw">
 
@@ -629,29 +629,22 @@
           <tr>
 
             <td class="ruta">términos y privacidad</td>
-
-            <td><span class="tag t-rojo">bloqueante</span></td>
-
-            <td>El login dice "aceptas los Términos y la Política de privacidad"
-
-                (<code>login.terms</code>) y <strong>ninguno de los dos documentos existe</strong>:
-
-                solo hay tres rutas, <code>/</code>, <code>/login</code> y <code>/dashboard</code>.
-
-                Es lo único de esta lista que no se resuelve solo el día de publicar.</td>
-
+            <td><span class="tag t-oro">a medias</span></td>
+            <td><strong>Las tres páginas existen</strong> — <code>/legal</code>,
+                <code>/privacidad</code> y <code>/terminos</code>, en español e inglés, enlazadas
+                desde el pie de la landing y desde el login. Lo que falta son los cinco datos del
+                titular, con huecos en <code>web/lib/legal/datos.ts</code> y un recuadro naranja en
+                la propia página que los lista.</td>
           </tr>
 
           <tr>
 
             <td class="ruta">cerrar sesión</td>
-
-            <td><span class="tag t-rojo">roto</span></td>
-
-            <td>No existe en ninguna parte. El botón de la esquina superior derecha cambia el tema
-
-                y nada más. En un ordenador compartido, el siguiente que lo use entra con tu sesión.</td>
-
+            <td><span class="tag t-verde">resuelto</span></td>
+            <td>El icono de usuario de la cabecera abre un menú con el email de la cuenta y
+                "Cerrar sesión". Al cerrar borra el token, el email y la cuenta activa, y vuelve al
+                login. El email hubo que guardarlo aparte: el token es un JWT cifrado y no dice de
+                qué cuenta es.</td>
           </tr>
 
           <tr>
