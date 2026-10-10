@@ -22,6 +22,27 @@ from app.errors import FILE_NO_POSITIONS, FileError
 class MT5Parser:
     """Traduce la tabla 'Positions' de un reporte de MT5 a ClosedTrade."""
 
+    # Encabezados con los que empieza otra seccion del reporte. Cuando aparece
+    # uno DESPUES de la tabla de Positions, esta ha terminado.
+    #
+    # "Positions" NO va aqui: es el nombre de nuestra propia tabla y aparece en
+    # la fila 5, justo antes de la cabecera de las columnas (fila 6). Si estuiera
+    # en la lista, el parser pararia antes de leer la primera operacion.
+    _SECTION_HEADERS = {
+        "Orders",
+        "Deals",
+        "Results",
+        "Tickets",
+        "Order History",
+        "Deal History",
+        "Balance:",
+        "Credit Facility:",
+        "Floating P/L:",
+        "Equity:",
+        "Stop Loss",
+        "Limit Orders",
+    }
+
     def parse(self, file_path: str) -> List[ClosedTrade]:
         raw = read_any_table(file_path)
 
@@ -31,9 +52,22 @@ class MT5Parser:
         for i in range(start + 1, len(raw)):
             row = raw.iloc[i].tolist()
 
-            # La tabla termina cuando la fila deja de tener una fecha de apertura válida
-            if pd.isna(row[0]) or not self._looks_like_datetime(row[0]):
+            # El reporte de MT5 tiene VARIAS secciones seguidas: Positions,
+            # Orders, Deals, y al final un resumen. Solo nos interesa la
+            # primera, asi que aqui se termina.
+            #
+            # Antes se usaba `break` en cuanto una fila no tenia fecha, lo cual
+            # paraba el bucle en la fila 27, que es la que dice "Orders". Eso
+            # hacia que solo se leyeran las 20 posiciones y se perdia todo lo
+            # demas. Con `break` aqui, la tabla de Positions se lee completa y
+            # se corta en el cambio de seccion.
+            if str(row[0]).strip() in self._SECTION_HEADERS:
                 break
+
+            # Filas sueltas sin fecha dentro de la tabla (separadores, pies de
+            # seccion). Se saltan, no se termina.
+            if pd.isna(row[0]) or not self._looks_like_datetime(row[0]):
+                continue
 
             direction = "long" if str(row[3]).strip().lower() == "buy" else "short"
 
@@ -45,9 +79,19 @@ class MT5Parser:
                 exit_price=float(row[9]),
                 entry_time=self._parse_time(row[0]),
                 exit_time=self._parse_time(row[8]),
-                commission=float(row[10] or 0.0),
-                swap=float(row[11] or 0.0),
-                pnl_bruto=float(row[12] or 0.0),
+                # El reporte de MT5 deja estas tres celdas VACIAS con mucha
+                # frecuencia (67 de 130 filas en el reporte de ejemplo). Con
+                # `float(x or 0.0)` el 0.0 nunca se usaba, porque en Python NaN
+                # es "verdadero": el `or` devuelve NaN. El resultado era un NaN
+                # guardado en commission/swap/pnl_bruto, que hacia que TODAS las
+                # sumas de la cuenta dieran NaN y que GET /trades/ devolviera un
+                # 500 al serializar.
+                #
+                # _parse_optional_float ya hacia esto bien con pd.isna; para estas
+                # tres se quiere 0.0 y no None, asi que hay un helper aparte.
+                commission=self._parse_float_or_zero(row[10]),
+                swap=self._parse_float_or_zero(row[11]),
+                pnl_bruto=self._parse_float_or_zero(row[12]),
                 sl=self._parse_optional_float(row[6]),
                 tp=self._parse_optional_float(row[7]),
                 position=self._parse_position(row[1]),
@@ -88,6 +132,26 @@ class MT5Parser:
             return parsed if parsed != 0.0 else None
         except (TypeError, ValueError):
             return None
+
+    @staticmethod
+    def _parse_float_or_zero(value) -> float:
+        """Como _parse_optional_float pero devuelve 0.0 en vez de None.
+
+        Para comision, swap y pnl_bruto, que no admiten nulo: en la base de
+        datos son NOT NULL y ademas 0.0 es su valor correcto cuando la celda
+        viene vacia (el broker no cobro nada).
+
+        Hace falta un helper propio porque `float(x or 0.0)` NO funciona: pandas
+        convierte la celda vacia en NaN, y en Python NaN es verdadero, asi que
+        el `or` devuelve NaN y nunca se llega a usar el 0.0. Eso guardaba un NaN
+        en la columna y hacia que cualquier suma con ese trade diera NaN.
+        """
+        if pd.isna(value):
+            return 0.0
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return 0.0
 
     @staticmethod
     def _parse_position(value) -> Optional[str]:

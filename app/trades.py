@@ -63,7 +63,14 @@ def upload_trades(
 ):
     _get_owned_account(db, account_id, current_user)
 
-    if not file.filename.endswith((".xlsx", ".xls", ".csv")):
+    # El nombre del archivo se pasa a minusculas antes de mirar la extension:
+    # en Windows el usuario sube REPORTE.XLSX o Datos.CSV tan a menudo como
+    # reporte.xlsx, y endswith() distingue mayusculas de minusculas. Con el
+    # .lower() un archivo valido en cualquiera de los dos casos entra, y el
+    # temporal se crea con la extension en minusculas para que el lector de
+    # archivos la reconozca.
+    nombre = (file.filename or "").strip()
+    if not nombre.lower().endswith((".xlsx", ".xls", ".csv")):
         raise errors.error(
             errors.FILE_BAD_EXTENSION,
             "El archivo debe ser .xlsx, .xls o .csv: "
@@ -71,7 +78,7 @@ def upload_trades(
             status_code=400,
         )
 
-    suffix = "." + file.filename.rsplit(".", 1)[-1]
+    suffix = "." + nombre.rsplit(".", 1)[-1].lower()
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         shutil.copyfileobj(file.file, tmp)
         tmp_path = tmp.name
@@ -170,7 +177,26 @@ def update_trade(
     if not trade:
         raise errors.error(errors.TRADE_NOT_FOUND, "Trade no encontrado", status_code=404)
 
-    for field, value in trade_in.model_dump(exclude_unset=True).items():
+    # exclude_unset=True aplica solo los campos que el cliente ha enviado. Pero
+    # un null explicito ("symbol": null) tambien cuenta como enviado, y se
+    # intentaba guardar NULL en una columna NOT NULL: Postgres lo rechazaba y
+    # el usuario veia un 500 en vez de "el simbolo no puede estar vacio".
+    #
+    # Asi que los null de campos obligatorios se ignoran. Para ponerlos a null de
+    # verdad estan sl y tp, que si son nulables, y esos si se aplican.
+    _NO_NULOS = {
+        "symbol",
+        "direction",
+        "quantity",
+        "entry_price",
+        "exit_price",
+        "pnl_bruto",
+    }
+
+    cambios = trade_in.model_dump(exclude_unset=True)
+    for field, value in cambios.items():
+        if value is None and field in _NO_NULOS:
+            continue
         setattr(trade, field, value)
 
     db.commit()

@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -61,7 +63,7 @@ def list_accounts(
 
 @router.get("/{account_id}", response_model=AccountOut)
 def get_account(
-    account_id: str,
+    account_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -77,7 +79,7 @@ def get_account(
 
 @router.put("/{account_id}", response_model=AccountOut)
 def update_account(
-    account_id: str,
+    account_id: UUID,
     changes: AccountUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -109,7 +111,7 @@ def update_account(
 
 @router.delete("/{account_id}", status_code=204)
 def delete_account(
-    account_id: str,
+    account_id: UUID,
     delete_trades: bool = False,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
