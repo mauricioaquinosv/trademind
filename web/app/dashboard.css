@@ -644,6 +644,22 @@ main{margin:0 10px 0 110px;padding:22px 24px 60px;position:relative;z-index:1;}
 .aviso-import-dato b{color:var(--red);font-family:'IBM Plex Mono',monospace;}
 .aviso-import-porque{font-size:12.5px;color:var(--text);}
 .aviso-import-fix{font-size:12px;color:var(--muted2);margin-top:2px;}
+
+/* Las que el usuario ya tenia: no hay nada que corregir, asi que el numero de
+   fila va en turquesa y no en rojo. */
+.aviso-import-ya .aviso-import-nro{color:var(--teal);}
+
+/* Borrar todo y volver a importar. Sale SOLO cuando el backend dice que el
+   archivo era identico (ver el boton en AvisoImportacion.tsx). Rojo y con borde:
+   es una accion que borra, y tiene que parecerlo antes de pulsarla. */
+.aviso-import-reemplazar{
+  display:block;width:100%;margin-top:12px;padding:10px 14px;
+  border:1px solid rgba(255,77,109,.45);border-radius:10px;
+  background:rgba(255,77,109,.10);color:var(--red);
+  font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;
+  transition:background .15s ease,border-color .15s ease;
+}
+.aviso-import-reemplazar:hover{background:rgba(255,77,109,.18);border-color:var(--red);}
 .preview-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:14px;}
 .preview-table th,.preview-table td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);}
 .preview-table th{color:var(--muted);font-weight:500;}

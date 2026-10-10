@@ -17,7 +17,11 @@
 "use client";
 
 import { useState } from "react";
-import { traduceRechazos, type RechazoTraducido } from "../../lib/i18n/importRechazos";
+import {
+  traduceRechazos,
+  traduceRepetidas,
+  type RechazoTraducido,
+} from "../../lib/i18n/importRechazos";
 import { useI18n } from "../../lib/i18n/LocaleProvider";
 import type { TranslationKey } from "../../lib/i18n/config";
 
@@ -30,18 +34,31 @@ type Props = {
   guardadas: number;
   /** Cuantas habia en el archivo, para decir "498 de 502". */
   leidas: number | null;
-  /** Para cerrarlo. */
+  /** Lo que devuelve el backend: `data.ya_importadas`. */
+  repetidas: unknown;
+  /** El backend solo lo pone a true cuando NO se ha guardado nada y el archivo
+      era identico al que ya habia. Solo entonces se puede ofrecer borrar. */
+  archivoIdentico: boolean;
+  /** Para cerrar el aviso. */
   onClose: () => void;
+  /** Para borrar todo y volver a importar. Opcional: solo existe cuando el
+      backend dice que el archivo es identico. */
+  onReplaceAll?: () => void;
 };
 
-export default function AvisoImportacion({ rechazos, guardadas, leidas, onClose }: Props) {
+export default function AvisoImportacion({
+  rechazos, repetidas, guardadas, leidas, archivoIdentico, onClose, onReplaceAll,
+}: Props) {
   const { t } = useI18n();
   const [abierto, setAbierto] = useState(false);
 
   const lista: RechazoTraducido[] = traduceRechazos(rechazos, t as T);
-  if (!lista.length) return null;
+  const yaTenia: RechazoTraducido[] = traduceRepetidas(repetidas, t as T);
 
-  const total = leidas ?? guardadas + lista.length;
+  // Sin ninguna de las dos listas no hay nada que avisar: el archivo subio bien.
+  if (!lista.length && !yaTenia.length) return null;
+
+  const total = leidas ?? guardadas + lista.length + yaTenia.length;
 
   return (
     <div className="aviso-import" role="status">
@@ -62,12 +79,20 @@ export default function AvisoImportacion({ rechazos, guardadas, leidas, onClose 
         </svg>
 
         <div className="aviso-import-txt">
+          {/* El titular cambia segun que haya pasado. "Has importado 498 de
+              502" no sirve si lo que paso es que no habia nada nuevo que
+              importar. */}
           <b>
-            {leidas !== null
-              ? t("import.partial", { n: guardadas, total })
-              : t("import.why", { n: lista.length })}
+            {guardadas === 0 && yaTenia.length > 0
+              ? t("import.allThere", { n: yaTenia.length })
+              : leidas !== null
+                ? t("import.partial", { n: guardadas, total })
+                : t("import.why", { n: lista.length })}
           </b>
-          <span>{t("import.rejectedTitle", { n: lista.length })}</span>
+          {lista.length > 0 && <span>{t("import.rejectedTitle", { n: lista.length })}</span>}
+          {yaTenia.length > 0 && (
+            <span>{t("import.alreadyTitle", { n: yaTenia.length })}</span>
+          )}
         </div>
 
         <div className="aviso-import-acc">
@@ -82,6 +107,15 @@ export default function AvisoImportacion({ rechazos, guardadas, leidas, onClose 
         </div>
       </div>
 
+      {/* El boton de borrar SOLO aparece cuando el backend dice que el archivo
+          era identico. Con una sola operacion nueva, el usuario tiene datos
+          que perder y no se le ofrece: por eso no se decide aqui. */}
+      {archivoIdentico && onReplaceAll && (
+        <button type="button" className="aviso-import-reemplazar" onClick={onReplaceAll}>
+          {t("import.replaceAll")}
+        </button>
+      )}
+
       {abierto && (
         <ul className="aviso-import-lista">
           {lista.map((r, i) => (
@@ -95,6 +129,22 @@ export default function AvisoImportacion({ rechazos, guardadas, leidas, onClose 
               </div>
               <div className="aviso-import-dato">
                 {r.campo}: <b>{r.valor}</b>
+              </div>
+              <div className="aviso-import-porque">{r.motivo}</div>
+              <div className="aviso-import-fix">{r.solucion}</div>
+            </li>
+          ))}
+
+          {/* Las repetidas van en su propia lista visual: no hay dato malo que
+              corregir, solo operaciones que ya estaban. */}
+          {yaTenia.map((r, i) => (
+            <li key={`rep-${r.fila ?? "x"}-${i}`} className="aviso-import-item aviso-import-ya">
+              <div className="aviso-import-fila">
+                <span className="aviso-import-nro">
+                  {r.fila === null ? t("import.rowUnknown") : t("import.row", { n: r.fila })}
+                </span>
+                {r.simbolo && <span className="aviso-import-sim">{r.simbolo}</span>}
+                {r.fecha && <span className="aviso-import-fecha">{r.fecha.replace("T", " ").slice(0, 16)}</span>}
               </div>
               <div className="aviso-import-porque">{r.motivo}</div>
               <div className="aviso-import-fix">{r.solucion}</div>

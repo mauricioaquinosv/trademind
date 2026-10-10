@@ -104,6 +104,32 @@ export function traduceRechazos(lista: unknown, t: T): RechazoTraducido[] {
     .map((r) => traduceRechazo(r, t));
 }
 
+/**
+ * Traduce las operaciones que el usuario YA tenia en la cuenta.
+ *
+ * No van por `traduceRechazos` porque son otra cosa. Un rechazo es "este dato
+ * esta mal, corregelo"; una repetida es "esto ya lo tienes". Si compartieran
+ * camino, el usuario leeria que su archivo tiene errores cuando lo que tiene es
+ * datos que ya importo antes.
+ *
+ * Vienen con el mismo esquema para poder pintar las dos listas con el mismo
+ * componente, pero con su propio codigo y su propio texto.
+ */
+export function traduceRepetidas(lista: unknown, t: T): RechazoTraducido[] {
+  if (!Array.isArray(lista)) return [];
+  return (lista as Rechazo[])
+    .filter((r) => r && typeof r === "object" && typeof r.codigo === "string")
+    .map((r) => ({
+      fila: typeof r.fila === "number" ? r.fila : null,
+      simbolo: r.simbolo ?? null,
+      fecha: r.fecha ?? null,
+      campo: t("import.already.motivo"),
+      valor: r.valor ?? t("import.emptyValue"),
+      motivo: t("import.already.motivo"),
+      solucion: t("import.already.solucion"),
+    }));
+}
+
 /** Los pares codigo <-> clave del motivo, para que un test pueda comprobar la cobertura. */
 export function mapaDeMotivos(): { codigo: string; clave: TranslationKey }[] {
   return Object.entries(MOTIVOS).map(([codigo, clave]) => ({ codigo, clave }));

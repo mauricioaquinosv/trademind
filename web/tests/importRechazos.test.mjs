@@ -20,6 +20,7 @@ import { readFileSync } from "node:fs";
 
 import {
   traduceRechazos,
+  traduceRepetidas,
   mapaDeMotivos,
   mapaDeSoluciones,
   codigosDeCampo,
@@ -227,9 +228,12 @@ const PYTHON_RECHAZO = new URL("../../app/import_validacion.py", import.meta.url
 
 test("el modelo Rechazo del backend no lleva ninguna frase en espanol", () => {
   const fuente = readFileSync(PYTHON_RECHAZO, "utf8");
+  // El recorte acaba en `CODIGOS_YA_EXISTE`, que es justo donde empieza lo
+  // siguiente. Acotar por un "def" generico se comia `YaImportada` entera y el
+  // test comparaba las dos clases juntas.
   const modelo = fuente.slice(
     fuente.indexOf("class Rechazo"),
-    fuente.indexOf("def _texto(")
+    fuente.indexOf("CODIGOS_YA_EXISTE")
   );
 
   // Solo se miran los campos del modelo, no los comentarios de arriba, que si
@@ -277,4 +281,64 @@ test("el backend no manda ninguna frase traducida al cliente", () => {
   const frases = bloque.match(/["'][A-ZÁÉÍÓÚÑ][a-záéíóúñ]+ [a-záéíóúñ]+/g) ?? [];
 
   assert.deepEqual(frases, [], "la respuesta del endpoint lleva texto escrito a mano");
+});
+
+/* `YaImportada` comparte forma con `Rechazo` a proposito: asi el frontend las
+   pinta con el mismo componente. Lo que cambia es el codigo, y por eso NO se
+   pueden confundir al traducir. */
+test("el modelo de las repetidas tiene su propia clase, no comparte codigo", () => {
+  const fuente = readFileSync(PYTHON_RECHAZO, "utf8");
+
+  assert.ok(fuente.includes("class YaImportada"), "falta la clase de las repetidas");
+
+  const bloque = fuente.slice(
+    fuente.indexOf("class YaImportada"),
+    fuente.indexOf("def huella(")
+  );
+  // Nada antes de la clase: si el marcador no esta, el recorte seria de 0 a -1
+  // y el test pasaria sin mirar nada.
+  const campos = [...bloque.matchAll(/^\s{4}(\w+):/gm)].map((m) => m[1]);
+
+  assert.deepEqual(
+    campos.sort(),
+    ["campo", "codigo", "fecha", "fila", "simbolo", "valor"],
+    "cambia la forma de YaImportada: revisa tambien el frontend"
+  );
+
+  // El codigo por defecto tiene que ser el de "ya la tienes", no uno de dato malo.
+  const r = traduceRepetidas(
+    [{
+      fila: 8, simbolo: "EURUSD", fecha: "2026-09-25T07:58:00",
+      campo: "position", valor: "166321549", codigo: "already_imported",
+    }],
+    traducir
+  );
+  assert.equal(r.length, 1);
+  assert.equal(r[0].motivo, es["import.already.motivo"]);
+  assert.ok(
+    !r[0].motivo.includes("vacío") && !r[0].motivo.includes("negativo"),
+    `parece un motivo de dato malo: ${r[0].motivo}`
+  );
+});
+
+test("las repetidas se traducen aparte y degradan sin romperse", () => {
+  for (const basura of [null, undefined, 42, "texto", {}]) {
+    assert.deepEqual(traduceRepetidas(basura, traducir), [], `entrada: ${JSON.stringify(basura)}`);
+  }
+  assert.deepEqual(traduceRepetidas([null, { sinCodigo: true }], traducir), []);
+});
+
+test("las claves de repetidas existen en los dos idiomas", () => {
+  for (const clave of [
+    "import.alreadyTitle",
+    "import.already.motivo",
+    "import.already.solucion",
+    "import.allThere",
+    "import.replaceAll",
+    "import.replaceAllConfirm",
+  ]) {
+    assert.ok(clave in es, `falta en espanol: ${clave}`);
+    assert.ok(clave in en, `falta en ingles: ${clave}`);
+    assert.notEqual(es[clave], en[clave], `${clave} es igual en los dos idiomas`);
+  }
 });

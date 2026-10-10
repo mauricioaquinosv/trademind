@@ -235,24 +235,35 @@ def test_csv_se_acepta_por_extension(client, cuenta):
     assert r.status_code in (200, 400)
 
 
-def test_subir_dos_veces_no_duplica_la_cuenta_de_trades_borrados(
-    client, cuenta, archivo, db_session
-):
+def test_subir_dos_veces_no_duplica_las_operaciones(client, cuenta, archivo, db_session):
     """
-    Subir el mismo reporte dos veces guarda los trades dos veces: a proposito,
-    la app no deduplica. Se deja constancia del comportamiento para que nadie
-    lo descubra como si fuera un fallo.
+    Subir el mismo reporte dos veces NO guarda las operaciones dos veces.
+
+    Este test estaba escrito al reves: documentaba que la app NO deduplicaba, y
+    deciaexplicitamente que se dejaba constancia "para que nadie lo descubra
+    como si fuera un fallo". Eso era justo el punto: era un fallo, y se hacia
+    constar. Ahora se ha arreglado (ver `separa_repetidas` en
+    app/import_validacion.py) y el test afirma lo correcto.
+
+    El caso de detalle esta en tests/test_import_parcial.py, donde se comprueba
+    tambien que el aviso lleva el numero de fila y que el boton de borrar solo
+    aparece cuando el archivo es identico.
     """
+    respuestas = []
     for _ in range(2):
-        client.post(
-            "/trades/upload",
-            params={"account_id": str(cuenta.id)},
-            files={"file": ("reporte.xlsx", archivo(MT5), "application/vnd.ms-excel")},
+        respuestas.append(
+            client.post(
+                "/trades/upload",
+                params={"account_id": str(cuenta.id)},
+                files={"file": ("reporte.xlsx", archivo(MT5), "application/vnd.ms-excel")},
+            ).json()
         )
 
     from app.models import Trade
 
-    assert db_session.query(Trade).count() == MT5_TRADES * 2
+    assert respuestas[0]["trades_guardados"] == MT5_TRADES
+    assert respuestas[1]["trades_guardados"] == 0
+    assert db_session.query(Trade).count() == MT5_TRADES
 
 
 def test_el_archivo_temporal_se_borra_tras_subir(client, cuenta, archivo, tmp_path, monkeypatch):

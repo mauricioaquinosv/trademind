@@ -90,6 +90,134 @@ class Rechazo(BaseModel):
     codigo: str
 
 
+# --- Las operaciones que ya estaban en la cuenta ---------------------------
+#
+# Un rechazo por "ya la tienes" es lo mismo que un rechazo por dato malo, pero
+# con otra lectura: aqui el dato ESTA bien, lo que pasa es que ya existe. Por eso
+# van aparte, para no mezclarlos al traducir.
+
+CODIGOS_YA_EXISTE = {"already_imported"}
+
+
+class YaImportada(BaseModel):
+    """Una operacion valida que el usuario ya tenia en esa cuenta.
+
+    Mismo esquema que `Rechazo` para que el cliente los pinte con el mismo
+    componente, pero con su propio codigo y su propio texto: uno es un dato que
+    hay que corregir y el otro es algo que ya tienes.
+    """
+
+    fila: Optional[int]
+    simbolo: Optional[str] = None
+    fecha: Optional[str] = None
+    campo: str = "position"
+    valor: Optional[str] = None
+    codigo: str = "already_imported"
+
+
+def huella(t: ClosedTrade) -> tuple:
+    """La identidad de una operacion cuando no hay ticket del broker.
+
+    La plantilla manual deja el ticket vacio, asi que hace falta otra cosa que
+    diga "esto es la misma operacion". Se comparan los datos que la definen: si
+    coinciden todos, es la misma.
+
+    El redondeo a 8 decimales es el mismo que usa `ClosedTrade.pnl_neto`, y no es
+    casual: los brokers mandan los precios con ruido de coma flotante, y sin
+    redondear dos veces el mismo precio darian numeros distintos y la comparacion
+    fallaria siempre.
+    """
+    return (
+        (t.symbol or "").strip().upper(),
+        t.direction,
+        _redondear(t.quantity),
+        _redondear(t.entry_price),
+        _redondear(t.exit_price),
+        _iso(t.entry_time),
+        _iso(t.exit_time),
+    )
+
+
+def _redondear(valor) -> Optional[float]:
+    if valor is None or valor != valor:
+        return None
+    try:
+        return round(float(valor), 8)
+    except (TypeError, ValueError):
+        return None
+
+
+def _iso(fecha) -> Optional[str]:
+    if fecha is None or not hasattr(fecha, "isoformat"):
+        return None
+    try:
+        return fecha.isoformat()  # type: ignore[union-attr]
+    except (TypeError, ValueError):
+        return None
+
+
+def separa_repetidas(
+    trades: List[ClosedTrade],
+    ya_existentes: List[ClosedTrade],
+    filas: Optional[List[Optional[int]]] = None,
+) -> Tuple[List[ClosedTrade], List[YaImportada]]:
+    """Separa las operaciones nuevas de las que el usuario ya tenia.
+
+    `ya_existentes` son las que ya hay en ESA cuenta, no las de otras: una cuenta
+    distinta con el mismo ticket es una cuenta distinta.
+
+    La comparacion es por ticket cuando lo hay, y por huella cuando no. Se mira
+    primero el ticket y solo si falta se pasa a la huella, porque dos operaciones
+    pueden coincidir en todos los datos y tener tickets distintos: eso son dos
+    operaciones de verdad (por ejemplo, la misma apertura cerrada en dos
+    tramos), y unirlas seria peor que duplicarlas.
+    """
+    nuevos: List[ClosedTrade] = []
+    repetidas: List[YaImportada] = []
+
+    tickets = {(t.position or "").strip() for t in ya_existentes if (t.position or "").strip()}
+    huellas = {huella(t) for t in ya_existentes}
+
+    # Los tickets ya vistos, para no avisar dos veces del mismo: se compara con
+    # lo que hay en la cuenta MAS lo que se ha visto en este mismo archivo.
+    # Subir un archivo con dos operaciones identicas tiene que avisar una vez y
+    # importar la otra, no avisar dos veces y no importar ninguna.
+    vistos = set(tickets)
+    repetidas_ya_vistas: set = set()
+
+    for i, t in enumerate(trades):
+        fila = filas[i] if filas and i < len(filas) else None
+        ticket = (t.position or "").strip()
+
+        if ticket:
+            es_repetida = ticket in vistos
+        else:
+            h = huella(t)
+            es_repetida = h in huellas or h in repetidas_ya_vistas
+
+        if es_repetida:
+            repetidas.append(
+                YaImportada(
+                    fila=fila,
+                    simbolo=(t.symbol or "").strip() or None,
+                    fecha=_fecha_iso(t.entry_time),
+                    valor=ticket or None,
+                )
+            )
+            continue
+
+        # Una operacion sin ticket no tiene donde apuntar el "ya visto": se
+        # anade su huella al conjunto para que la siguiente repetida se detecte.
+        if not ticket:
+            repetidas_ya_vistas.add(huella(t))
+        else:
+            vistos.add(ticket)
+
+        nuevos.append(t)
+
+    return nuevos, repetidas
+
+
 def _texto(valor: object) -> Optional[str]:
     """Un valor para mostrar. None si no hay nada."""
     if valor is None:

@@ -22,6 +22,7 @@ import pytest
 from app.fifo_engine import ClosedTrade
 from app.import_validacion import (
     CODIGOS_RECHAZO,
+    separa_repetidas,
     valida_trades_de_archivo,
 )
 from app.parsers.mt5_parser import MT5Parser
@@ -302,3 +303,206 @@ def test_las_filas_apuntan_a_donde_el_usuario_mira():
     assert filas[0] == 8  # la primera operacion esta en la fila 8 del archivo
     assert len(filas) == 20
     assert filas == sorted(filas)
+
+# --- Subir el mismo archivo dos veces -------------------------------------
+#
+# El fallo mas grave en el uso diario: el usuario sube el reporte, ve algo raro
+# y lo vuelve a subir "por si acaso". Las 20 operaciones entraban dos veces y las
+# estadisticas quedaban al doble, pero seguian cuadrando entre si, asi que no
+# habia forma de saber que estaban mal.
+
+
+def _subir_dos_veces(client, cuenta):
+    """Sube el reporte de ejemplo dos veces. Devuelve las dos respuestas."""
+    with open(MT5, "rb") as f:
+        primera = _subir(client, cuenta, f.read()).json()
+    with open(MT5, "rb") as f:
+        segunda = _subir(client, cuenta, f.read()).json()
+    return primera, segunda
+
+
+def test_subir_dos_veces_no_duplica(client, cuenta):
+    primera, segunda = _subir_dos_veces(client, cuenta)
+
+    assert primera["trades_guardados"] == 20
+    # La segunda no guarda nada: si guardara, las estadisticas quedarian al doble.
+    assert segunda["trades_guardados"] == 0
+
+
+def test_la_segunda_subida_avisa_de_las_20_que_ya_tenia(client, cuenta):
+    _, segunda = _subir_dos_veces(client, cuenta)
+
+    ya = segunda["ya_importadas"]
+    assert len(ya) == 20
+    assert all(r["codigo"] == "already_imported" for r in ya)
+
+
+def test_el_aviso_de_repetidas_dice_la_fila_del_archivo(client, cuenta):
+    _, segunda = _subir_dos_veces(client, cuenta)
+
+    filas = sorted(r["fila"] for r in segunda["ya_importadas"])
+    assert filas == list(range(8, 28))  # las 20 del reporte, filas 8 a 27
+
+
+def test_el_archivo_identico_se_marca_para_poder_ofrecer_reimportar(client, cuenta):
+    _, segunda = _subir_dos_veces(client, cuenta)
+
+    # Solo en este caso se puede prometer que reimportar no pierde nada.
+    assert segunda["archivo_identico"] is True
+
+
+def test_un_archivo_con_algo_nuevo_no_ofrece_borrar(client, cuenta, monkeypatch):
+    """Con una sola operacion nueva, el boton de borrar NO debe aparecer.
+
+    La segunda subida trae las 20 de siempre MAS dos que no estaban: el usuario
+    tiene datos nuevos que perder, asi que no se le ofrece borrarlo todo.
+    """
+    from datetime import datetime
+
+    import app.trades as modulo
+
+    from app.fifo_engine import ClosedTrade
+
+    def nuevas():
+        return [
+            ClosedTrade(
+                symbol="GBPUSD", direction="long", quantity=0.5,
+                entry_price=1.25, exit_price=1.30,
+                entry_time=datetime(2026, 10, 1, 9, 0),
+                exit_time=datetime(2026, 10, 1, 9, 30),
+                pnl_bruto=250.0, position=f"NUEVA{i}",
+            )
+            for i in range(2)
+        ]
+
+    del_Reporte = MT5Parser().parse(MT5)
+
+    # El parser devuelve una cosa distinta en cada llamada: la primera vez solo
+    # el reporte, la segunda el reporte mas las dos nuevas.
+    llamadas = {"n": 0}
+
+    class _PorLlamada:
+        def parse(self, ruta):
+            llamadas["n"] += 1
+            return list(del_Reporte if llamadas["n"] == 1 else del_Reporte + nuevas())
+
+    monkeypatch.setattr(modulo, "_pick_parser", lambda ruta: _PorLlamada())
+
+    _subir(client, cuenta, b"x")
+    cuerpo = _subir(client, cuenta, b"x").json()
+
+    assert cuerpo["trades_guardados"] == 2
+    assert len(cuerpo["ya_importadas"]) == 20
+    # Aqui NO se ofrece borrar: el usuario tiene operaciones nuevas que perder.
+    assert cuerpo["archivo_identico"] is False
+
+
+def test_otra_cuenta_no_cuenta_como_duplicado(make_client, otro_usuario, db_session):
+    """El mismo ticket en OTRA cuenta es otra cuenta: no se debe descartar.
+
+    Se crean dos cuentas del mismo usuario y se sube el MISMO reporte a las dos.
+    Si la comparacion no mirara de que cuenta son, la segunda se quedaria vacia.
+    """
+    from app.models import Account
+
+    cliente = make_client(otro_usuario)
+
+    cuentas = [
+        Account(
+            user_id=otro_usuario.id,
+            name=n,
+            initial_balance=1000,
+            currency="USD",
+            source="manual",
+        )
+        for n in ("Primera", "Segunda")
+    ]
+    db_session.add_all(cuentas)
+    db_session.commit()
+
+    for acc in cuentas:
+        with open(MT5, "rb") as f:
+            cuerpo = _subir(cliente, acc, f.read()).json()
+        assert cuerpo["trades_guardados"] == 20, f"la cuenta {acc.name} no importo"
+
+
+def test_sin_ticket_se_compara_por_la_huella():
+    """La plantilla manual deja el ticket vacio: ahi manda la huella."""
+    from datetime import datetime
+
+    t = ClosedTrade(
+        symbol="EURUSD", direction="long", quantity=0.1,
+        entry_price=1.1, exit_price=1.2,
+        entry_time=datetime(2026, 1, 1, 10, 0),
+        exit_time=datetime(2026, 1, 1, 10, 30),
+        pnl_bruto=100.0,
+    )
+
+    nuevas, repetidas = separa_repetidas([t], [])
+    assert len(nuevas) == 1 and repetidas == []
+
+    nuevas, repetidas = separa_repetidas([t], [t])
+    assert nuevas == [] and len(repetidas) == 1
+
+
+def test_ruido_de_coma_floante_no_crea_una_operacion_nueva():
+    """Un broker puede mandar 1.1000000000000001 y 1.1. Sin redondear, la misma
+    operacion parecieria distinta y se importaria dos veces."""
+    from datetime import datetime
+
+    a = ClosedTrade(symbol="EURUSD", direction="long", quantity=0.1,
+                    entry_price=1.1, exit_price=1.2,
+                    entry_time=datetime(2026, 1, 1, 10, 0),
+                    exit_time=datetime(2026, 1, 1, 10, 30), pnl_bruto=100.0)
+    b = ClosedTrade(symbol="EURUSD", direction="long", quantity=0.1,
+                    entry_price=1.1000000000000001, exit_price=1.2,
+                    entry_time=datetime(2026, 1, 1, 10, 0),
+                    exit_time=datetime(2026, 1, 1, 10, 30), pnl_bruto=100.0)
+
+    _, repetidas = separa_repetidas([b], [a])
+    assert len(repetidas) == 1
+
+
+def test_dos_operaciones_iguales_sin_ticket_dentro_del_mismo_archivo():
+    """Si el archivo trae dos identicas sin ticket, se avisa una e importa la otra.
+
+    Si las dos se descartaran, el usuario perderia una operacion real. Si las dos
+    entraran, seria un duplicado. Lo correcto es avisar e importar una."""
+    from datetime import datetime
+
+    def una():
+        return ClosedTrade(symbol="EURUSD", direction="long", quantity=0.1,
+                           entry_price=1.1, exit_price=1.2,
+                           entry_time=datetime(2026, 1, 1, 10, 0),
+                           exit_time=datetime(2026, 1, 1, 10, 30), pnl_bruto=100.0)
+
+    nuevas, repetidas = separa_repetidas([una(), una()], [])
+
+    assert len(nuevas) == 1
+    assert len(repetidas) == 1
+
+
+def test_operaciones_con_ticket_distinto_no_se_confunden():
+    """Dos operaciones con los MISMOS datos pero tickets distintos son dos
+    operaciones de verdad: abrir y cerrar en dos tramos, por ejemplo."""
+    from datetime import datetime
+
+    def una(ticket):
+        return ClosedTrade(symbol="EURUSD", direction="long", quantity=0.1,
+                           entry_price=1.1, exit_price=1.2,
+                           entry_time=datetime(2026, 1, 1, 10, 0),
+                           exit_time=datetime(2026, 1, 1, 10, 30),
+                           pnl_bruto=100.0, position=ticket)
+
+    nuevas, repetidas = separa_repetidas([una("111"), una("222")], [una("111")])
+
+    assert len(nuevas) == 1
+    assert len(repetidas) == 1
+
+
+def test_el_codigo_de_repetida_no_se_confunde_con_los_de_dato_malo():
+    """Son dos cosas distintas: una es un dato que hay que corregir, la otra es
+    algo que ya tienes. Si compartieran codigo, el cliente no podria distinguirlas."""
+    from app.import_validacion import CODIGOS_RECHAZO
+
+    assert "already_imported" not in CODIGOS_RECHAZO

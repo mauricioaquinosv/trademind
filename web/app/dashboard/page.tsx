@@ -234,8 +234,10 @@ export default function DashboardPage() {
      archivo, para poder decir "498 de 502" en el titular. */
   const [aviso, setAviso] = useState<{
     rechazos: unknown;
+    repetidas: unknown;
     guardadas: number;
     leidas: number | null;
+    archivoIdentico: boolean;
   } | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -272,6 +274,9 @@ export default function DashboardPage() {
      el token no se puede saber que cuenta esta abierta: por eso hace falta
      guardarlo aparte al iniciar sesion. */
   const [emailSesion, setEmailSesion] = useState("");
+  /* El ultimo archivo subido, en memoria. Lo necesita "borrar todo y volver a
+     importar". */
+  const [ultimoArchivo, setUltimoArchivo] = useState<File | null>(null);
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
   const [filterType, setFilterType] = useState("");
@@ -498,12 +503,44 @@ export default function DashboardPage() {
     setView("import");
   }
 
+  /* Borrar todo y volver a importar.
+   *
+   * Solo llega aqui cuando el backend ha dicho que el archivo es identico al que
+   * ya habia, o sea que no se ha guardado nada nuevo. Por eso se puede ofrecer
+   * sin miedo: lo que se borra se vuelve a poner igual.
+   *
+   * Aun asi se pide confirmacion, porque borra operaciones que el usuario puede
+   * haber editado a mano (pnl_neto es editable). El aviso de por si es
+   * descartable con la X; esto no. */
+  function reemplazarTodo() {
+    if (!ultimoArchivo) return;
+    setConfirm({
+      open: true,
+      title: t("import.replaceAll"),
+      message: t("import.replaceAllConfirm"),
+      okLabel: t("import.replaceAll"),
+      onOk: () => { void borrarTodoYVolverAImportar(); },
+    });
+  }
+
+  async function borrarTodoYVolverAImportar() {
+    if (!currentAccountId || !ultimoArchivo) return;
+    /* El archivo se conserva en memoria porque, sin el, el boton no tendria nada
+       que volver a subir: el <input type="file"> ya no lo tiene, el usuario no
+       lo vuelve a elegir. */
+    await authedFetch(`/trades?account_id=${currentAccountId}&todas=1`, { method: "DELETE" });
+    await handleFile(ultimoArchivo);
+  }
+
   async function handleFile(file: File | null | undefined) {
     if (!file) return;
     let accountId = currentAccountId;
     /* El aviso de la subida anterior se cierra al empezar otra: si no, se
        queda con las 4 operaciones del archivo viejo mientras el nuevo se sube. */
     setAviso(null);
+    /* Se recuerda el archivo por si luego hay que volver a importarlo: el input
+       de ficheros ya no lo tiene. */
+    setUltimoArchivo(file);
 
     if (!accountId) {
       const balance = parseFloat(importBalance);
@@ -545,14 +582,17 @@ export default function DashboardPage() {
        hay rechazos: dira solo las buenas y el usuario creera que se han
        importado todas. El aviso ya dice "498 de 502". */
     const hayRechazos = Array.isArray(data.rechazos) && data.rechazos.length > 0;
+    const hayRepetidas = Array.isArray(data.ya_importadas) && data.ya_importadas.length > 0;
     setAviso(
-      hayRechazos
+      hayRechazos || hayRepetidas
         ? {
             rechazos: data.rechazos,
+            repetidas: data.ya_importadas,
             guardadas: data.trades_guardados,
-            // El backend solo manda `trades_leidos` cuando hay rechazos. Si un
-            // dia dejara de mandarlo, se calcula con lo que hay.
+            // El backend solo manda `trades_leidos` cuando hay algo que avisar.
+            // Si un dia dejara de mandarlo, se calcula con lo que hay.
             leidas: typeof data.trades_leidos === "number" ? data.trades_leidos : null,
+            archivoIdentico: data.archivo_identico === true,
           }
         : null,
     );
@@ -1089,9 +1129,12 @@ export default function DashboardPage() {
           {aviso && (
             <AvisoImportacion
               rechazos={aviso.rechazos}
+              repetidas={aviso.repetidas}
               guardadas={aviso.guardadas}
               leidas={aviso.leidas}
+              archivoIdentico={aviso.archivoIdentico}
               onClose={() => setAviso(null)}
+              onReplaceAll={reemplazarTodo}
             />
           )}
 

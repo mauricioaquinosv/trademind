@@ -11,7 +11,10 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models import User, Trade, Account
 from app.schemas import TradeCreate, TradeUpdate, TradeOut
-from app.import_validacion import valida_trades_de_archivo
+from app.import_validacion import (
+    separa_repetidas,
+    valida_trades_de_archivo,
+)
 from app.parsers.mt5_parser import MT5Parser
 from app.parsers.manual_template_parser import ManualTemplateParser
 from app.parsers.file_reader import read_any_table
@@ -124,6 +127,34 @@ def upload_trades(
     # celdas vacias son lo normal (en el de ejemplo, 67 de 130).
     validas, rechazos = valida_trades_de_archivo(closed_trades, filas)
 
+    # De las validas, las que el usuario YA tiene en esta cuenta se separan antes
+    # de guardar. Sin esto, subir el mismo reporte dos veces duplicaba todo: las
+    # estadisticas quedaban al doble y seguian cuadrando entre si, asi que no
+    # habia forma de saber que estaban mal.
+    #
+    # Se comparan solo las de ESTA cuenta: otra cuenta con el mismo ticket es
+    # otra cuenta.
+    ya_importadas = []
+    if validas:
+        ya_en_la_cuenta = (
+            db.query(Trade).filter(Trade.account_id == account_id).all()
+        )
+        # `filas` viene en el orden del ARCHIVO entero, y ya se ha filtrado la
+        # lista: hay que recortar los indices de las que pasaron la validacion
+        # o el numero de fila no corresponderia con nada.
+        indices_validas = [
+            i for i, t in enumerate(closed_trades)
+            if any(t is v for v in validas)
+        ]
+        filas_validas = (
+            [filas[i] for i in indices_validas if i < len(filas)]
+            if filas
+            else [None] * len(validas)
+        )
+        validas, ya_importadas = separa_repetidas(
+            validas, ya_en_la_cuenta, filas_validas
+        )
+
     for t in validas:
         trade = Trade(
             user_id=current_user.id,
@@ -154,13 +185,24 @@ def upload_trades(
     #
     # Cuando no hay rechazos se devuelve solo el numero, como hasta ahora, para
     # no cambiar la forma de la respuesta en el caso normal.
-    if not rechazos:
+    if not rechazos and not ya_importadas:
         return {"trades_guardados": saved}
 
     return {
         "trades_guardados": saved,
         "trades_leidos": len(closed_trades),
         "rechazos": [r.model_dump() for r in rechazos],
+        "ya_importadas": [r.model_dump() for r in ya_importadas],
+        # El frontend solo ofrece "borrar todo y volver a importar" cuando el
+        # archivo era IDENTICO al que ya tenia: en ese caso y solo en ese,
+        # reimportar da exactamente lo mismo y no se puede perder nada.
+        #
+        # La condicion es `saved == 0`, no "hay repetidas": si el archivo traia
+        # una sola operacion nueva, hay repetidas Y se ha guardado algo, y en
+        # ese caso NO se puede ofrecer borrar porque el usuario tiene datos
+        # nuevos que perder. Solo cuando no se ha guardado NADA se puede
+        # prometer que reimportar no pierde nada.
+        "archivo_identico": saved == 0 and bool(ya_importadas) and not rechazos,
     }
 
 
@@ -233,6 +275,29 @@ def update_trade(
     db.commit()
     db.refresh(trade)
     return trade
+
+
+@router.delete("/", status_code=204)
+def borrar_todas_las_operaciones(
+    account_id: UUID = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Borra TODAS las operaciones de una cuenta.
+
+    Va declarado ANTES que `/{trade_id}` a proposito: si no, FastAPI intentaria
+    interpretar el camino como un UUID y devolveria un 422 en vez de borrar.
+
+    Lo usa "borrar todo y volver a importar", que solo aparece cuando el backend
+    ha confirmado que el archivo era identico al que ya habia.
+    """
+    _get_owned_account(db, account_id, current_user)
+
+    db.query(Trade).filter(
+        Trade.account_id == account_id,
+        Trade.user_id == current_user.id,
+    ).delete(synchronize_session=False)
+    db.commit()
 
 
 @router.delete("/{trade_id}", status_code=204)

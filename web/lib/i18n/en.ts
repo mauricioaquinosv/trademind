@@ -368,6 +368,20 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "import.fix.exit_price_unreadable": "Check the closing price cell.",
   "import.fix.exit_price_not_positive": "Check the closing price cell.",
 
+  // --- Trades the user already had -------------------------------------
+  // Not rejections: there is nothing to fix. The backend keeps them apart
+  // because otherwise uploading the same report twice doubled everything and
+  // the numbers still added up, so nobody could tell.
+  "import.alreadyTitle":
+    { one: "This trade was already in your account:", other: "These trades were already in your account:" },
+  "import.already.motivo": "Already in your account",
+  "import.already.solucion": "We did not import it again, so there are no duplicates.",
+  "import.allThere":
+    { one: "You already have this trade. We did not import anything.", other: "You already have these {n} trades. We did not import anything." },
+  "import.replaceAll": "Delete everything and import again",
+  "import.replaceAllConfirm":
+    "Every trade in this account will be deleted and imported again from the file. Any result you corrected by hand will be lost.",
+
   // ------------------------------------------------------------------
   // Onboarding
   // ------------------------------------------------------------------

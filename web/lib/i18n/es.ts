@@ -367,6 +367,20 @@ export const es = {
   "import.fix.exit_price_unreadable": "Revisa la celda del precio de cierre.",
   "import.fix.exit_price_not_positive": "Revisa la celda del precio de cierre.",
 
+  // --- Operaciones que el usuario ya tenia ------------------------------
+  // No son rechazos: no hay nada que corregir. El backend las separa porque si
+  // no, subir el mismo reporte dos veces duplicaba todo y las estadisticas
+  // quedaban al doble sin que se notara.
+  "import.alreadyTitle":
+    { one: "Esta operación ya la tenías:", other: "Estas operaciones ya las tenías:" },
+  "import.already.motivo": "Ya está en tu cuenta",
+  "import.already.solucion": "No la hemos vuelto a importar, así que no hay duplicados.",
+  "import.allThere":
+    { one: "Ya tienes esta operación. No hemos importado nada.", other: "Ya tienes estas {n} operaciones. No hemos importado nada." },
+  "import.replaceAll": "Borrar todo y volver a importar",
+  "import.replaceAllConfirm":
+    "Se borrarán todas las operaciones de esta cuenta y se volverán a importar del archivo. Tus correcciones manuales de resultados se perderán.",
+
   // ------------------------------------------------------------------
   // Onboarding
   // ------------------------------------------------------------------
