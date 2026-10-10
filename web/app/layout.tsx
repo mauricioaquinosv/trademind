@@ -9,6 +9,9 @@ import "./dashboard.css";
 // selector .landing, así que no pisa nada del dashboard. Se carga aquí porque
 // Next solo permite importar CSS desde el layout.
 import "./landing.css";
+// El CSS del login va DESPUES del de la landing: comparte el fondo y la
+// rejilla con ella, y asi el login gana si algun dia chocaran.
+import "./login.css";
 // Las constantes y la normalizacion se importan de ./config y NO de
 // LocaleProvider: LocaleProvider es un modulo de cliente, y desde el
 // servidor Next solo devuelve un proxy de referencia (y LOCALES.includes

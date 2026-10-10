@@ -69,7 +69,9 @@ const Check = () => (
   </svg>
 );
 
-const Logo = ({ size, relleno }: { size: number; relleno?: boolean }) => (
+/** El logo. Se exporta para que el login use el MISMO y no otro parecido: dos
+ *  logos distintos en dos pantallas del mismo producto se notan. */
+export const Logo = ({ size, relleno }: { size: number; relleno?: boolean }) => (
   <svg viewBox="0 0 40 40" fill="none" width={size} height={size} aria-hidden="true">
     <path d="M20 4c-7 0-11 5-11 11 0 3 1 5 2 7-1 2-2 4-2 6 0 5 4 8 9 8V4z" fill="#E22FA0" />
     <path d="M20 4c7 0 11 5 11 11 0 3-1 5-2 7 1 2 2 4 2 6 0 5-4 8-9 8V4z" fill="#2FD8C8" />

@@ -34,6 +34,47 @@ const NS = "http://www.w3.org/2000/svg";
 
 type Limpieza = () => void;
 
+/**
+ * La rejilla que sigue al raton, y SOLO eso.
+ *
+ * Va aparte de `iniciarEfectos` porque el login la quiere y no el resto: si
+ * metieramos el login dentro de `iniciarEfectos`, cada efecto buscaria sus
+ * selectores en un arbol que no los tiene (`#producto`, `.hero`, `.dstats`...)
+ * y no haria nada, mientras que este si tiene que funcionar.
+ *
+ * Se queda quieta si la persona pidio "reducir movimiento": en ese caso la
+ * rejilla se pinta entera y estatica, que es lo que hace el resto del sitio.
+ */
+export function montarRejilla(raiz: HTMLElement): Limpieza {
+  if (typeof window === "undefined") return () => {};
+
+  const g = document.createElement("div");
+  g.id = "tm-grid";
+  raiz.appendChild(g);
+
+  const reduce = window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+  if (reduce) return () => g.remove();
+
+  const alMover = (ev: Event) => {
+    const e = ev as MouseEvent;
+    g.style.setProperty("--gx", `${e.clientX}px`);
+    g.style.setProperty("--gy", `${e.clientY}px`);
+  };
+
+  // Sin este primer movimiento, la mascara se queda en -999px y la rejilla no se
+  // ve hasta que el raton se mueva. Con el raton quieto no se sabria donde mira.
+  alMover({
+    clientX: window.innerWidth * 0.72,
+    clientY: window.innerHeight * 0.32,
+  } as MouseEvent);
+
+  document.addEventListener("mousemove", alMover, { passive: true });
+  return () => {
+    document.removeEventListener("mousemove", alMover);
+    g.remove();
+  };
+}
+
 export function iniciarEfectos(raiz: HTMLElement): Limpieza {
   if (typeof window === "undefined") return () => {};
   if (window.matchMedia("(prefers-reduced-motion:reduce)").matches) return () => {};

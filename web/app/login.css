@@ -1,0 +1,254 @@
+/* ===================================================================
+   PANTALLA DE ACCESO (/login y /dashboard/login)
+   Todo esta bajo .lg para no tocar ni la landing (.lp) ni el dashboard,
+   que tienen sus propias reglas globales.
+
+   POR QUE ESTO EXISTE
+
+   El login traeva con una foto de un astronauta que no encaja con la landing
+   nueva: son dos productos distintos pegados. Aqui se rehace con el mismo
+   lenguaje visual: fondo casi negro, la misma rejilla turquesa que sigue al
+   raton, los mismos brillos de color y el mismo panel con el mismo borde y la
+   misma sombra.
+
+   La rejilla NO se dibuja aqui: la pinta `montarRejilla` (components/landingFx.ts)
+   como un <div id="tm-grid">, y estas reglas solo le dan el aspecto. Es el
+   mismo elemento que usa la landing, con las mismas medidas de 64 px, para que
+   las dos pantallas se vean como la misma pagina.
+
+   LO QUE NO SE TOCA: la logica del formulario, el idioma, los errores y el
+   registro. Esto es solo como se ve.
+   =================================================================== */
+
+.lg {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #05060B;
+  color: #F1F2F6;
+  font-family: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.lg *,
+.lg *::before,
+.lg *::after { box-sizing: border-box; }
+
+/* --- La rejilla. Las mismas medidas que en la landing a proposito: si se
+   cambiaran aqui, las dos pantallas dejarian de parecer la misma. --- */
+.lg #tm-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(47,216,200,.55) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(47,216,200,.55) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(240px circle at var(--gx,-999px) var(--gy,-999px), #000, transparent 70%);
+  mask-image: radial-gradient(240px circle at var(--gx,-999px) var(--gy,-999px), #000, transparent 70%);
+}
+/* Con "reducir movimiento" la rejilla se ve entera y quieta: es contenido, no
+   adorno, y taparla seria dejar media pantalla vacia. */
+@media (prefers-reduced-motion: reduce) {
+  .lg #tm-grid {
+    -webkit-mask-image: linear-gradient(180deg, #000, transparent 78%);
+    mask-image: linear-gradient(180deg, #000, transparent 78%);
+  }
+}
+
+/* --- Los brillos de color, los mismos que en la landing --- */
+.lg-glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(90px);
+}
+.lg-glow.a { top: -300px; left: -260px; width: 860px; height: 700px; background: rgba(226,47,160,.24); }
+.lg-glow.b { top: -240px; right: -240px; width: 900px; height: 720px; background: rgba(47,216,200,.20); }
+.lg-glow.c { bottom: -340px; left: 38%; width: 820px; height: 620px; background: rgba(120,60,220,.16); }
+
+/* --- La marca, arriba a la izquierda --- */
+.lg-brand {
+  position: absolute;
+  top: 26px;
+  left: 28px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+.lg-brand .disp {
+  font-family: 'Bricolage Grotesque', 'Instrument Sans', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 21px;
+  letter-spacing: -.025em;
+}
+
+/* --- El panel del formulario: mismo borde y misma sombra que las tarjetas --- */
+.lg-card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 416px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 22px;
+  background:
+    radial-gradient(120% 140% at 10% -10%, rgba(255,255,255,.08), transparent 55%),
+    linear-gradient(180deg, rgba(25,27,42,.90), rgba(11,12,20,.94));
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.07) inset,
+    0 40px 100px -30px rgba(0,0,0,.9),
+    0 0 80px -30px rgba(47,216,200,.22);
+  backdrop-filter: blur(18px);
+  padding: 30px 30px 26px;
+}
+
+.lg-title {
+  margin: 0;
+  font-family: 'Bricolage Grotesque', 'Instrument Sans', system-ui, sans-serif;
+  font-size: 30px;
+  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: -.025em;
+  color: #F1F2F6;
+}
+.lg-sub {
+  margin: 10px 0 22px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #8E93A6;
+}
+.lg-label {
+  display: block;
+  margin: 0 0 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #C9CDDC;
+}
+.lg-input {
+  width: 100%;
+  height: 50px;
+  padding: 0 15px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.15);
+  background: rgba(255,255,255,.05);
+  color: #F1F2F6;
+  font-size: 15.5px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+.lg-input::placeholder { color: #5C6178; }
+.lg-input:focus {
+  border-color: #2FD8C8;
+  background: rgba(47,216,200,.06);
+  box-shadow: 0 0 0 4px rgba(47,216,200,.18);
+}
+.lg-input-wrap { position: relative; }
+.lg-input-wrap .lg-input { padding-right: 50px; }
+
+.lg-eye {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #8E93A6;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.lg-eye:hover { background: rgba(255,255,255,.08); color: #F1F2F6; }
+
+.lg-error {
+  margin: 0;
+  padding: 10px 13px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,77,109,.32);
+  background: rgba(255,77,109,.10);
+  color: #FF6B85;
+  font-size: 13.5px;
+  text-align: center;
+}
+.lg-hint { margin: 7px 0 0; font-size: 12px; color: #5C6178; }
+
+.lg-submit {
+  width: 100%;
+  height: 52px;
+  margin-top: 6px;
+  border: 0;
+  border-radius: 12px;
+  background: #2FD8C8;
+  color: #04211E;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s ease, transform .15s ease;
+}
+.lg-submit:hover:not(:disabled) { background: #5BE6D8; transform: translateY(-1px); }
+.lg-submit:disabled { opacity: .7; cursor: wait; }
+
+.lg-google {
+  width: 100%;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 12px;
+  background: rgba(255,255,255,.06);
+  color: #F1F2F6;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.lg-google:hover { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.26); }
+
+.lg-sep {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 22px 0;
+  font-size: 12.5px;
+  color: #5C6178;
+}
+.lg-sep::before,
+.lg-sep::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,.12);
+}
+
+.lg-alt { margin-top: 22px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.10);
+  text-align: center; font-size: 14.5px; color: #A3A8BC; }
+.lg-alt button {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: #7DF0DE;
+  cursor: pointer;
+}
+.lg-alt button:hover { color: #B5F7EC; text-decoration: underline; }
+
+.lg a:focus-visible,
+.lg button:focus-visible,
+.lg input:focus-visible { outline: 2px solid #2FD8C8; outline-offset: 3px; }
+
+@media (max-width: 560px) {
+  .lg-card { padding: 24px 20px 20px; border-radius: 18px; }
+  .lg-title { font-size: 26px; }
+  .lg-brand { top: 18px; left: 18px; }
+}

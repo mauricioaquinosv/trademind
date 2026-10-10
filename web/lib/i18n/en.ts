@@ -407,7 +407,7 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "landing.nav.product": "Product",
   "landing.nav.import": "Import",
   "landing.nav.faq": "Questions",
-  "landing.nav.login": "Sign in",
+  "landing.nav.login": "Login",
   "landing.nav.signup": "Create account",
   "landing.badge": "Trading journal",
   "landing.hero.title": "The trading journal that tells you",
