@@ -202,8 +202,8 @@
       <span class="tag t-azul">5 vistas</span>
       <span class="tag t-azul">12 endpoints</span>
       <span class="tag t-azul">3 tablas</span>
-      <span class="tag t-azul">360 claves × 2 idiomas</span>
-      <span class="tag t-verde">216 + 98 tests</span>
+      <span class="tag t-azul">423 claves × 2 idiomas</span>
+      <span class="tag t-verde">216 + 106 tests</span>
       <span class="tag t-rojo">5 bloqueos</span>
     </div>
   </div>
@@ -302,14 +302,22 @@
         <tbody>
           <tr>
             <td class="ruta">crear cuenta</td>
+            <td><span class="tag t-verde">resuelto</span></td>
+            <td>El login tiene los dos modos y registra de verdad contra
+                <code>POST /auth/register</code>. <strong>Probado de punta a punta</strong>: cuenta
+                creada, sesión iniciada sola y entrada al dashboard sin escribir los datos dos veces.</td>
+          </tr>
+          <tr>
+            <td class="ruta">términos y privacidad</td>
             <td><span class="tag t-rojo">bloqueante</span></td>
-            <td>El backend tiene <code>POST /auth/register</code> y funciona. El enlace del login
-                es <code>href="#"</code>. <strong>No hay ningún camino para entrar</strong> salvo
-                tener una cuenta ya creada a mano.</td>
+            <td>El login dice "aceptas los Términos y la Política de privacidad"
+                (<code>login.terms</code>) y <strong>ninguno de los dos documentos existe</strong>:
+                solo hay tres rutas, <code>/</code>, <code>/login</code> y <code>/dashboard</code>.
+                Es lo único de esta lista que no se resuelve solo el día de publicar.</td>
           </tr>
           <tr>
             <td class="ruta">cerrar sesión</td>
-            <td><span class="tag t-rojo">bloqueante</span></td>
+            <td><span class="tag t-rojo">roto</span></td>
             <td>No existe en ninguna parte. El botón de la esquina superior derecha cambia el tema
                 y nada más. En un ordenador compartido, el siguiente que lo use entra con tu sesión.</td>
           </tr>
@@ -321,13 +329,8 @@
           <tr>
             <td class="ruta">Google / Apple</td>
             <td><span class="tag t-oro">a medias</span></td>
-            <td>Los botones están y se ven bien, pero no hacen nada. Apple se descartó por coste
-                (99 USD/año). Google sigue sin decisión.</td>
-          </tr>
-          <tr>
-            <td class="ruta">Preguntar a la IA</td>
-            <td><span class="tag t-oro">detenido</span></td>
-            <td>La etiqueta está en la cabecera, sin nada detrás. Fase E, detenida a propósito.</td>
+            <td>El botón de Google está y avisa de que aún no está. Apple se descartó por coste
+                (99 USD/año) y ya no aparece en pantalla.</td>
           </tr>
           <tr>
             <td class="ruta">mensajes de validación</td>
@@ -340,11 +343,11 @@
       </div>
 
       <div class="nota">
-        <strong>No todas estas seis son del mismo tipo</strong>, y por eso llevan etiquetas distintas:
-        <span class="tag t-rojo">defecto</span> es un fallo con una solución),
-        <span class="tag t-oro">despliegue</span> es una pieza que falta y sin la cual no se puede
-        instalar en un servidor limpio, y <span class="tag t-azul">característica</span> es algo que
-        nunca se construyó. Se mezclaron en la revisión que las{Y no كلها se arreglan igual}.
+        <strong>No todas estas son del mismo tipo</strong>, y por eso llevan etiquetas distintas:
+        <span class="tag t-rojo">bloqueante</span> impide lanzar,
+        <span class="tag t-rojo">roto</span> es un fallo con solución,
+        <span class="tag t-oro">a medias</span> está a medias, y
+        <span class="tag t-verde">resuelto</span> ya funciona. No todas se arreglan igual.
       </div>
     </div>
 
@@ -385,6 +388,19 @@
                 pueden hacer miles contra un email concreto.</td>
           </tr>
           <tr>
+            <td class="ruta">dirección del backend escrita a mano</td>
+            <td><span class="tag t-oro">despliegue</span></td>
+            <td><code>dashboard/page.tsx</code> y <code>login/page.tsx</code> — <code>"http://127.0.0.1:8000"</code></td>
+            <td>
+              <strong>No da ningún problema mientras se use en local</strong>: el navegador busca
+              en el propio ordenador y ahí está el backend. El día que haya un dominio, el
+              visitante buscará en <em>su</em> ordenador y no habrá nada: la web le saldrá vacía.<br>
+              Lo peligroso es que <strong>ninguna comprobación automática lo detecta</strong>: los
+              tipos son válidos, los tests usan el servidor real y el build compila. Solo se ve
+              probándolo desde fuera.
+            </td>
+          </tr>
+          <tr>
             <td class="ruta">SECRET_KEY</td>
             <td><span class="tag t-oro">despliegue</span></td>
             <td><code>security.py:10</code> — <code>os.getenv</code> y ya</td>
@@ -408,21 +424,20 @@
           </tr>
           <tr>
             <td class="ruta">crear cuenta desde la web</td>
-            <td><span class="tag t-azul">característica</span></td>
-            <td><code>login/page.tsx</code> — enlace <code>href="#"</code></td>
-            <td>El backend sí tiene <code>POST /auth/register</code> y funciona. Falta el formulario.
-                Sigue siendo el bloqueante número uno, y no aparece en la lista de la revisión
-                porque no es un fallo: nunca se construyó.</td>
+            <td><span class="tag t-verde">resuelto</span></td>
+            <td><code>login/page.tsx</code></td>
+            <td>El login tiene los dos modos y registra contra <code>POST /auth/register</code>.
+                <strong>Probado de punta a punta.</strong> No aparece como pendiente.</td>
           </tr>
         </tbody>
       </table>
       </div>
 
       <div class="nota oro">
-        <strong>Por qué el duplicado se salió de la revisión anterior:</strong> se______________________________________
-        miró si algo se rompía, no si algo se repitía. El resto de esta lista es de otra clase:
-        <strong>falta una pieza</strong> de despliegue. Son cosas que seBuild sin que nadie lo note,
-        hasta el día que hay que instalar el backend en un servidor y no hay forma.
+        <strong>Por qué el duplicado se salió de la revisión anterior:</strong> se miró si
+        algo se rompía, no si algo se repetía. El resto de esta lista es de otra clase:
+        <strong>falta una pieza</strong> de despliegue. Son cosas que se construyen sin que nadie
+        lo note, hasta el día que hay que instalarlo en un servidor y no hay forma.
       </div>
     </div>
   </section>
@@ -437,10 +452,13 @@
         <div class="cnum">capa 1</div>
         <h4>Lo que ve la persona</h4>
         <ul>
-          <li><code>web/app/page.tsx</code> — la landing</li>
-          <li><code>web/app/login/page.tsx</code></li>
-          <li><code>web/app/dashboard/page.tsx</code> — las 5 vistas</li>
-          <li><code>SummaryView</code>, <code>AnalyticsView</code>, <code>AvisoImportacion</code>, <code>PanelAnimado</code></li>
+          <li><code>app/page.tsx</code> — la landing, pero solo la monta</li>
+          <li><code>components/Landing.tsx</code> — el diseño entero</li>
+          <li><code>components/landingFx.ts</code> — sus animaciones</li>
+          <li><code>lib/landing/datos.ts</code> — las cifras de ejemplo</li>
+          <li><code>app/login/page.tsx</code> — entrar y registrarse</li>
+          <li><code>app/dashboard/page.tsx</code> — las 5 vistas</li>
+          <li><code>SummaryView</code>, <code>AnalyticsView</code>, <code>AvisoImportacion</code></li>
         </ul>
       </div>
       <div class="capa c2">
@@ -566,8 +584,8 @@
       <table>
         <thead><tr><th>Fichero</th><th>Qué hace</th></tr></thead>
         <tbody>
-          <tr><td class="ruta">es.ts</td><td>360 claves. La fuente de verdad: su tipo define el contrato.</td></tr>
-          <tr><td class="ruta">en.ts</td><td>Las mismas 360. Si sobra o falta una, TypeScript lo dice.</td></tr>
+          <tr><td class="ruta">es.ts</td><td>423 claves. La fuente de verdad: su tipo define el contrato.</td></tr>
+          <tr><td class="ruta">en.ts</td><td>Las mismas 423. Si sobra o falta una, TypeScript lo dice.</td></tr>
           <tr><td class="ruta">config.ts</td><td>La lógica: traducir, interpolar, plurales. Sin dependencias de React, para poder llamarla desde el servidor.</td></tr>
           <tr><td class="ruta">LocaleProvider.tsx</td><td>El contexto de React. Es lo único que lleva "use client".</td></tr>
           <tr><td class="ruta">apiErrors.ts</td><td>Traduce los 15 códigos de error de la API, y los de Pydantic.</td></tr>
