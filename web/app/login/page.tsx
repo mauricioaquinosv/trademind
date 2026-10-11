@@ -24,7 +24,7 @@ import LanguageSwitcher from "../../lib/i18n/LanguageSwitcher";
 import { montarRejilla } from "../components/landingFx";
 import { Logo } from "../components/Landing";
 
-const API = "http://127.0.0.1:8000";
+const API = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000").replace(/\/+$/, "");
 
 /* Una sola pantalla con dos modos. Se entra en "registro" porque quien llega
    desde la landing es, casi siempre, un usuario nuevo; "entrar" es el enlace de

@@ -8,6 +8,27 @@ from passlib.context import CryptContext
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
+
+# Sin SECRET_KEY la app arrancaba bien y fallaba en el primer login con un 500
+# (jose no puede firmar un token con clave None). En un despliegue nadie prueba
+# el login, solo se mira que la web cargue, asi que el fallo aparecia cuando un
+# usuario real intentaba entrar. Mejor que se niegue a arrancar y diga que hacer.
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY no esta definida. Generala con: "
+        'python -c "import secrets; print(secrets.token_urlsafe(48))" '
+        "y ponla en el archivo .env (o en las variables de entorno del servidor)."
+    )
+if len(SECRET_KEY) < 32:
+    # No se bloquea (podria romper un .env local ya existente), pero HS256
+    # pide una clave de al menos 32 caracteres: en produccion debe cumplirlo.
+    import warnings
+
+    warnings.warn(
+        "SECRET_KEY tiene menos de 32 caracteres; en produccion usa una de 32 o mas.",
+        stacklevel=1,
+    )
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 horas
 
