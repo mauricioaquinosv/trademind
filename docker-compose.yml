@@ -12,7 +12,12 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      # Solo lo escucha tu propio equipo. Con "5432:5432" a pelo, Docker lo
+      # publica en 0.0.0.0, o sea en TODAS las interfaces: la base de datos
+      # respondia en 192.168.0.4:5432 y cualquiera de la misma WiFi podia
+      # intentar conectarse. Tu app va por localhost, asi que con esto no
+      # cambia nada para ella y deja de verse desde la red.
+      - "127.0.0.1:5432:5432"
     volumes:
       - trademind_pgdata:/var/lib/postgresql/data
     healthcheck:
