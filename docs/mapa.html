@@ -328,6 +328,28 @@
 
 
 
+  section > h4{margin:22px 0 8px;font-size:15.5px;font-weight:600;color:var(--teal)}
+
+  .aviso{
+    margin-top:14px;padding:12px 15px;border-radius:11px;
+    font-size:13.5px;line-height:1.6;
+  }
+  .aviso b{color:var(--text);font-weight:600}
+  .aviso.oro{background:rgba(242,169,59,.08);border:1px solid rgba(242,169,59,.24);color:#E8D5AA}
+  .aviso.rojo{background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.24);color:#F5B9C4}
+  .aviso.verde{background:rgba(47,216,184,.08);border:1px solid rgba(47,216,184,.24);color:#A9EEE0}
+
+  pre{
+    margin-top:14px;background:var(--solid);border:1px solid var(--line);border-radius:11px;
+    padding:13px 15px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;
+    line-height:1.75;color:var(--teal);
+  }
+  pre .c{color:var(--muted2)}
+
+  .estado-lista{margin:0;padding-left:18px;color:var(--muted);font-size:13.5px}
+  .estado-lista li{margin:6px 0}
+  .estado-lista b{color:var(--text)}
+
   footer{margin-top:50px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted2);font-size:12.5px}
 
 </style>
@@ -349,6 +371,10 @@
   <div class="sub">mapa del sitio · QA</div>
 
   <nav id="nav">
+
+    <div class="grp">Proyecto</div>
+
+    <a href="#proyecto">El estado</a>
 
     <div class="grp">Producto</div>
 
@@ -424,11 +450,228 @@
 
 
 
+
+  <!-- ==================== 1. EL ESTADO DEL PROYECTO ==================== -->
+
+  <section id="proyecto">
+
+    <h3><span class="n">01</span> El estado del proyecto</h3>
+
+    <p class="lead">
+      Una foto de dónde está TradeMind hoy: qué funciona, qué es solo diseño y qué falta.
+      Escrito para leerse sin saber nada del código.
+    </p>
+
+    <div class="meta">
+      <span class="tag t-verde">69 commits</span>
+      <span class="tag t-verde">140 ficheros</span>
+      <span class="tag t-verde">todo subido a GitHub</span>
+      <span class="tag t-azul">11 rutas · 14 endpoints</span>
+      <span class="tag t-azul">602 claves × 2 idiomas</span>
+      <span class="tag t-verde">272 + 167 tests</span>
+      <span class="tag t-rojo">sin cobros</span>
+    </div>
+
+    <div class="card">
+
+      <h4>Lo que funciona de verdad</h4>
+
+      <div class="tw">
+      <table>
+        <thead><tr><th>Zona</th><th>Qué hace</th></tr></thead>
+        <tbody>
+          <tr><td class="ruta">/auth</td><td>Registro y login</td></tr>
+          <tr><td class="ruta">/accounts</td><td>Crear, listar, editar y borrar cuentas</td></tr>
+          <tr><td class="ruta">/trades</td><td>Subir archivo, listar, crear, editar, borrar</td></tr>
+          <tr><td class="ruta">/health</td><td>Comprobar que el backend está vivo</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p style="margin-top:14px">
+        <b>Probado de punta a punta:</b> creas cuenta, entra solo, subes un reporte de MT5 y ves
+        tus métricas reales. Cinco tablas: <code>users</code>, <code>accounts</code>,
+        <code>trades</code>, <code>login_fallidos</code> y <code>alembic_version</code>.
+        Seis migraciones, escritas a mano.
+      </p>
+
+      <div class="aviso verde">
+        <b>Por qué las migraciones son a mano:</b> <code>--autogenerate</code> compara contra la
+        base de desarrollo, que se creó con <code>create_all</code>. Escribiría una migración
+        vacía y daría por bueno que no hay cambios que hacer.
+      </div>
+
+      <p style="margin-top:14px">
+        <b>Todo traducido.</b> El español manda: su tipo define qué claves existen y el inglés
+        está tipado contra él. Si se añade una clave en un idioma y no en el otro,
+        <b>no compila</b>. 602 claves en cada uno.
+      </p>
+
+    </div>
+
+    <div class="card">
+
+      <h4>Lo que es solo diseño</h4>
+
+      <p style="margin:0 0 10px">
+        Las cinco rutas de suscripción: <code>/plan</code>, <code>/pago</code>,
+        <code>/bienvenida</code>, <code>/facturacion</code> y <code>/acceso-pausado</code>.
+        <b>Ninguna cobra y ningún botón hace nada.</b> El estado se lee de <code>?estado=</code>
+        en la URL porque no hay tabla de suscripciones. El detalle está en la sección 13.
+      </p>
+
+      <ul class="estado-lista">
+        <li><b>Lo que sí es permanente:</b> las cifras viven en <code>lib/plan/datos.ts</code>,
+          no dentro de los textos. Cambias el precio en <b>un sitio</b> y se actualiza en las dos
+          pantallas y los dos idiomas.</li>
+        <li>El día del aviso se <b>calcula</b> (7 − 2 = 5), no está escrito.</li>
+        <li>La aritmética de fechas usa <code>setDate</code>, no sumar milisegundos. Con el
+          cambio de hora eso se va un día.</li>
+        <li>Las tipografías que faltaban (Bricolage Grotesque e Instrument Sans) ya cargan.</li>
+      </ul>
+
+      <div class="aviso rojo">
+        <b>El día 7 sigue sin decidirse.</b> Qué pasa con alguien que entró durante la prueba
+        cuando llega el cobro. Ahora se esquiva borrando las cuentas de prueba, pero
+        <b>no desaparece</b>: es la decisión de producto más grande de todo el bloque.
+      </div>
+
+    </div>
+
+    <div class="card">
+
+      <h4>Lo que falta</h4>
+
+      <p style="margin:0 0 8px"><b>Bloquea publicar</b></p>
+      <div class="tw">
+      <table>
+        <thead><tr><th>Qué</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td><b>Los 5 datos legales</b></td><td>Nombre, NIF, email, contacto y fecha. En <code>web/lib/legal/datos.ts</code>. Decidido: no ponerlos aún</td></tr>
+          <tr><td><b>La empresa</b></td><td>Sin ella no hay cuenta de 4Geeks ni cobros. Trámite iniciado, ~3 días</td></tr>
+          <tr><td><b>El hosting</b></td><td>Neon, Render, Cloudflare y StatusCake sin crear</td></tr>
+          <tr><td><b>El dominio</b></td><td>Sin comprar</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p style="margin:18px 0 8px"><b>Funciona mal hoy</b></p>
+      <div class="tw">
+      <table>
+        <thead><tr><th>Qué</th><th>Detalle</th></tr></thead>
+        <tbody>
+          <tr><td><b>SECRET_KEY de 11 caracteres</b></td><td>Débil. El código ya avisa al arrancar, pero sigue sin cambiarse</td></tr>
+          <tr><td><b>"Olvidé mi contraseña"</b></td><td>Sigue siendo <code>href="#"</code></td></tr>
+          <tr><td><b>Mensajes de Pydantic</b></td><td>Salen en inglés fijo</td></tr>
+          <tr><td><b>GET /trades/ sin paginar</b></td><td>La paginación se hace en el navegador</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p style="margin:18px 0 8px"><b>No existe</b></p>
+      <ul class="estado-lista">
+        <li><b>El motor de suscripciones entero.</b> No hay tabla, ni cobro, ni webhook, ni
+          aviso del día 5.</li>
+        <li><b>Quién manda el email del día 5.</b> Hace falta un servicio aparte (Resend,
+          SendGrid). Sin dueño.</li>
+        <li><b>La decisión del día 7</b> con quien entró durante la prueba.</li>
+      </ul>
+
+    </div>
+
+    <div class="card">
+
+      <h4>Lo último que se hizo: el lote 1</h4>
+
+      <p style="margin:0 0 10px">
+        Es lo único que hace falta para poder desplegar. Sin eso no hay formulario de 4Geeks
+        que rellenar.
+      </p>
+
+      <div class="tw">
+      <table>
+        <thead><tr><th>Fichero</th><th>Para qué</th></tr></thead>
+        <tbody>
+          <tr><td class="ruta">requirements.txt</td><td>Las 13 librerías con <b>tus</b> versiones probadas, no las más nuevas</td></tr>
+          <tr><td class="ruta">.python-version</td><td>3.14, la misma que usas tú</td></tr>
+          <tr><td class="ruta">.env.example</td><td>Plantilla con el aviso del <code>+psycopg2</code></td></tr>
+          <tr><td class="ruta">app/security.py</td><td><code>SECRET_KEY</code> falta al arrancar, no en el primer login</td></tr>
+          <tr><td class="ruta">app/database.py</td><td><code>pool_pre_ping</code> para que Neon no dé errores al despertar</td></tr>
+          <tr><td class="ruta">login · dashboard</td><td>La URL del backend por variable de entorno</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <div class="aviso">
+        <b>El hallazgo del driver.</b> SQLAlchemy 2.1 busca psycopg3 cuando la URL no dice nada,
+        no lo encuentra y la app no arranca. Pasaba <b>solo</b> con la URL de Neon, que viene sin
+        driver: en local funciona porque tu <code>.env</code> lo lleva escrito. Se resuelve con
+        <code>+psycopg2</code> en la URL, no bajando de versión.
+      </div>
+
+    </div>
+
+    <div class="card">
+
+      <h4>Cómo levantarlo</h4>
+
+      <pre><span class="c"># Docker Desktop tiene que estar abierto. Sin él, se cae el backend.</span>
+
+cd C:\trademind\web        npm run dev          <span class="c"># la web, en :3000</span>
+
+cd C:\trademind
+.\venv\Scripts\python.exe -m pytest            <span class="c"># 272 tests de backend</span>
+cd web; npm test                                <span class="c"># 167 tests de frontend</span>
+cd web; npx tsc --noEmit                        <span class="c"># los tipos</span>
+cd web; npm run build                           <span class="c"># que compile de verdad</span></pre>
+
+      <p style="margin:0">
+        Como el backend es Python y la web Next.js, <b>hay dos carpetas con su propio
+        <code>package.json</code></b>. Regla fácil: si el comando lleva <code>npm</code>, estás
+        en <code>web</code>. Si lleva <code>pytest</code>, <code>alembic</code> o
+        <code>docker</code>, estás en la raíz.
+      </p>
+
+    </div>
+
+    <div class="card rojo">
+
+      <h4>Lo siguiente</h4>
+
+      <div class="rej c2">
+        <div class="t-caja"><div class="cab2"><span>tú</span></div>
+          <ul>
+            <li>Crear las cuentas: Neon, Render, Cloudflare, StatusCake</li>
+            <li>Comprar el dominio</li>
+            <li>Generar una <code>SECRET_KEY</code> nueva (la tuya tiene 11 caracteres)</li>
+            <li>Preguntar a 4Geeks si un diario de trading es negocio permitido</li>
+          </ul>
+        </div>
+        <div class="t-caja"><div class="cab2"><span>yo</span></div>
+          <ul>
+            <li>Desplegar con el lote 1 ya listo</li>
+            <li>Revisar los lotes 2, 3 y 4: tabla de suscripciones, pagos simulados, frontend</li>
+            <li>Commitear y subir cada lote revisado</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="aviso rojo" style="margin-top:16px">
+        <b>Lo más urgente de todo:</b> preguntar a 4Geeks si un diario de trading que no ejecuta
+        operaciones ni asesora es un negocio permitido. Es gratis, se pregunta hoy, y si la
+        respuesta es no te ahorras registrar la empresa.
+      </div>
+
+    </div>
+
+  </section>
+
+
   <!-- ==================== 1. RECORRIDO ==================== -->
 
   <section id="recorrido">
 
-    <h3><span class="n">01</span> El recorrido de una persona</h3>
+    <h3><span class="n">02</span> El recorrido de una persona</h3>
 
     <p class="lead">De dónde entra a dónde sale. Las líneas rojas son donde se rompe el camino.</p>
 
@@ -635,7 +878,7 @@
 
   <section id="bloqueos">
 
-    <h3><span class="n">02</span> Lo que está roto</h3>
+    <h3><span class="n">03</span> Lo que está roto</h3>
 
     <p class="lead">Lo que queda sin terminar. El registro y el cierre de sesión ya no están aquí: los dos funcionan.</p>
 
@@ -932,7 +1175,7 @@
 
   <section id="capas">
 
-    <h3><span class="n">03</span> Las cuatro capas</h3>
+    <h3><span class="n">04</span> Las cuatro capas</h3>
 
     <p class="lead">De fuera hacia dentro. Cada capa habla con la de abajo por un contrato: rutas HTTP, códigos de error y códigos de rechazo.</p>
 
@@ -1060,7 +1303,7 @@
 
   <section id="api">
 
-    <h3><span class="n">04</span> Los 14 endpoints</h3>
+    <h3><span class="n">05</span> Los 14 endpoints</h3>
 
     <p class="lead">Tres grupos de prefijos, más <code>/health</code>. Ninguno pide el token por decorador: lo comprueban a mano. Lo que impide ver las cuentas de otro usuario es <code>get_current_user</code>, no la ruta.</p>
 
@@ -1134,7 +1377,7 @@
 
   <section id="datos">
 
-    <h3><span class="n">05</span> El modelo de datos</h3>
+    <h3><span class="n">06</span> El modelo de datos</h3>
 
     <p class="lead">Tres tablas. La relación es Usuario → Cuenta → Trade, y cada una lleva su <code>user_id</code> para que el aislamiento no dependa de la cuenta.</p>
 
@@ -1204,7 +1447,7 @@
 
   <section id="traduccion">
 
-    <h3><span class="n">06</span> La traducción</h3>
+    <h3><span class="n">07</span> La traducción</h3>
 
     <p class="lead"><strong>El español manda.</strong> Su tipo define qué claves existen, y el inglés está tipado contra él. Añadir una clave en español y no traducirla hace fallar la compilación. Es imposible que se escape sin que se note.</p>
 
@@ -1276,7 +1519,7 @@
 
   <section id="navegador">
 
-    <h3><span class="n">07</span> Lo que se guarda en el navegador</h3>
+    <h3><span class="n">08</span> Lo que se guarda en el navegador</h3>
 
     <p class="lead">Sin servidor de sesiones. Cinco claves en <code>localStorage</code>, y el idioma también en cookie.</p>
 
@@ -1320,7 +1563,7 @@
 
   <section id="qa">
 
-    <h3><span class="n">08</span> La QA, por zonas</h3>
+    <h3><span class="n">09</span> La QA, por zonas</h3>
 
     <p class="lead">La lista entera, con casillas para tachar, está en <code>docs/mapa-y-qa.md</code>. Esto es el índice. No lleva orden ni prioridades: el recorrido es tuyo.</p>
 
@@ -1362,7 +1605,7 @@
 
     <section id="seguridad">
 
-    <h3><span class="n">09</span> Seguridad del backend</h3>
+    <h3><span class="n">10</span> Seguridad del backend</h3>
 
     <p class="lead">Revisada punto por punto contra el código. Cada uno lleva su estado real, no el que parecía.</p>
 
@@ -1496,7 +1739,7 @@
 
   <section id="qa2">
 
-    <h3><span class="n">10</span> Los pendientes, en una lista</h3>
+    <h3><span class="n">11</span> Los pendientes, en una lista</h3>
 
     <p class="lead">Todo lo que queda, ordenado por lo que estorba. La versión para tachar, con el detalle de cada uno, está en <code>docs/mapa-y-qa.md</code>.</p>
 
@@ -1600,7 +1843,7 @@
 
 <section id="notas">
 
-    <h3><span class="n">11</span> Cómo se prueba</h3>
+    <h3><span class="n">12</span> Cómo se prueba</h3>
 
     <p class="lead">Las trampas del entorno, para no perder tiempo con ellas.</p>
 
@@ -1695,7 +1938,7 @@
 
   <section id="suscripcion">
 
-    <h3><span class="n">10</span> El flujo de suscripción</h3>
+    <h3><span class="n">13</span> El flujo de suscripción</h3>
 
     <p class="lead">Las ocho pantallas del diseño, montadas como maqueta. <strong>Ninguna cobra.</strong>
     El estado se lee de la URL porque todavía no hay tabla de suscripciones.</p>

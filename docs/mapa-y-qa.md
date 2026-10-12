@@ -522,7 +522,7 @@ Esto no lo pruebas tu, corre solo. Sirve para saber si se ha roto algo de lo
 de arriba:
 
 ```
-.\venv\Scripts\python.exe -m pytest     -> 261 tests de backend
+.\venv\Scripts\python.exe -m pytest     -> 272 tests de backend
 cd web; npm test                         -> 167 tests de frontend
 cd web; npm run test:traduccion          -> el guard de las cadenas sueltas
 cd web; npx tsc --noEmit                 -> los tipos

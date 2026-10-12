@@ -1,0 +1,375 @@
+<!doctype html>
+
+<html lang="es">
+
+<head>
+
+<meta charset="utf-8" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>TradeMind — Estado del proyecto</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+
+  :root{
+    --bg:#05060B; --panel:rgba(19,21,32,.72); --solid:#14151F;
+    --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.16);
+    --text:#F1F2F6; --muted:#8E93A6; --muted2:#5C6178;
+    --green:#2FD8B8; --red:#FF4D6D; --gold:#F2A93B; --pink:#E22FA0; --teal:#2FD8C8;
+    --sans:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,"Cascadia Code",Consolas,monospace;
+  }
+
+  *{box-sizing:border-box}
+
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:var(--sans);font-size:15px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  code,.mono{font-family:var(--mono);font-size:.88em;color:var(--teal)}
+
+  .lienzo{max-width:1000px;margin:0 auto;padding:40px 24px 90px}
+
+  /* ---------- cabecera ---------- */
+
+  .cab{border-bottom:1px solid var(--line);padding-bottom:24px;margin-bottom:34px}
+
+  .cab h1{font-size:32px;margin:0 0 8px;letter-spacing:-.02em}
+
+  .cab .sub{color:var(--muted);font-size:14.5px;max-width:75ch;margin:0}
+
+  .meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+
+  .tag{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:4px 10px;border-radius:999px;font-family:var(--mono);
+    font-size:11.5px;font-weight:500;border:1px solid var(--line2);color:var(--muted);
+  }
+  .t-verde{background:rgba(47,216,184,.12);border-color:rgba(47,216,184,.3);color:var(--green)}
+  .t-rojo{background:rgba(255,77,109,.12);border-color:rgba(255,77,109,.3);color:var(--red)}
+  .t-oro{background:rgba(242,169,59,.12);border-color:rgba(242,169,59,.3);color:var(--gold)}
+  .t-azul{background:rgba(47,216,200,.10);border-color:rgba(47,216,200,.28);color:var(--teal)}
+
+  /* ---------- secciones ---------- */
+
+  h2{
+    font-size:21px;margin:44px 0 6px;letter-spacing:-.01em;
+    display:flex;align-items:center;gap:10px;
+  }
+  h2 .n{font-family:var(--mono);font-size:11px;color:var(--muted2)}
+  h3{font-size:16.5px;margin:26px 0 8px;font-weight:600;color:var(--teal)}
+
+  p{margin:0 0 12px;color:var(--muted)}
+  p b,li b{color:var(--text);font-weight:600}
+  .lead{color:var(--muted);font-size:14.5px;margin:0 0 18px;max-width:80ch}
+
+  ul{margin:0 0 14px;padding-left:20px;color:var(--muted)}
+  li{margin:5px 0}
+
+  /* ---------- tablas ---------- */
+
+  .tabla{margin:0 0 20px;overflow-x:auto}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+
+  th{
+    text-align:left;padding:9px 12px;border-bottom:1px solid var(--line2);
+    color:var(--muted2);font-family:var(--mono);font-size:11.5px;
+    font-weight:500;letter-spacing:.04em;text-transform:uppercase;
+  }
+
+  td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--muted)}
+
+  td b{color:var(--text)}
+
+  tr:last-child td{border-bottom:0}
+
+  /* ---------- cajas ---------- */
+
+  .caja{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:18px 20px;margin:0 0 16px;
+  }
+
+  .aviso{
+    border-radius:14px;padding:16px 18px;margin:0 0 16px;font-size:14.5px;
+    background:rgba(242,169,59,.07);border:1px solid rgba(242,169,59,.22);color:#E8D5AA;
+  }
+  .aviso.rojo{background:rgba(255,77,109,.07);border-color:rgba(255,77,109,.22);color:#F5B9C4}
+  .aviso.verde{background:rgba(47,216,184,.07);border-color:rgba(47,216,184,.22);color:#A9EEE0}
+  .aviso b{color:var(--text);font-weight:600}
+
+  /* ---------- codigo ---------- */
+
+  pre{
+    background:var(--solid);border:1px solid var(--line);border-radius:12px;
+    padding:14px 16px;overflow-x:auto;margin:0 0 18px;
+    font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--teal);
+  }
+  pre .c{color:var(--muted2)}
+
+  /* ---------- dos columnas ---------- */
+
+  .dos{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.dos{grid-template-columns:1fr}}
+
+  .pie{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted2);font-size:12.5px;font-family:var(--mono)}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="lienzo">
+
+  <div class="cab">
+    <h1>TradeMind — estado del proyecto</h1>
+    <p class="sub">
+      Diario de trading. Subes el reporte de tu broker y te calcula winrate, profit factor,
+      días, horas y riesgo. En español e inglés. Backend en Python (FastAPI), frontend en
+      Next.js, base de datos Postgres.
+    </p>
+    <div class="meta">
+      <span class="tag t-verde">69 commits</span>
+      <span class="tag t-verde">140 ficheros</span>
+      <span class="tag t-verde">todo subido a GitHub</span>
+      <span class="tag t-azul">11 rutas · 14 endpoints</span>
+      <span class="tag t-azul">602 claves × 2 idiomas</span>
+      <span class="tag t-verde">272 + 167 tests</span>
+      <span class="tag t-rojo">sin cobros</span>
+    </div>
+  </div>
+
+  <p class="lead">
+    Este fichero es una foto del proyecto. Lo que funciona, lo que es solo diseño y lo que
+    falta. Está escrito para poder leerlo de arriba abajo sin saber nada del código.
+  </p>
+
+
+
+  <h2><span class="n">01</span> Lo que funciona de verdad</h2>
+
+  <h3>Backend — 14 endpoints, 5 tablas</h3>
+
+  <div class="tabla">
+  <table>
+    <thead><tr><th>Zona</th><th>Qué hace</th></tr></thead>
+    <tbody>
+      <tr><td><b>/auth</b></td><td>Registro y login</td></tr>
+      <tr><td><b>/accounts</b></td><td>Crear, listar, editar y borrar cuentas</td></tr>
+      <tr><td><b>/trades</b></td><td>Subir archivo, listar, crear, editar, borrar</td></tr>
+      <tr><td><b>/health</b></td><td>Comprobar que el backend está vivo</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>
+    <b>Probado de punta a punta:</b> creas cuenta, entra solo, subes un reporte de MT5 y ves tus
+    métricas reales. Cinco tablas: <code>users</code>, <code>accounts</code>,
+    <code>trades</code>, <code>login_fallidos</code> y <code>alembic_version</code>.
+    Seis migraciones, escritas a mano.
+  </p>
+
+  <div class="aviso verde">
+    <b>Por qué las migraciones son a mano:</b> <code>--autogenerate</code> compara contra la base
+    de desarrollo, que se creó con <code>create_all</code>. Escribiría una migración vacía y
+    daría por bueno que no hay cambios que hacer.
+  </div>
+
+  <h3>Frontend — 11 rutas</h3>
+
+  <div class="tabla">
+  <table>
+    <thead><tr><th>Ruta</th><th>Qué es</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td><b>/</b></td><td>La landing pública</td><td><span class="tag t-verde">funciona</span></td></tr>
+      <tr><td><b>/login</b></td><td>Entrar y registrarse, en la misma pantalla</td><td><span class="tag t-verde">funciona</span></td></tr>
+      <tr><td><b>/dashboard</b></td><td>5 vistas: Resumen, Trades, Cuentas, Analytics, Importar</td><td><span class="tag t-verde">funciona</span></td></tr>
+      <tr><td><b>/legal</b> · <b>/privacidad</b> · <b>/terminos</b></td><td>Las tres páginas legales</td><td><span class="tag t-oro">faltan datos</span></td></tr>
+      <tr><td><b>/plan</b></td><td>El plan: 7 días gratis, después $9,99/mes</td><td><span class="tag t-oro">diseño</span></td></tr>
+      <tr><td><b>/pago</b></td><td>Resumen + formulario de tarjeta</td><td><span class="tag t-oro">diseño</span></td></tr>
+      <tr><td><b>/bienvenida</b></td><td>Cuándo acaba la prueba y cuándo es el primer cobro</td><td><span class="tag t-oro">diseño</span></td></tr>
+      <tr><td><b>/facturacion</b></td><td>5 estados de la suscripción</td><td><span class="tag t-oro">diseño</span></td></tr>
+      <tr><td><b>/acceso-pausado</b></td><td>2 motivos de pausa</td><td><span class="tag t-oro">diseño</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>
+    <b>Todo traducido.</b> El español manda: su tipo define qué claves existen y el inglés está
+    tipado contra él. Si se añade una clave en un idioma y no en el otro, <b>no compila</b>.
+    602 claves en cada uno.
+  </p>
+
+
+
+  <h2><span class="n">02</span> Lo que es solo diseño</h2>
+
+  <p>
+    Las cinco rutas de suscripción. <b>Ninguna cobra y ningún botón hace nada.</b> El estado se
+    lee de <code>?estado=</code> en la URL porque no hay tabla de suscripciones.
+  </p>
+
+  <div class="caja">
+    <p style="margin:0 0 10px"><b>Lo que sí está resuelto y es permanente:</b></p>
+    <ul style="margin:0">
+      <li>Las cifras viven en <code>lib/plan/datos.ts</code>, no dentro de los textos. Cambias el precio en <b>un sitio</b> y se actualiza en las dos pantallas y los dos idiomas.</li>
+      <li>El día del aviso se <b>calcula</b> (7 − 2 = 5), no está escrito.</li>
+      <li>La aritmética de fechas usa <code>setDate</code>, no sumar milisegundos. Con el cambio de hora eso se va un día.</li>
+      <li>Las tipografías que faltaban (Bricolage Grotesque e Instrument Sans) ya cargan. Sin ellas todo caía en Segoe UI y se veía más grande de lo diseñado.</li>
+    </ul>
+  </div>
+
+  <div class="aviso rojo">
+    <b>El día 7 sigue sin decidirse.</b> Qué pasa con alguien que entró durante la prueba cuando
+    llega el cobro. Ahora se esquiva borrando las cuentas de prueba, pero <b>no desaparece</b>:
+    es la decisión de producto más grande de todo el bloque.
+  </div>
+
+
+
+  <h2><span class="n">03</span> Lo que falta</h2>
+
+  <h3>Bloquea publicar</h3>
+
+  <div class="tabla">
+  <table>
+    <thead><tr><th>Qué</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td><b>Los 5 datos legales</b></td><td>Nombre, NIF, email, contacto y fecha. En <code>web/lib/legal/datos.ts</code>. Decidido: no ponerlos aún</td></tr>
+      <tr><td><b>La empresa</b></td><td>Sin ella no hay cuenta de 4Geeks ni cobros. Trámite iniciado, ~3 días</td></tr>
+      <tr><td><b>El hosting</b></td><td>Neon, Render, Cloudflare y StatusCake sin crear</td></tr>
+      <tr><td><b>El dominio</b></td><td>Sin comprar</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Funciona mal hoy</h3>
+
+  <div class="tabla">
+  <table>
+    <thead><tr><th>Qué</th><th>Detalle</th></tr></thead>
+    <tbody>
+      <tr><td><b>SECRET_KEY de 11 caracteres</b></td><td>Débil. El código ya avisa al arrancar, pero sigue sin cambiarse</td></tr>
+      <tr><td><b>"Olvidé mi contraseña"</b></td><td>Sigue siendo <code>href="#"</code></td></tr>
+      <tr><td><b>Mensajes de Pydantic</b></td><td>Salen en inglés fijo</td></tr>
+      <tr><td><b>GET /trades/ sin paginar</b></td><td>La paginación se hace en el navegador</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>No existe</h3>
+
+  <ul>
+    <li><b>El motor de suscripciones entero.</b> No hay tabla, ni cobro, ni webhook, ni aviso del día 5.</li>
+    <li><b>Quién manda el email del día 5.</b> Hace falta un servicio aparte (Resend, SendGrid). Sin dueño.</li>
+    <li><b>La decisión del día 7</b> con quien entró durante la prueba.</li>
+  </ul>
+
+
+
+  <h2><span class="n">04</span> Lo último que se hizo</h2>
+
+  <p>
+    <b>Lote 1: que la app pueda salir de tu ordenador.</b> Es lo único que hace falta para poder
+    desplegar. Sin eso no hay formulario de 4Geeks que rellenar.
+  </p>
+
+  <div class="tabla">
+  <table>
+    <thead><tr><th>Fichero</th><th>Para qué</th></tr></thead>
+    <tbody>
+      <tr><td><code>requirements.txt</code></td><td>Las 13 librerías con <b>tus</b> versiones probadas, no las más nuevas</td></tr>
+      <tr><td><code>.python-version</code></td><td>3.14, la misma que usas tú</td></tr>
+      <tr><td><code>.env.example</code></td><td>Plantilla con el aviso del <code>+psycopg2</code></td></tr>
+      <tr><td><code>app/security.py</code></td><td><code>SECRET_KEY</code> falta al arrancar, no en el primer login</td></tr>
+      <tr><td><code>app/database.py</code></td><td><code>pool_pre_ping</code> para que Neon no dé errores al despertar</td></tr>
+      <tr><td><code>web/app/login/page.tsx</code></td><td>La URL del backend por variable de entorno</td></tr>
+      <tr><td><code>web/app/dashboard/page.tsx</code></td><td>Lo mismo</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="aviso">
+    <b>El hallazgo del driver.</b> SQLAlchemy 2.1 busca psycopg3 cuando la URL no dice nada, no lo
+    encuentra y la app no arranca. Pasaba <b>solo</b> con la URL de Neon, que viene sin driver:
+    en local funciona porque tu <code>.env</code> lo lleva escrito. Se resuelve con
+    <code>+psycopg2</code> en la URL, no bajando de versión. Así local y producción usan lo mismo.
+  </div>
+
+  <div class="aviso">
+    <b>Y una trampa del entorno.</b> PowerShell borra la variable cuando la pones vacía, en vez de
+    dejarla vacía. Una prueba manual dijo que el <code>SECRET_KEY</code> funcionaba cuando no. La
+    prueba de verdad es por subprocess, que es como están hechos los tests.
+  </div>
+
+
+
+  <h2><span class="n">05</span> Cómo levantarlo</h2>
+
+  <pre><span class="c"># Docker Desktop tiene que estar abierto. Sin él, se cae el backend.</span>
+
+cd C:\trademind\web        npm run dev          <span class="c"># la web, en :3000</span>
+
+cd C:\trademind
+.\venv\Scripts\python.exe -m pytest            <span class="c"># 272 tests de backend</span>
+cd web; npm test                                <span class="c"># 167 tests de frontend</span>
+cd web; npx tsc --noEmit                        <span class="c"># los tipos</span>
+cd web; npm run build                           <span class="c"># que compile de verdad</span></pre>
+
+  <p>
+    Como el backend es Python y la web Next.js, <b>hay dos carpetas con su propio
+    <code>package.json</code></b>. Regla fácil: si el comando lleva <code>npm</code>, estás en
+    <code>web</code>. Si lleva <code>pytest</code>, <code>alembic</code> o <code>docker</code>,
+    estás en la raíz.
+  </p>
+
+
+
+  <h2><span class="n">06</span> Lo siguiente</h2>
+
+  <div class="dos">
+
+    <div class="caja">
+      <p style="margin:0 0 8px"><b>Tú</b></p>
+      <ul style="margin:0">
+        <li>Crear las cuentas: Neon, Render, Cloudflare, StatusCake</li>
+        <li>Comprar el dominio</li>
+        <li>Generar una <code>SECRET_KEY</code> nueva (la tuya tiene 11 caracteres)</li>
+        <li>Preguntar a 4Geeks si un diario de trading es negocio permitido</li>
+      </ul>
+    </div>
+
+    <div class="caja">
+      <p style="margin:0 0 8px"><b>Yo</b></p>
+      <ul style="margin:0">
+        <li>Desplegar con el lote 1 ya listo</li>
+        <li>Revisar los lotes 2, 3 y 4: tabla de suscripciones, pagos simulados, frontend</li>
+        <li>Commitear y subir cada lote revisado</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="aviso rojo">
+    <b>Lo más urgente de todo:</b> preguntar a 4Geeks si un diario de trading que no ejecuta
+    operaciones ni asesora es un negocio permitido. Es gratis, se pregunta hoy, y si la respuesta
+    es no te ahorras registrar la empresa.
+  </div>
+
+  <p class="pie">
+    f0e7057 · 69 commits · 140 ficheros · 272 + 167 tests en verde
+  </p>
+
+</div>
+
+</body>
+
+</html>
