@@ -25,6 +25,27 @@ class ManualTemplateParser:
     """Traduce la plantilla propia de TradeMind (fecha/hora separadas) a ClosedTrade."""
 
     def parse(self, file_path: str) -> List[ClosedTrade]:
+        """Las operaciones de la plantilla, sin nada mas.
+
+        Se mantiene por compatibilidad: la usaban el resto de codigo y los
+        tests. Para el aviso de operaciones rechazadas hace falta saber de
+        que fila salio cada una, y eso lo da `parse_con_filas`.
+        """
+        trades, _filas = self.parse_con_filas(file_path)
+        return trades
+
+    def parse_con_filas(self, file_path: str):
+        """Igual que parse, pero cada operacion viene con su fila en el archivo.
+
+        Devuelve (trades, filas): dos listas del mismo tamano y en el mismo
+        orden, porque `trades.py` las usa pareadas para asignar a cada
+        rechazo su numero de linea. La fila es la que ve el usuario en su
+        Excel contando desde 1, con la 1 siendo la de los encabezados.
+
+        Antes la plantilla no tenia este metodo, asi que el endpoint rellenaba
+        `filas = [None] * n` y el usuario recibia el motivo del rechazo sin
+        saber cual era la linea que lo provocaba. MT4 y MT5 si lo traian.
+        """
         raw = read_any_table(file_path)
 
         header_row = [str(c).strip() for c in raw.iloc[0].tolist()]
@@ -37,6 +58,7 @@ class ManualTemplateParser:
             )
 
         trades: List[ClosedTrade] = []
+        filas: List[int] = []
 
         for i in range(1, len(raw)):
             row = raw.iloc[i].tolist()
@@ -59,6 +81,17 @@ class ManualTemplateParser:
             else:
                 direction = tipo
 
+            # `fila` es i+1 porque el indice de pandas empieza en 0, mientras
+            # que el usuario ve su Excel contando desde 1 (la 1 es el
+            # encabezado). Es el mismo criterio que MT4 y MT5.
+            #
+            # Las filas que el `continue` de arriba salta NO desplazan el
+            # numero: es el del archivo, no un contador de operaciones. Si se
+            # cambiase a contar de uno en uno, el aviso apuntaria a la linea
+            # equivocada. Esta cubierto por
+            # test_la_plantilla_devuelve_la_fila_absoluta_de_cada_operacion.
+            fila = i + 1
+
             trades.append(ClosedTrade(
                 symbol=str(row[3]).strip(),
                 direction=direction,
@@ -74,8 +107,9 @@ class ManualTemplateParser:
                 tp=self._parse_optional_float(row[8]),
                 position=self._parse_position(row[2]),
             ))
+            filas.append(fila)
 
-        return trades
+        return trades, filas
 
     @staticmethod
     def _combine_datetime(date_val, time_val) -> Optional[datetime]:

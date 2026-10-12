@@ -384,9 +384,10 @@ def test_un_tipo_que_no_es_buy_ni_sell_no_se_fuerza_a_venta(tmp_path):
     operacion vendida que nadie pidio, y saldria como una venta mas en las
     estadisticas sin que hubiera forma de enterarse.
 
-    Nota: la plantilla NO tiene `parse_con_filas`, asi que el rechazo llega
-    sin numero de fila. Se comprueba el campo y el valor, que es lo que si se
-    puede asegurar hoy.
+    Nota: aqui se llama a `valida_trades_de_archivo` sin pasarle las filas, asi
+    que este rechazo sale con `fila = None` por el camino directo. Que el
+    numero de fila si llegue cuando se sube por el endpoint lo comprueba
+    `test_el_rechazo_de_la_plantilla_lleva_el_numero_de_fila`, mas abajo.
     """
     import pandas as pd
 
@@ -411,3 +412,170 @@ def test_un_tipo_que_no_es_buy_ni_sell_no_se_fuerza_a_venta(tmp_path):
     assert rechazos[0].codigo == "direction_invalid"
     assert rechazos[0].campo == "direction"
     assert rechazos[0].valor == "compra"
+
+
+# ====================================================================
+# Fila de origen en los rechazos de la plantilla
+# ====================================================================
+#
+# MT4 y MT5 llevan tiempo teniendo `parse_con_filas`; la plantilla manual no,
+# asi que trades.py rellenaba `filas = [None] * n` y el usuario recibia el
+# motivo del rechazo sin saber que linea lo provocaba. Se cubre que la
+# plantilla ahora devuelve su fila, que es la absoluta del archivo, y que ese
+# numero llega entero en la respuesta de subir.
+
+_HEADERS_PLANTILLA = [
+    "Fecha apertura (YYYY-MM-DD)", "Hora apertura (HH:MM:SS)", "Posición",
+    "Símbolo", "Tipo (buy/sell)", "Volumen", "Precio apertura", "S/L", "T/P",
+    "Fecha cierre (YYYY-MM-DD)", "Hora cierre (HH:MM:SS)", "Precio cierre",
+    "Comisión", "Swap", "Beneficio",
+]
+
+
+def _escribe_plantilla(tmp_path, nombre, operaciones):
+    """Escribe una plantilla valida con `operaciones` debajo de los encabezados."""
+    import pandas as pd
+
+    archivo = tmp_path / nombre
+    pd.DataFrame([_HEADERS_PLANTILLA] + operaciones).to_excel(
+        archivo, index=False, header=False
+    )
+    return archivo
+
+
+def test_la_plantilla_devuelve_la_fila_absoluta_de_cada_operacion(tmp_path):
+    """Cada operacion sale con la fila que ocupa en el Excel del usuario.
+
+    Es la fila ABSOLUTA, no un contador de operaciones. Si el archivo trae
+    una linea sin simbolo en medio, esa linea se ignora pero sigue existiendo
+    para el usuario: la de despues es la 4, no la 2. Contando de uno en uno,
+    el aviso apuntaria a la linea equivocada y no serviria para encontrarla.
+
+    Un aviso que dice "fila 2" cuando el problema esta en la 4 es peor que no
+    decir nada: manda al usuario a corregir la linea buena.
+    """
+    operaciones = [
+        ["2026-01-22", "09:30:00", "1", "EURUSD", "buy", 0.10, 1.0850, None, None,
+         "2026-01-22", "11:14:00", 1.0912, -2.5, -0.3, 62.0],
+        # Sin simbolo: el parser la salta, pero en el Excel del usuario es la
+        # linea 3 y tiene que seguir contando.
+        ["2026-01-23", "08:00:00", None, None, "buy", 0.05, 1.1000, None, None,
+         "2026-01-23", "09:00:00", 1.1010, 0.0, 0.0, 5.0],
+        ["2026-01-24", "10:00:00", "2", "GBPUSD", "sell", 0.20, 1.3000, None, None,
+         "2026-01-24", "12:00:00", 1.2900, -1.5, -0.2, -30.0],
+    ]
+    archivo = _escribe_plantilla(tmp_path, "filas.xlsx", operaciones)
+
+    trades, filas = ManualTemplateParser().parse_con_filas(str(archivo))
+
+    assert len(trades) == 2
+    # La 1 son los encabezados, la 3 es la linea sin simbolo que se salta.
+    assert filas == [2, 4]
+    # Van pareadas: trades.py las coge por indice y si un desfase daria a
+    # cada rechazo la fila de otra operacion.
+    assert len(filas) == len(trades)
+    assert filas == sorted(filas)
+
+
+def test_parse_sigue_dando_lo_mismo_que_parse_con_filas(tmp_path):
+    """`parse` se mantiene como la vista de siempre: solo la lista de trades.
+
+    Se colgó de `parse_con_filas` para no tener dos copias del bucle que
+    pudieran divergir. Si alguna vez dejan de dar las mismas operaciones es
+    que el parser se ha roto por un lado y no por el otro.
+    """
+    operaciones = [
+        ["2026-01-22", "09:30:00", "1", "EURUSD", "buy", 0.10, 1.0850, None, None,
+         "2026-01-22", "11:14:00", 1.0912, -2.5, -0.3, 62.0],
+        ["2026-01-23", "10:00:00", "2", "GBPUSD", "sell", 0.20, 1.3000, None, None,
+         "2026-01-23", "12:00:00", 1.2900, -1.5, -0.2, -30.0],
+    ]
+    archivo = _escribe_plantilla(tmp_path, "igual.xlsx", operaciones)
+
+    solo = ManualTemplateParser().parse(str(archivo))
+    con_filas, filas = ManualTemplateParser().parse_con_filas(str(archivo))
+
+    assert isinstance(solo, list)
+    assert len(solo) == len(con_filas) == len(filas) == 2
+    assert [t.symbol for t in solo] == [t.symbol for t in con_filas]
+    assert filas == [2, 3]
+
+
+def test_el_rechazo_de_la_plantilla_lleva_el_numero_de_fila(client, cuenta, tmp_path):
+    """Al subir la plantilla, el rechazo dice en que linea esta el problema.
+
+    Este es el caso del usuario: rellena la plantilla, escribe "compra" donde
+    tenia que poner "buy", y hasta ahora veia el motivo pero no sabia cual de
+    sus lineas lo provocaba. La fila del rechazo tiene que ser la del Excel,
+    contando los encabezados como la 1, o sea la 3.
+    """
+    operaciones = [
+        # Fila 2: valida, se guarda.
+        ["2026-01-22", "09:30:00", "1", "EURUSD", "buy", 0.10, 1.0850, None, None,
+         "2026-01-22", "11:14:00", 1.0912, -2.5, -0.3, 62.0],
+        # Fila 3: "compra" no es buy ni sell, se rechaza.
+        ["2026-01-23", "10:00:00", "2", "GBPUSD", "compra", 0.20, 1.3000, None, None,
+         "2026-01-23", "12:00:00", 1.2900, -1.5, -0.2, -30.0],
+    ]
+    archivo = _escribe_plantilla(tmp_path, "mala.xlsx", operaciones)
+
+    with open(archivo, "rb") as f:
+        resp = client.post(
+            f"/trades/upload?account_id={cuenta.id}",
+            files={"file": ("mala.xlsx", io.BytesIO(f.read()),
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+        )
+
+    assert resp.status_code == 200
+    cuerpo = resp.json()
+
+    # La buena entra igual: no se tira el archivo entero por una fila rara.
+    assert cuerpo["trades_guardados"] == 1
+    assert cuerpo["trades_leidos"] == 2
+    assert len(cuerpo["rechazos"]) == 1
+
+    rechazo = cuerpo["rechazos"][0]
+    assert rechazo["codigo"] == "direction_invalid"
+    assert rechazo["valor"] == "compra"
+    assert rechazo["fila"] == 3
+
+
+def test_las_repetidas_de_la_plantilla_tambien_llevan_fila(client, cuenta, tmp_path):
+    """La segunda subida dice en que linea esta cada operacion que ya tenias.
+
+    `ya_importadas` se construye con `filas_validas`, que sale de la MISMA
+    lista de filas que los rechazos. Si la plantilla no la pasara, el aviso
+    de "ya la tienes" llegaria sin numero igual que el de rechazo.
+
+    Se comprueba con la lista ordenada porque el orden de `ya_importadas`
+    depende de como devuelva `separa_repetidas`, y lo que hay que asegurar
+    aqui es que cada operacion salga con SU fila.
+    """
+    operaciones = [
+        ["2026-01-22", "09:30:00", "1", "EURUSD", "buy", 0.10, 1.0850, None, None,
+         "2026-01-22", "11:14:00", 1.0912, -2.5, -0.3, 62.0],
+        ["2026-01-23", "10:00:00", "2", "GBPUSD", "sell", 0.20, 1.3000, None, None,
+         "2026-01-23", "12:00:00", 1.2900, -1.5, -0.2, -30.0],
+    ]
+    archivo = _escribe_plantilla(tmp_path, "dos_veces.xlsx", operaciones)
+
+    with open(archivo, "rb") as f:
+        datos = f.read()
+
+    primera = client.post(
+        f"/trades/upload?account_id={cuenta.id}",
+        files={"file": ("dos_veces.xlsx", io.BytesIO(datos),
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+    )
+    assert primera.json()["trades_guardados"] == 2
+
+    segunda = client.post(
+        f"/trades/upload?account_id={cuenta.id}",
+        files={"file": ("dos_veces.xlsx", io.BytesIO(datos),
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+    ).json()
+
+    assert segunda["trades_guardados"] == 0
+    assert len(segunda["ya_importadas"]) == 2
+    assert sorted(y["fila"] for y in segunda["ya_importadas"]) == [2, 3]
+    assert not segunda["rechazos"]

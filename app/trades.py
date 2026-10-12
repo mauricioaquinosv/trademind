@@ -174,8 +174,10 @@ def upload_trades(
         parser = _pick_parser(tmp_path)
 
         # Si el parser sabe decir de que fila salio cada operacion, se usa eso
-        # para poder decirle al usuario "la fila 23". Si no lo sabe (la
-        # plantilla manual), se importan igual y el aviso lo dirá.
+        # para poder decirle al usuario "la fila 23". Los tres parsers que
+        # existen hoy (MT4, MT5 y la plantilla manual) lo saben; el `else` es
+        # la red por si alguno nuevo no lo trae, para que la subida no falle
+        # por eso.
         if hasattr(parser, "parse_con_filas"):
             closed_trades, filas = parser.parse_con_filas(tmp_path)
         else:
