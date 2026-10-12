@@ -215,7 +215,7 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "accounts.count": { one: "{n} account", other: "{n} accounts" },
   "accounts.new": "New account",
   "accounts.myAccount": "My account",
-  "accounts.myAccountMT5": "My MT5 account",
+  "accounts.myAccountMT5": "My account",
   "accounts.imported": "Imported account",
   "accounts.createManual": "Create account manually",
   "accounts.nameLabel": "Account name",
@@ -224,14 +224,14 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "accounts.currency": "Currency",
   "accounts.headerAccount": "Account",
   "accounts.hint":
-    "You can keep several accounts (for example, manual and MT5 imported) and switch between them at any time. Each account's trades are stored separately.",
+    "You can keep several accounts (for example, manual or imported from MT4/MT5) and switch between them at any time. Each account's trades are stored separately.",
   "accounts.empty": "You have no accounts yet.",
   "accounts.current": "Current",
   "accounts.initialDeposit": "Initial deposit ${amount}",
   "accounts.tradesCount": { one: "{n} trade", other: "{n} trades" },
   "accounts.useThis": "Use this account",
-  "accounts.importInstead": "Would you rather import it from MT5 instead of creating it manually?",
-  "accounts.importInsteadLink": "Import CSV as a new account",
+  "accounts.importInstead": "Would you rather import it from MT4 or MT5 instead of creating it manually?",
+  "accounts.importInsteadLink": "Import a report as a new account",
   "accounts.edit": "Edit account",
   "accounts.editTitle": "Edit account",
   "accounts.saveChanges": "Save changes",
@@ -390,9 +390,9 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "onboarding.configure": "Set up your account to get started",
   "onboarding.choose": "Choose how you want to start seeing your trading statistics.",
   "onboarding.loading": "Loading...",
-  "onboarding.importTitle": "Import from CSV/Excel",
+  "onboarding.importTitle": "Import MT4/MT5 report",
   "onboarding.importDesc":
-    "Upload your MT5 report (.csv or .xlsx) and we will calculate your statistics automatically.",
+    "Upload your MT4 or MT5 report (.htm, .csv, .xlsx or .xls) and we will calculate your statistics automatically.",
   "onboarding.manualTitle": "Create account manually",
   "onboarding.manualDesc":
     "Set an initial balance and start from scratch. You can import your trades later.",
@@ -401,7 +401,7 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   // ------------------------------------------------------------------
   // Origen de los datos (pastilla del header)
   // ------------------------------------------------------------------
-  "datasource.mt5": "MT5 imported",
+  "datasource.mt5": "Imported from file",
   "datasource.manual": "Manual",
   "datasource.none": "No account",
 

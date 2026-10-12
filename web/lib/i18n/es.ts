@@ -214,7 +214,7 @@ export const es = {
   "accounts.count": { one: "{n} cuenta", other: "{n} cuentas" },
   "accounts.new": "Nueva cuenta",
   "accounts.myAccount": "Mi cuenta",
-  "accounts.myAccountMT5": "Mi cuenta MT5",
+  "accounts.myAccountMT5": "Mi cuenta",
   "accounts.imported": "Cuenta importada",
   "accounts.createManual": "Crear cuenta manual",
   "accounts.nameLabel": "Nombre de la cuenta",
@@ -223,14 +223,14 @@ export const es = {
   "accounts.currency": "Moneda",
   "accounts.headerAccount": "Account",
   "accounts.hint":
-    "Puedes llevar varias cuentas (por ejemplo, manual y MT5 importada) y cambiar entre ellas en cualquier momento. Los trades de cada cuenta se guardan por separado.",
+    "Puedes llevar varias cuentas (por ejemplo, manual o importada de MT4/MT5) y cambiar entre ellas en cualquier momento. Los trades de cada cuenta se guardan por separado.",
   "accounts.empty": "Aún no tienes cuentas creadas.",
   "accounts.current": "Actual",
   "accounts.initialDeposit": "Depósito inicial ${amount}",
   "accounts.tradesCount": { one: "{n} operación", other: "{n} operaciones" },
   "accounts.useThis": "Usar esta cuenta",
-  "accounts.importInstead": "¿Quieres importarla desde MT5 en vez de crearla manual?",
-  "accounts.importInsteadLink": "Importar CSV como cuenta nueva",
+  "accounts.importInstead": "¿Quieres importarla desde MT4 o MT5 en vez de crearla manual?",
+  "accounts.importInsteadLink": "Importar un reporte como cuenta nueva",
   "accounts.edit": "Editar cuenta",
   "accounts.editTitle": "Editar cuenta",
   "accounts.saveChanges": "Guardar cambios",
@@ -389,9 +389,9 @@ export const es = {
   "onboarding.configure": "Configura tu cuenta para comenzar",
   "onboarding.choose": "Elige cómo quieres empezar a ver tus estadísticas de trading.",
   "onboarding.loading": "Cargando...",
-  "onboarding.importTitle": "Importar desde CSV/Excel",
+  "onboarding.importTitle": "Importar reporte de MT4/MT5",
   "onboarding.importDesc":
-    "Sube tu reporte de MT5 (.csv o .xlsx) y calculamos tus estadísticas automáticamente.",
+    "Sube tu reporte de MT4 o MT5 (.htm, .csv, .xlsx o .xls) y calculamos tus estadísticas automáticamente.",
   "onboarding.manualTitle": "Crear cuenta manual",
   "onboarding.manualDesc":
     "Define un balance inicial y empieza desde cero. Podrás importar tus operaciones después.",
@@ -400,7 +400,7 @@ export const es = {
   // ------------------------------------------------------------------
   // Origen de los datos (pastilla del header)
   // ------------------------------------------------------------------
-  "datasource.mt5": "MT5 importado",
+  "datasource.mt5": "Importado desde archivo",
   "datasource.manual": "Manual",
   "datasource.none": "Sin cuenta",
 
