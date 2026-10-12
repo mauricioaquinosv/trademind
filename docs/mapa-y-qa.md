@@ -236,10 +236,16 @@ Lo decidido:
    Cuando se confirme, se anade como otra implementacion de `LiveConnector`.
 4. **Match-Trade y DXtrade: descartados por ahora.** Requieren acuerdo con cada broker.
 
-- [ ] **Parser de MT4.** Reporte exportado, igual que MT5. Es el siguiente paso.
-      Hace falta un archivo real de ejemplo, con compras y ventas, comisiones y swaps
-      distintos de cero, y varios simbolos. Y hay que saber en que idioma esta el
-      terminal, porque MT4 escribe el nombre de las secciones traducido.
+- [x] **Parser de MT4.** Hecho el 12 oct (`42ef557`), en `app/parsers/mt4_parser.py`, con
+      dos reportes reales como fixtures. Lee la cabecera `Ticket | Open Time | ...`,
+      quita el separador de miles que MT4 escribe con espacio, pasa los simbolos a
+      mayusculas y salta la fila del balance y la de totales.
+      **El idioma del terminal NO importa:** se comprobó con el programa en español y
+      en inglés, y MT4 escribe los nombres de las secciones siempre en inglés, así que
+      hace falta un solo parser, no dos. Esa duda queda cerrada.
+      Pendiente: un reporte con **swap distinto de cero** (en los dos ejemplos todas las
+      operaciones se abrieron y cerraron el mismo día) y un **símbolo con sufijo de
+      broker** (`EURUSD.a`), que es frecuente y ninguno de los dos trae.
 - [ ] **Verificar la API de TradeLocker** antes de construir nada sobre ella.
 - [ ] **La politica de privacidad** habla de archivos, no de tokens de broker. Lo
       lleva el titular del proyecto; hay que avisarle cuando la tenga.
@@ -552,7 +558,7 @@ Esto no lo pruebas tu, corre solo. Sirve para saber si se ha roto algo de lo
 de arriba:
 
 ```
-.\venv\Scripts\python.exe -m pytest     -> 272 tests de backend
+.\venv\Scripts\python.exe -m pytest     -> 300 tests de backend
 cd web; npm test                         -> 167 tests de frontend
 cd web; npm run test:traduccion          -> el guard de las cadenas sueltas
 cd web; npx tsc --noEmit                 -> los tipos

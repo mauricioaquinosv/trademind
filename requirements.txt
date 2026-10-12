@@ -1,6 +1,6 @@
 # Dependencias del backend de TradeMind.
 #
-# ESTAS SON LAS VERSIONES QUE PASAN LOS 269 TESTS, no las más recientes.
+# ESTAS SON LAS VERSIONES QUE PASAN LOS 300 TESTS, no las más recientes.
 # Se generaron con `pip freeze` del entorno de desarrollo. Si cambias algo
 # aquí, corre los tests antes: un fichero de dependencias sirve para
 # reproducir lo que funciona, no para estrenar versiones.
