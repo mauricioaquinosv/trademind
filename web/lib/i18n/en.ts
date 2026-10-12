@@ -298,6 +298,10 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "col.openPrice": "Open price",
   "col.sl": "S/L",
   "col.tp": "T/P",
+  // A trade with no stop is not drawn as "—": that does not tell "it has none"
+  // from "it could not be read". It is spelled out instead.
+  "col.noSl": "No SL",
+  "col.noTp": "No TP",
   "col.closeTime": "Close",
   "col.closePrice": "Close price",
   "col.commission": "Commission",

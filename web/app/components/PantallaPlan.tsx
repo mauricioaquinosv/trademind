@@ -5,14 +5,14 @@
  *
  * QUE ES Y QUE NO ES
  *
- * Es el diseÃ±o, no el motor. Cuando alguien entre aqui todavÃ­a no se le cobra
- * nada, no se le guarda ninguna suscripciÃ³n y el boton no llama aStripe: se
+ * Es el diseño, no el motor. Cuando alguien entre aqui todavía no se le cobra
+ * nada, no se le guarda ninguna suscripción y el boton no llama aStripe: se
  * lleva a la Bienvenida porque es el paso 3 y es la que existe. En cuanto haya
  * una pantalla de pago, este boton pasa a /pago y ahi empieza lo de verdad.
  *
  * LO QUE NO SE HA HECHO A PROPOSITO
  *
- * No hay comprobaciÃ³n de "Â¿tiene ya plan?". Cuando esa comprobaciÃ³n exista, esta
+ * No hay comprobación de "¿tiene ya plan?". Cuando esa comprobación exista, esta
  * pantalla pasa a ser a donde vuelve el que ya esta suscrito a renewar. Ahora
  * mismo todo el mundo puede verla, y eso es lo correcto para una maqueta.
  *
@@ -46,7 +46,7 @@ export default function PantallaPlan() {
       <div className="fl-in">
         <CabeceraFlujo />
 
-        {/* El paso 1 (Cuenta) ya estÃ¡ superado: se entra a /plan despuÃ©s de
+        {/* El paso 1 (Cuenta) ya está superado: se entra a /plan después de
             registrarse. */}
         <PasosFlujo actual={2} />
 

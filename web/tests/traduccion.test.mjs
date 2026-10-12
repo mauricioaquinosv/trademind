@@ -193,3 +193,75 @@ test("el precio del plan no esta escrito a mano en el diccionario", () => {
     "hay cantidades escritas dentro del diccionario: usa {precio} y pasalo desde lib/plan/datos.ts"
   );
 });
+
+test("un trade sin stop se dice con palabras y en el idioma que toque", () => {
+  /* ¿Por qué existe esto?
+     Al montar la tabla, un trade sin stop se pintaba con el guion largo "—".
+     El guion salia corrompido en pantalla (dos codificaciones UTF-8 encima una
+     de otra) y salia "â€”", y encima no distinguia el trade que NO TIENE stop
+     del cuyo stop NO SE PUDO LEER. Ambos casos eran el mismo guion.
+
+     Ahora tradeToRow guarda null y la celda escribe "Sin SL"/"Sin TP" o
+     "No SL"/"No TP" segun el idioma del momento. Aqui se cubre lo que no
+     cubre ningun otro test: que las dos claves existan en los DOS idiomas y
+     que page.tsx siga llamando a t() en vez de volver a escribir un guion
+     a mano en sl/tp. */
+  const pagina = readFileSync(join(RAIZ, "app/dashboard/page.tsx"), "utf8");
+
+  for (const clave of ["col.noSl", "col.noTp"]) {
+    assert.equal(typeof es[clave], "string", `la clave ${clave} no esta en es.ts`);
+    assert.equal(typeof en[clave], "string", `la clave ${clave} no esta en en.ts`);
+    assert.notEqual(es[clave], "", `la clave ${clave} esta vacia en es.ts`);
+    assert.notEqual(en[clave], "", `la clave ${clave} esta vacia en en.ts`);
+  }
+
+  /* Se miran los dos idiomas, no solo que sean textos: si mañana se cambia
+     el español y no el ingles, aqui se nota. */
+  assert.equal(es["col.noSl"], "Sin SL");
+  assert.equal(es["col.noTp"], "Sin TP");
+  assert.equal(en["col.noSl"], "No SL");
+  assert.equal(en["col.noTp"], "No TP");
+
+  /* La traduccion tiene que pasar por t() en el momento de pintar la celda.
+     Un literal aqui (aunque estuviera bien escrito) se quedaria en un idioma
+     fijo para siempre, y seria exactamente la mitad del fallo original. */
+  assert.match(
+    pagina,
+    /t\(c\.key === "sl" \? "col\.noSl" : "col\.noTp"\)/,
+    "la celda de S/L y T/P no pasa por t(): se veria siempre en el mismo idioma"
+  );
+});
+
+test("tradeToRow guarda null en sl/tp, no un guion largo escrito a mano", () => {
+  // Complemento del anterior. Si sl/tp vuelve a rellenarse con "—" en
+  // tradeToRow, la rama que pinta la celda deja de alcanzarse y vuelve a
+  // salir el guion, corrompido o no, en vez de "Sin SL".
+  //
+  // Se busca el guion como dos cosas: el caracter en UTF-8 y su forma
+  // corrompida "â€”", por si vuelve a haber doble codificacion. Asi el fallo
+  // sale aqui y no en la captura del usuario.
+  const pagina = readFileSync(join(RAIZ, "app/dashboard/page.tsx"), "utf8");
+  const funcion = pagina.slice(
+    pagina.indexOf("function tradeToRow"),
+    pagina.indexOf("raw: t,", pagina.indexOf("function tradeToRow"))
+  );
+
+  assert.ok(funcion.length > 0, "no se ha encontrado tradeToRow: se ha renombrado el fichero");
+  assert.match(funcion, /sl:\s*t\.sl\s*\?\?\s*null/, "tradeToRow no guarda null en sl");
+  assert.match(funcion, /tp:\s*t\.tp\s*\?\?\s*null/, "tradeToRow no guarda null en tp");
+
+  /* Solo se miran las líneas que ASIGNAN sl y tp, no toda la función: aquí
+     dentro hay un comentario que menciona el guion para explicar por qué ya
+     no se usa, y ese comentario no se pinta en pantalla. Buscar el guion en
+     toda la función hacía fallar el test por su propia explicación. */
+  const asignaciones = funcion
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => /^(sl|tp):/.test(l));
+  const conGuion = asignaciones.filter((l) => /—|â€/.test(l));
+  assert.deepEqual(
+    conGuion,
+    [],
+    "tradeToRow escribe un guion en sl/tp en vez de null: la celda no llegara a traducirse"
+  );
+});

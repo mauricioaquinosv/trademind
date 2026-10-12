@@ -297,6 +297,10 @@ export const es = {
   "col.openPrice": "Precio apertura",
   "col.sl": "S/L",
   "col.tp": "T/P",
+  // Un trade sin stop no se pinta con "—": eso no distingue "no tiene" de
+  // "no se pudo leer". Se dice en palabras.
+  "col.noSl": "Sin SL",
+  "col.noTp": "Sin TP",
   "col.closeTime": "Cierre",
   "col.closePrice": "Precio cierre",
   "col.commission": "Comisión",
