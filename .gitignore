@@ -57,6 +57,10 @@ temp/
 # --- Excepciones: archivos que SÍ deben versionarse ---
 # Las plantillas y reportes de ejemplo son fixtures de prueba.
 !sample_data/*.xlsx
+# Los .htm son reportes de MT4 exportados desde el terminal. Se versionan a
+# propósito aunque hoy no haya nada que los excluya: son los que hacen que
+# test_mt4_parser.py valide el formato real y no uno inventado.
+!sample_data/*.htm
 
 # La documentación del proyecto SÍ se versiona: es lo que explica el proyecto a
 # quien lo lea dentro de seis meses. Vive en docs/.

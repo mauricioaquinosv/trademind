@@ -40,6 +40,7 @@ type Trade = {
   tp: number | null;
   commission: number;
   swap: number;
+  taxes: number;
   pnl_bruto: number;
   pnl_neto: number | null;
 };
@@ -119,7 +120,7 @@ type Row = {
 };
 
 function tradeToRow(t: Trade): Row {
-  const pnl = t.pnl_neto !== null && t.pnl_neto !== undefined ? t.pnl_neto : t.pnl_bruto + t.commission + t.swap;
+  const pnl = t.pnl_neto !== null && t.pnl_neto !== undefined ? t.pnl_neto : t.pnl_bruto + t.commission + t.swap + (t.taxes ?? 0);
   return {
     id: t.id,
     openTime: t.entry_time ? t.entry_time.replace("T", " ") : "â€”",
@@ -1421,7 +1422,7 @@ export default function DashboardPage() {
                   <p><b>{t("import.dropHere")}</b></p>
                   <p>{t("import.formats")}</p>
                 </label>
-                <input type="file" ref={fileInputRef} accept=".csv,.xlsx,.xls" style={{ position: "absolute", width: 1, height: 1, opacity: 0, overflow: "hidden" }} onChange={(e) => handleFile(e.target.files?.[0])} />
+                <input type="file" ref={fileInputRef} accept=".csv,.xlsx,.xls,.htm,.html" style={{ position: "absolute", width: 1, height: 1, opacity: 0, overflow: "hidden" }} onChange={(e) => handleFile(e.target.files?.[0])} />
 
                 {/* BotÃ³n de descarga de la plantilla. Antes solo habÃ­a un enlace
                     de texto metido dentro de un pÃ¡rrafo, muy fÃ¡cil de no ver. */}

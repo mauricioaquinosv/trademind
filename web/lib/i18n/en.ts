@@ -98,9 +98,9 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "apiErrors.accountNotFound": "That account no longer exists.",
   "apiErrors.accountHasTrades": "This account has {n} trades. Delete them too to remove the account.",
   "apiErrors.tradeNotFound": "That trade no longer exists.",
-  "apiErrors.fileBadExtension": "The file must be .xlsx, .xls or .csv: an MT5 report or the TradeMind template.",
+  "apiErrors.fileBadExtension": "The file must be .xlsx, .xls, .csv, .htm or .html: an MT4 or MT5 report, or the TradeMind template.",
   "apiErrors.fileEmpty": "The file is empty: no table was found inside.",
-  "apiErrors.fileNoPositions": "No 'Positions' section found in the file. This looks like an incomplete MT5 report.",
+  "apiErrors.fileNoPositions": "No closed-trades section was found: 'Closed Transactions' in MT4 or 'Positions' in MT5. The report may be incomplete.",
   "apiErrors.fileHtmlNoTable": "The file looks like a saved web page, but it has no trades table.",
   "apiErrors.fileUnreadable": "The file could not be read. Check that it isn't damaged.",
   "apiErrors.fileBadTemplate": "The file doesn't match the TradeMind template. Download it from the import view.",
@@ -320,7 +320,7 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   // ------------------------------------------------------------------
   // Importar
   // ------------------------------------------------------------------
-  "import.mt5": "Import MT5 report",
+  "import.mt5": "Import MT4/MT5 report",
   "import.manual": "Import trades manually",
   "import.fromFile": "Import from CSV/Excel",
   "import.title": "Import",
@@ -328,13 +328,13 @@ export const en: { [K in keyof typeof es]: BaseDe<(typeof es)[K]> } = {
   "import.startWeek": "Start my week",
   "import.success": { one: "{n} trade loaded successfully.", other: "{n} trades loaded successfully." },
   "import.hint":
-    'Export your "Trade History Report" from MetaTrader 5 (right-click the history → Report → Save as CSV or Save as .xlsx) and upload it here.',
+    'Export your history from your terminal: in MetaTrader 5, right-click → Report → Save as CSV or Save as .xlsx; in MetaTrader 4, right-click → Save as Report, which saves a .htm. Then upload it here.',
   "import.hintTemplateNote":
     "You can also upload it already filled in: I detect it automatically and add those trades to your account.",
   "import.downloadTemplate": "Download Excel template",
   "import.balanceForAccount": "Account initial balance",
   "import.dropHere": "Click to choose a file or drag it here",
-  "import.formats": "Format .csv, .xlsx or .xls",
+  "import.formats": "Format .csv, .xlsx, .xls or .htm",
 
   // --- Trades that could not be imported ----------------------------
   // The file is always accepted: the good ones go in and these are explained one

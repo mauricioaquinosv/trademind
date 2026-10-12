@@ -26,6 +26,7 @@ export type AnalyticsTrade = {
   pnl_bruto: number;
   commission: number;
   swap: number;
+  taxes: number;
 };
 
 type SymbolPerf = {
@@ -41,7 +42,7 @@ function computeSymbolPerf(trades: AnalyticsTrade[]): SymbolPerf[] {
     const sym = t.symbol || "—";
     if (!bySymbol[sym]) bySymbol[sym] = { count: 0, wins: 0, pnl: 0 };
     bySymbol[sym].count++;
-    const pnl = t.pnl_neto !== null && t.pnl_neto !== undefined ? t.pnl_neto : t.pnl_bruto + t.commission + t.swap;
+    const pnl = t.pnl_neto !== null && t.pnl_neto !== undefined ? t.pnl_neto : t.pnl_bruto + t.commission + t.swap + (t.taxes ?? 0);
     if (pnl > 0) bySymbol[sym].wins++;
     bySymbol[sym].pnl += pnl;
   });

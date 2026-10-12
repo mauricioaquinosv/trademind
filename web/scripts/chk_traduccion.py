@@ -65,7 +65,7 @@ NEUTRAS = {
     "Hr", "Min", "Auto", "Swap", "P&L", "USD", "EUR", "MT5", "CSV", "XLSX", "ID", "FIFO",
     # Las extensiones de archivo son universales: traducirlas no aportaria nada
     # y solo abriria la puerta a escribirlas distintas en cada idioma.
-    ".xlsx · .xls · .csv",
+    ".xlsx · .xls · .csv · .htm",
     # Etiqueta del grupo de botones que cambian de idioma. Es bilingue a proposito
     # y por eso es IGUAL en los dos idiomas: quien lee la pagina en cualquiera de
     # los dos tiene que reconocer las dos palabras. No es un texto sin traducir,

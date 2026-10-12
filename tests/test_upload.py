@@ -20,10 +20,17 @@ from conftest import detalle
 from app.parsers.file_reader import read_any_table
 from app.parsers.manual_template_parser import ManualTemplateParser
 from app.parsers.mt5_parser import MT5Parser
+from app.parsers.mt4_parser import MT4Parser
 from app.security import create_access_token
 
 MT5 = "sample_data/ReportHistory-35023263.xlsx"
 PLANTILLA = "sample_data/plantilla_trademind.xlsx"
+MT4 = "sample_data/Statement_MT4_largo.htm"
+
+# Cifras reales del reporte MT4, comprobadas contra la fila de totales del
+# propio fichero (y contra su "Closed P/L:").
+LARGO_TRADES = 27
+LARGO_CLOSED_PL = -387.92
 
 # Valores reales, comprobados contra los ficheros de ejemplo del repositorio.
 MT5_TRADES = 20
@@ -310,3 +317,69 @@ def test_el_temporal_se_borra_tambien_cuando_el_parseo_falla(client, cuenta):
 
     despues = set(glob.glob(os.path.join(tempfile_mod.gettempdir(), "*.xlsx")))
     assert despues == antes, f"quedaron temporales: {despues - antes}"
+
+
+# --- MT4, de punta a punta -------------------------------------------------
+#
+# El parser de MT4 tiene sus propios tests unitarios. Aqui lo que se comprueba
+# es el camino completo: que `_pick_parser` elija MT4 y no MT5, que el .htm
+# llegue al final y que los datos se guarden en la base. Un parser perfecto
+# que `_pick_parser` no selecciona no sirve de nada.
+
+
+def test_subir_reporte_mt4_guarda_los_trades(client, cuenta, archivo):
+    r = client.post(
+        "/trades/upload",
+        params={"account_id": str(cuenta.id)},
+        files={"file": ("Statement.htm", archivo(MT4), "text/html")},
+    )
+
+    assert r.status_code == 200
+    assert r.json() == {"trades_guardados": LARGO_TRADES}
+
+
+def test_los_trades_mt4_llegan_con_su_impuesto_a_la_base(client, cuenta, archivo, db_session):
+    """Comprueba que `taxes` recorre ClosedTrade -> Trade -> columna.
+
+    Todos valen 0.00 en este reporte, asi que un campo sin mapear tambien
+    daria 0.0 por casualidad. Lo que distingue el caso es `is not None`:
+    si la columna no existiera o viniera sin rellenar, saldria NULL.
+    """
+    from app.models import Trade
+
+    client.post(
+        "/trades/upload",
+        params={"account_id": str(cuenta.id)},
+        files={"file": ("Statement.htm", archivo(MT4), "text/html")},
+    )
+
+    filas = db_session.query(Trade).all()
+    assert len(filas) == LARGO_TRADES
+    assert all(t.taxes is not None for t in filas)
+    assert all(t.taxes == 0.0 for t in filas)
+
+
+def test_el_neto_mt4_guardado_es_el_closed_pl_del_reporte(client, cuenta, archivo, db_session):
+    from app.models import Trade
+
+    client.post(
+        "/trades/upload",
+        params={"account_id": str(cuenta.id)},
+        files={"file": ("Statement.htm", archivo(MT4), "text/html")},
+    )
+
+    total = sum(t.pnl_neto for t in db_session.query(Trade).all())
+    assert abs(total - LARGO_CLOSED_PL) < 0.01
+
+
+def test_subir_un_htm_no_se_intenta_leer_como_mt5(client, cuenta, archivo):
+    """Si `_pick_parser` eligiera MT5, el rechazo seria 'no hay operaciones'
+    con un archivo que si las tiene: el usuario no tendria forma de saber
+    que era un problema de deteccion y no de su archivo."""
+    r = client.post(
+        "/trades/upload",
+        params={"account_id": str(cuenta.id)},
+        files={"file": ("Statement.htm", archivo(MT4), "text/html")},
+    )
+    assert r.status_code == 200
+    assert r.json() == {"trades_guardados": LARGO_TRADES}

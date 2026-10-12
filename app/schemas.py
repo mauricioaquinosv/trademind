@@ -52,6 +52,7 @@ class TradeCreate(BaseModel):
     tp: Optional[float] = None
     commission: float = 0.0
     swap: float = 0.0
+    taxes: float = 0.0
     pnl_bruto: float
     pnl_neto: Optional[float] = None
 
@@ -101,6 +102,7 @@ class TradeUpdate(BaseModel):
     tp: Optional[float] = None
     commission: Optional[float] = None
     swap: Optional[float] = None
+    taxes: Optional[float] = None
     pnl_bruto: Optional[float] = None
     pnl_neto: Optional[float] = None
 
@@ -147,6 +149,7 @@ class TradeOut(BaseModel):
     tp: Optional[float]
     commission: float
     swap: float
+    taxes: float
     pnl_bruto: float
     pnl_neto: Optional[float]
 

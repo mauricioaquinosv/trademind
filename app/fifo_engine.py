@@ -66,6 +66,12 @@ class ClosedTrade:
     exit_time: Optional[datetime] = None
     commission: float = 0.0
     swap: float = 0.0
+    # Impuestos retenidos por el broker. MT4 trae una columna "Taxes" que MT5
+    # no tiene; casi siempre es 0.00, pero cuando no lo es no puede meterse
+    # dentro de `commission`, porque entonces la comisión que se enseña al
+    # usuario no sería la que cobró el broker. En los reportes de MT5 no
+    # existe, así que se queda a 0.0.
+    taxes: float = 0.0
     pnl_bruto: float = 0.0  # profit real reportado por el broker
     sl: Optional[float] = None
     tp: Optional[float] = None
@@ -78,8 +84,14 @@ class ClosedTrade:
 
     @property
     def pnl_neto(self) -> float:
-        """Resultado calculado: profit del broker + comisión + swap."""
-        return round(self.pnl_bruto + self.commission + self.swap, 8)
+        """Resultado calculado: profit del broker + comisión + swap + impuestos.
+
+        Este es el mismo número que MT4 pone en su propia fila "Closed P/L",
+        que suma Commission + Taxes + Swap + Profit. Si `taxes` no entrara
+        aquí, un broker que retenga impuestos daría un neto mayor que el que
+        reporta el propio terminal, y el usuario lo notaría al cuadrar.
+        """
+        return round(self.pnl_bruto + self.commission + self.swap + self.taxes, 8)
 
 
 class FifoEngine:

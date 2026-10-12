@@ -16,6 +16,7 @@ from app.import_validacion import (
     valida_trades_de_archivo,
 )
 from app.parsers.mt5_parser import MT5Parser
+from app.parsers.mt4_parser import MT4Parser
 from app.parsers.manual_template_parser import ManualTemplateParser
 from app.parsers.file_reader import read_any_table
 
@@ -35,10 +36,11 @@ def _get_owned_account(db: Session, account_id: UUID, user: User) -> Account:
 
 def _pick_parser(file_path: str):
     """
-    Detecta si el archivo subido es un reporte de MT5 (sección 'Positions')
-    o la plantilla propia de TradeMind (encabezado 'Fecha apertura'), y
-    devuelve el parser correcto para cada caso. Funciona sin importar si
-    el archivo es .xlsx real, una tabla HTML disfrazada, o CSV.
+    Detecta si el archivo subido es un reporte de MT5 (sección 'Positions'),
+    un reporte de MT4 (cabecera 'Ticket' + 'Open Time'), o la plantilla propia
+    de TradeMind (encabezado 'Fecha apertura'), y devuelve el parser correcto
+    para cada caso. Funciona sin importar si el archivo es .xlsx real, una
+    tabla HTML disfrazada, o CSV.
     """
     raw = read_any_table(file_path)
 
@@ -55,6 +57,15 @@ def _pick_parser(file_path: str):
 
     if first_cell.startswith("Fecha apertura"):
         return ManualTemplateParser()
+
+    # MT4 se comprueba ANTES que MT5, y por la cabecera de su tabla ('Ticket'
+    # | 'Open Time'), no por la primera celda del fichero: los dos reportes
+    # empiezan igual, con la cabecera de la cuenta. Si MT4 pasara por
+    # MT5Parser, este no encontraría 'Positions' y devolvería un rechazo
+    # engañoso ("no hay operaciones") en vez de importar.
+    if MT4Parser.parece_mt4(raw):
+        return MT4Parser()
+
     return MT5Parser()
 
 
@@ -105,12 +116,18 @@ def upload_trades(
     # .lower() un archivo valido en cualquiera de los dos casos entra, y el
     # temporal se crea con la extension en minusculas para que el lector de
     # archivos la reconozca.
+    #
+    # .htm y .html los añade MT4, que exporta el statement como HTML. No es
+    # una comodidad: sin ellos el archivo se rechazaba en la puerta con un
+    # 400 y el parser de MT4 ni llegaba a ejecutarse. El lector decide por el
+    # CONTENIDO, no por la extension, asi que una tabla HTML con cara de .xls
+    # (que es lo que MT4 hace al guardar como Excel) ya funcionaba antes.
     nombre = (file.filename or "").strip()
-    if not nombre.lower().endswith((".xlsx", ".xls", ".csv")):
+    if not nombre.lower().endswith((".xlsx", ".xls", ".csv", ".htm", ".html")):
         raise errors.error(
             errors.FILE_BAD_EXTENSION,
-            "El archivo debe ser .xlsx, .xls o .csv: "
-            "un reporte de MT5 o la plantilla de TradeMind",
+            "El archivo debe ser .xlsx, .xls, .csv, .htm o .html: "
+            "un reporte de MT4 o MT5, o la plantilla de TradeMind",
             status_code=400,
         )
 
@@ -238,6 +255,7 @@ def upload_trades(
             tp=t.tp,
             commission=t.commission,
             swap=t.swap,
+            taxes=t.taxes,
             pnl_bruto=t.pnl_bruto,
             pnl_neto=t.pnl_neto,
         )

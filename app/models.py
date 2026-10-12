@@ -103,7 +103,17 @@ class Trade(Base):
 
     commission = Column(Float, default=0.0)
     swap = Column(Float, default=0.0)
+    # Impuestos retenidos por el broker (columna "Taxes" de MT4, que MT5 no
+    # trae). Casi siempre 0.0. No va dentro de `commission` para no enseñar
+    # una comisión que el broker no cobró.
+    #
+    # Es NOT NULL con DEFAULT 0 a propósito, aunque commission y swap no lo
+    # sean: `TradeOut.taxes` es `float`, no opcional, y una fila antigua con
+    # NULL rompería el listado entero con un 500. El DEFAULT 0 es además lo
+    # que rellena las filas que ya existen al aplicar la migración.
+    taxes = Column(Float, nullable=False, default=0.0, server_default="0")
     pnl_bruto = Column(Float, nullable=False)
-    pnl_neto = Column(Float, nullable=True)  # editable a mano; si es null, se calcula bruto+comisión+swap
+    # editable a mano; si es null, se calcula bruto+comisión+swap+impuestos
+    pnl_neto = Column(Float, nullable=True)
 
     created_at = Column(DateTime, default=utcnow_naive)

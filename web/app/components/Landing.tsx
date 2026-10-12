@@ -686,7 +686,7 @@ export default function Landing() {
                       <path d="M8 30v2a2 2 0 0 0 2 2h20a2 2 0 0 0 2-2v-2" stroke="rgba(47,216,200,.6)" strokeWidth="2.2" strokeLinecap="round" />
                     </svg>
                     <div className="disp" style={{ fontSize: 18, fontWeight: 600, marginTop: 10 }}>{t("landing.import.drop")}</div>
-                    <div className="mono" style={{ fontSize: 11.5, color: "#8E93A6", marginTop: 6 }}>.xlsx · .xls · .csv</div>
+                    <div className="mono" style={{ fontSize: 11.5, color: "#8E93A6", marginTop: 6 }}>.xlsx · .xls · .csv · .htm</div>
                   </div>
                   <div className="inner" style={{ marginTop: 14, padding: "6px 16px" }}>
                     {(

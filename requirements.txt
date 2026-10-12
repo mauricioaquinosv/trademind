@@ -5,12 +5,18 @@
 # aquí, corre los tests antes: un fichero de dependencias sirve para
 # reproducir lo que funciona, no para estrenar versiones.
 #
-# Dos cosas fijadas a propósito, y ninguna es por gusto:
+# Tres cosas que no se pueden quitar sin romper algo, y ninguna es por gusto:
 #
 #   - bcrypt==4.0.1: passlib 1.7.4 no es compatible con bcrypt 5. El
 #     registro y el login darían error al hashear la contraseña.
 #   - pydantic[email]: el [email] hace falta. `schemas.py` usa `EmailStr`
 #     para validar el email del login y sin `email-validator` peta.
+#   - lxml: lo necesita pandas.read_html, que es como file_reader.py lee
+#     los .htm de MT4 y los .xlsx que en realidad son HTML disfrazado.
+#     Sin él, subir cualquiera de esos archivos daba un ImportError crudo
+#     (HTTP 500) en vez de importar. Estaba roto sin que se notara, porque
+#     los dos fixtures de los tests son .xlsx de verdad (ZIP) y la rama
+#     HTML no la cubría ningún test. Si lo quitas, vuelve el 500.
 #
 # sqlalchemy va en 2.1.0, que es la que está probada, pero OJO con esto:
 # la 2.1 busca psycopg (v3) por defecto cuando la URL no dice el driver.
@@ -32,3 +38,4 @@ pydantic[email]==2.13.5
 python-multipart==0.0.32
 pandas==3.0.6
 openpyxl==3.1.5
+lxml==6.1.3

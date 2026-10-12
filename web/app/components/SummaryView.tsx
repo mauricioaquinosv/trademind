@@ -83,6 +83,7 @@ export type SummaryTrade = {
   exit_time: string | null;
   commission: number;
   swap: number;
+  taxes: number;
   pnl_bruto: number;
   pnl_neto: number | null;
 };
@@ -308,7 +309,7 @@ export default function SummaryView({ trades, initialBalance }: { trades: Summar
         .filter((t) => !!t.exit_time)
         .map((t) => ({
           date: (t.exit_time as string).slice(0, 10),
-          pnl: t.pnl_neto !== null && t.pnl_neto !== undefined ? t.pnl_neto : t.pnl_bruto + t.commission + t.swap,
+          pnl: t.pnl_neto !== null && t.pnl_neto !== undefined ? t.pnl_neto : t.pnl_bruto + t.commission + t.swap + (t.taxes ?? 0),
         })),
     [trades]
   );

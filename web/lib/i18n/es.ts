@@ -97,9 +97,9 @@ export const es = {
   "apiErrors.accountNotFound": "Esa cuenta ya no existe.",
   "apiErrors.accountHasTrades": "La cuenta tiene {n} operaciones. Bórralas también para eliminarla.",
   "apiErrors.tradeNotFound": "Esa operación ya no existe.",
-  "apiErrors.fileBadExtension": "El archivo debe ser .xlsx, .xls o .csv: un reporte de MT5 o la plantilla de TradeMind.",
+  "apiErrors.fileBadExtension": "El archivo debe ser .xlsx, .xls, .csv, .htm o .html: un reporte de MT4 o MT5, o la plantilla de TradeMind.",
   "apiErrors.fileEmpty": "El archivo está vacío: no se encontró ninguna tabla dentro.",
-  "apiErrors.fileNoPositions": "No se encontró la sección 'Positions' en el archivo. Este parece un reporte de MT5 incompleto.",
+  "apiErrors.fileNoPositions": "No se encontró la sección de operaciones cerradas: 'Closed Transactions' en MT4 o 'Positions' en MT5. Puede que el reporte esté incompleto.",
   "apiErrors.fileHtmlNoTable": "El archivo parece una página web guardada, pero no tiene ninguna tabla de operaciones.",
   "apiErrors.fileUnreadable": "No se pudo leer el archivo. Comprueba que no esté dañado.",
   "apiErrors.fileBadTemplate": "El archivo no coincide con la plantilla de TradeMind. Descárgala desde la vista de importar.",
@@ -319,7 +319,7 @@ export const es = {
   // ------------------------------------------------------------------
   // Importar
   // ------------------------------------------------------------------
-  "import.mt5": "Importar reporte de MT5",
+  "import.mt5": "Importar reporte de MT4/MT5",
   "import.manual": "Importar trades manualmente",
   "import.fromFile": "Importar desde CSV/Excel",
   "import.title": "Importar",
@@ -327,13 +327,13 @@ export const es = {
   "import.startWeek": "Iniciar mi semana",
   "import.success": { one: "{n} operación cargada correctamente.", other: "{n} operaciones cargadas correctamente." },
   "import.hint":
-    'Exporta tu "Trade History Report" desde MetaTrader 5 (botón derecho sobre el historial → Report → Save as CSV o Guardar como .xlsx) y súbelo aquí.',
+    'Exporta el historial desde tu terminal: en MetaTrader 5, botón derecho → Report → Save as CSV o Guardar como .xlsx; en MetaTrader 4, botón derecho → Save as Report, que guarda un .htm. Y súbelo aquí.',
   "import.hintTemplateNote":
     "También puedes subirla ya llena: la detecto automáticamente y agrego esos trades a tu cuenta.",
   "import.downloadTemplate": "Descargar plantilla Excel",
   "import.balanceForAccount": "Balance inicial de la cuenta",
   "import.dropHere": "Haz clic para elegir un archivo o arrástralo aquí",
-  "import.formats": "Formato .csv, .xlsx o .xls",
+  "import.formats": "Formato .csv, .xlsx, .xls o .htm",
 
   // --- Operaciones que no se han podido importar -------------------
   // El archivo se acepta siempre: se importan las buenas y estas se explican
