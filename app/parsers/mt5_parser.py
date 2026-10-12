@@ -87,6 +87,13 @@ class MT5Parser:
             if pd.isna(row[0]) or not self._looks_like_datetime(row[0]):
                 continue
 
+            # El tipo tiene que ser "buy" o "sell". Dentro de la tabla de
+            # posiciones no deberia haber nada mas, pero una fila de balance
+            # o de deposito con fecha en la primera columna pasaria el filtro
+            # de arriba, y la linea de abajo la meteria como una venta.
+            if len(row) < 4 or str(row[3]).strip().lower() not in ("buy", "sell"):
+                continue
+
             direction = "long" if str(row[3]).strip().lower() == "buy" else "short"
 
             # ANTES: float(row[4]) a pelo. Con una celda vacia, float() lanza

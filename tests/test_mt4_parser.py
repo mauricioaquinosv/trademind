@@ -302,3 +302,76 @@ def test_las_comisiones_con_decimales_se_leen_bien(largo):
 
 def test_los_volumenes_van_de_0_1_a_2(largo):
     assert sorted({t.quantity for t in largo}) == [0.1, 0.25, 0.5, 1.0, 2.0]
+
+
+# --- la fila de balance no es una operacion ---------------------------------
+#
+# Es la fila mas trampa del reporte entero. Dentro de la tabla de operaciones
+# trae ticket numerico y fecha VALIDA, con las mismas catorce celdas que una
+# operacion de verdad, asi que las comprobaciones normales (celda vacia, ticket
+# que no es numero) no la pillan. Lo unico que la delata es el tipo.
+
+
+def test_un_deposito_no_se_convierte_en_operacion(tmp_path):
+    """Se renombra la fila de balance a 'deposit' y se comprueba que no entra.
+
+    Con la palabra original ya la saltaba el `if` de 'balance'. Cambiada,
+    entraba como una venta: 15 operaciones en vez de 14, con el saldo inicial
+    (25 000.00) como P&L y 'INITIAL ACCOUNT BALANCE' de simbolo. Eso no es un
+    error de lectura puntual: son 25 000 de beneficio inventados que
+    reventarian el win rate y el profit factor de la cuenta entera, y en
+    pantalla no se veia nada raro.
+    """
+    with open(CORTO, encoding="utf-8", errors="replace") as fh:
+        html = fh.read()
+    assert html.count(">balance<") == 1, (
+        "el reporte de ejemplo ya no trae la fila de balance como se esperaba"
+    )
+
+    copia = tmp_path / "con_deposito.htm"
+    copia.write_text(html.replace(">balance<", ">deposit<", 1), encoding="utf-8")
+
+    trades = MT4Parser().parse(str(copia))
+
+    assert len(trades) == CORTO_TRADES
+    assert all(t.quantity is not None for t in trades)
+    assert all((t.pnl_bruto or 0) < 1000 for t in trades)
+    assert all(t.direction in ("long", "short") for t in trades)
+
+
+@pytest.mark.parametrize(
+    "tipo", ["balance", "deposit", "withdrawal", "credit", "transfer"]
+)
+def test_las_filas_de_dinero_no_son_operaciones(tipo):
+    """Ticket numerico y fecha valida, como una operacion de verdad, pero el
+    tipo no es 'buy' ni 'sell'."""
+    fila = (
+        [114487682, "2026.10.12 15:27:10", tipo]
+        + ["Initial account balance"] * 10
+        + ["25 000.00"]
+    )
+    assert MT4Parser._no_es_operacion(fila) is True
+
+
+@pytest.mark.parametrize("tipo", ["buy", "sell", "BUY", " Sell "])
+def test_las_operaciones_de_verdad_no_se_saltan(tipo):
+    """La red nueva no se puede comer una operacion real: si lo hiciera, la
+    cuenta saldria con menos trades de los que tiene y las sumas dejarian de
+    cuadrar con el Closed P/L del propio MT4."""
+    fila = [
+        114488147,
+        "2026.10.12 15:27:10",
+        tipo,
+        1.0,
+        "eurusd",
+        1.11763,
+        1.11472,
+        1.12449,
+        "2026.10.12 16:00:00",
+        1.11798,
+        -5.0,
+        0.0,
+        0.0,
+        35.0,
+    ]
+    assert MT4Parser._no_es_operacion(fila) is False

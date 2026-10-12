@@ -7,6 +7,7 @@ de subida de archivos, siempre contra la base de datos de pruebas.
 
 import io
 
+from app.import_validacion import valida_trades_de_archivo
 from app.models import Trade
 from app.parsers.manual_template_parser import ManualTemplateParser
 
@@ -372,3 +373,41 @@ def test_parser_rechaza_archivo_que_no_es_la_plantilla(tmp_path):
         assert "no coincide con la plantilla" in str(e)
     else:
         raise AssertionError("Debía lanzar ValueError")
+
+
+def test_un_tipo_que_no_es_buy_ni_sell_no_se_fuerza_a_venta(tmp_path):
+    """Quien llena la plantilla puede escribir 'compra' o dejar la celda vacia.
+
+    Eso no se puede convertir en una venta. El valor tiene que llegar entero a
+    la validacion, que rechaza la fila con `direction_invalid` y le dice al
+    usuario que valor tenia. Forzando 'short' en el parser se fabricaria una
+    operacion vendida que nadie pidio, y saldria como una venta mas en las
+    estadisticas sin que hubiera forma de enterarse.
+
+    Nota: la plantilla NO tiene `parse_con_filas`, asi que el rechazo llega
+    sin numero de fila. Se comprueba el campo y el valor, que es lo que si se
+    puede asegurar hoy.
+    """
+    import pandas as pd
+
+    headers = ["Fecha apertura (YYYY-MM-DD)", "Hora apertura (HH:MM:SS)", "Posición",
+               "Símbolo", "Tipo (buy/sell)", "Volumen", "Precio apertura", "S/L",
+               "T/P", "Fecha cierre (YYYY-MM-DD)", "Hora cierre (HH:MM:SS)",
+               "Precio cierre", "Comisión", "Swap", "Beneficio"]
+    filas = [headers,
+             ["2026-01-22", "09:30:00", "1", "EURUSD", "compra", 0.10, 1.0850,
+              None, None, "2026-01-22", "11:14:00", 1.0912, -2.5, -0.3, 62.0]]
+    archivo = tmp_path / "mal_tipo.xlsx"
+    pd.DataFrame(filas).to_excel(archivo, index=False, header=False)
+
+    trades = ManualTemplateParser().parse(str(archivo))
+
+    assert len(trades) == 1
+    assert trades[0].direction not in ("long", "short")
+
+    validas, rechazos = valida_trades_de_archivo(trades)
+    assert validas == []
+    assert len(rechazos) == 1
+    assert rechazos[0].codigo == "direction_invalid"
+    assert rechazos[0].campo == "direction"
+    assert rechazos[0].valor == "compra"

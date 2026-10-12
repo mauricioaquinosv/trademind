@@ -36,8 +36,13 @@ LAS TRAMPAS DE ESTE FORMATO, Y POR QUE ESTAN AQUI ESCRITAS
      y tiene cuatro numeros al final. Si no se salta, se convierte en una
      operacion con ticket vacio y numeros donde no van.
 
-  3. La fila del balance. Cinco celdas, con "balance" en la tercera. Se
-     salta: el balance inicial lo gestiona la cuenta, no una operacion.
+  3. La fila de balance, deposito o retiro. ATENCION: NO trae cinco celdas
+     ni fecha vacia, como podria suponerse. Trae las mismas catorce que una
+     operacion, con un ticket numerico ("114487682") y una fecha valida, y
+     el saldo repetido en las demas celdas. Las comprobaciones normales --
+     celda vacia, ticket que no es numero -- NO la pillan. Lo unico que la
+     delata es el tipo: no es "buy" ni "sell". Se salta: el saldo lo
+     gestiona la cuenta, no una operacion.
 
   4. Los simbolos van en MINUSCULAS ("eurusd"). Si se guardan asi,
      Analytics trata "eurusd" y "EURUSD" como dos simbolos distintos y
@@ -124,12 +129,10 @@ class MT4Parser:
             if self._no_es_operacion(row):
                 continue
 
-            # "balance" es la fila del balance inicial. Tiene cinco celdas
-            # y ninguna fecha, asi que ya la descarta _no_es_operacion;
-            # este if es por si algun broker la escribe con fecha.
-            if str(row[2]).strip().lower() == "balance":
-                continue
-
+            # Aqui el tipo ya es "buy" o "sell": _no_es_operacion se ha
+            # llevado la fila de balance y cualquier otra cosa que no sea
+            # una operacion. Sin esa red, un deposito entraria como una
+            # venta con el saldo inicial como P&L.
             direction = "long" if str(row[2]).strip().lower() == "buy" else "short"
 
             # i+1 porque el usuario ve las filas contando desde 1, e i es
@@ -213,20 +216,31 @@ class MT4Parser:
     def _no_es_operacion(cls, row) -> bool:
         """True si la fila no es una operacion cerrada.
 
-        Cubre los tres casos que aparecen en un reporte de MT4 y que no son
+        Cubre los cuatro casos que aparecen en un reporte de MT4 y que no son
         operaciones:
 
           - La fila de totales: primera celda vacia (NaN) y numeros al final.
           - Separadores y pies de seccion, vacios del todo.
           - Cualquier fila cuya primera celda no sea un ticket, que es un
             numero.
+          - La fila de balance, deposito o retiro. Es la unica que se cuela
+            por las tres anteriores: trae ticket numerico y fecha valida, con
+            las mismas catorce celdas que una operacion de verdad.
         """
         if len(row) < 4:
             return True
         if pd.isna(row[0]):
             return True
         # El ticket es siempre un numero. Si no lo es, no es una operacion.
-        return not cls._es_numero(row[0])
+        if not cls._es_numero(row[0]):
+            return True
+        # El tipo tiene que ser "buy" o "sell". Lo demas que puede ocupar esa
+        # columna (balance, deposito, retiro, credit) es dinero que entra o
+        # sale de la cuenta, no una operacion. Dejandolo pasar, la linea de
+        # direction de mas abajo lo meteria como una venta: en el reporte de
+        # ejemplo eso seria un P&L inventado de 25 000 con el saldo inicial
+        # como simbolo.
+        return str(row[2]).strip().lower() not in ("buy", "sell")
 
     @staticmethod
     def _es_numero(value) -> bool:
@@ -252,7 +266,6 @@ class MT4Parser:
     def _parse_symbol(value) -> str:
         if pd.isna(value):
             return ""
-        # normalize primero, por si viene con un punto bizarre de Unicode.
         texto = str(value).strip()
         return texto.upper()
 

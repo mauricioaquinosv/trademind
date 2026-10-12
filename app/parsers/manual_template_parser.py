@@ -44,7 +44,20 @@ class ManualTemplateParser:
             if pd.isna(row[0]) or pd.isna(row[3]):
                 continue  # fila vacía, se ignora
 
-            direction = "long" if str(row[4]).strip().lower() == "buy" else "short"
+            # No se fuerza a "short". Si quien llena la plantilla escribe algo
+            # que no es "buy" ni "sell" (un "compra", o la celda vacia), el
+            # valor pasa tal cual a la validacion, que rechaza esa fila con
+            # direction_invalid y le dice al usuario que fila es y que valor
+            # tenia. Forzando "short" aqui se fabricaria una operacion vendida
+            # que nadie pidio, y saldria como una venta mas en las estadisticas
+            # sin que hubiera forma de enterarse.
+            tipo = None if pd.isna(row[4]) else str(row[4]).strip().lower()
+            if tipo == "buy":
+                direction = "long"
+            elif tipo == "sell":
+                direction = "short"
+            else:
+                direction = tipo
 
             trades.append(ClosedTrade(
                 symbol=str(row[3]).strip(),

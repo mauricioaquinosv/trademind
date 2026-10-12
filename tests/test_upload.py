@@ -105,6 +105,44 @@ def test_todo_trade_parseado_tiene_fecha_de_salida(archivo):
         assert t.entry_time is not None
 
 
+def test_una_fila_de_dinero_no_se_monta_como_venta(tmp_path):
+    """Una fila con fecha valida pero con Type que no es buy ni sell no es una
+    posicion cerrada: es dinero que entra o sale de la cuenta.
+
+    Si pasara, la linea que fija la direccion la meteria como short, porque
+    todo lo que no era 'buy' acababa siendo venta. Se monta un reporte de MT5
+    a mano con una fila de balance DENTRO de la tabla de Positions, que es el
+    unico sitio donde el filtro de fechas no la salvaria.
+
+    El reporte de ejemplo no tiene ninguna fila asi (sus 20 posiciones son 17
+    'sell' y 3 'buy'), asi que sin este test el hueco estaria sin cubrir.
+    """
+    import pandas as pd
+
+    cabecera = [
+        "Time", "Position", "Symbol", "Type", "Volume", "Price", "S / L",
+        "T / P", "Time", "Price", "Commission", "Swap", "Profit",
+    ]
+    filas = [
+        cabecera,
+        # Dinero con fecha en la primera columna: pasa el filtro de fechas,
+        # que es lo unico que habia delante del calculo de la direccion.
+        ["2026.09.25 07:58:00", 999999, "balance", "balance", None, None, None,
+         None, "2026.09.25 07:58:00", None, None, None, 25000.0],
+        # Una posicion cerrada de verdad.
+        ["2026.09.25 07:58:00", 166321549, "EURUSD", "sell", 0.1, 1.13689,
+         1.13827, 1.13453, "2026.09.25 08:58:00", 1.13500, -1.0, 0.0, -18.9],
+    ]
+    archivo = tmp_path / "mt5_dinero.xlsx"
+    pd.DataFrame(filas).to_excel(archivo, index=False, header=False)
+
+    trades = MT5Parser().parse(str(archivo))
+
+    assert len(trades) == 1
+    assert trades[0].symbol == "EURUSD"
+    assert trades[0].direction == "short"
+
+
 def test_los_parsers_se_eligen_por_el_contenido_no_por_la_extension(archivo):
     """
     El mismo formato llega como .xlsx, como HTML o como CSV. Lo que decide es
