@@ -6,9 +6,17 @@ Toda la documentación vive aquí. Cada documento dice **qué es** y **cuándo s
 
 | Documento | Qué es | Estado |
 |---|---|---|
-| [`especificaciones-tecnicas-y-de-negocio.md`](./especificaciones-tecnicas-y-de-negocio.md) | **Referencia de negocio.** Modelo de precios (3 planes), posicionamiento frente a la competencia, arquitectura en 5 bloques, cronograma por sprints y presupuesto. | Vigente |
+| [`especificaciones-tecnicas-y-de-negocio.md`](./especificaciones-tecnicas-y-de-negocio.md) | **Referencia de negocio.** Modelo de precios (3 planes), posicionamiento frente a la competencia, arquitectura en 5 bloques, cronograma por sprints y presupuesto. | Vigente, **pero ver la advertencia de abajo** |
+| [`mapa.html`](./mapa.html) | **El mapa del sitio y plan de QA.** Empieza por aquí. Dónde está cada pieza, qué hay que comprobar y qué está roto. | Vigente |
+| [`estado.html`](./estado.html) | **La foto del proyecto hoy.** Qué funciona, qué es solo diseño y qué falta. | Vigente |
+| [`mapa-y-qa.md`](./mapa-y-qa.md) | El mapa en texto plano: las 13 zonas de QA para tachar, parte por parte. | Vigente |
 | [`informe-estado-y-plan.md`](./informe-estado-y-plan.md) | **Estado real del código**, medido, y las fases que quedan. Es el documento de trabajo. | Vigente |
 | [`informe-claude-2026-10-03.md`](./informe-claude-2026-10-03.md) | Auditoría anterior del proyecto, hecha antes de añadir Git, tests, el idioma y los 8 puntos de mejora. | **Superado** — se conserva como registro |
+| [`landing-vista.html`](./landing-vista.html) | La landing pública renderizada, para verla sin levantar el proyecto. | Vigente |
+
+**Orden de lectura:** `mapa.html` (o `estado.html` si quieres la foto rápida) →
+`mapa-y-qa.md` para lo que hay que comprobar → `especificaciones` para por dónde
+iba el negocio. Los dos HTML se abren con doble clic, no necesitan servidor.
 
 El original de las especificaciones sigue en la raíz del repositorio como
 `DOCUMENTO DE ESPECIFICACIONES TÉCNICAS Y DE NEGOCIO.docx`. La versión en Markdown
@@ -52,21 +60,24 @@ en [`informe-estado-y-plan.md`](./informe-estado-y-plan.md).
 
 ## Decisiones de negocio ya tomadas
 
-El documento de especificaciones **ya responde** a una de las tres decisiones que
-estaban esperando. No hay que decidirlo otra vez:
+El documento de especificaciones responde a una de las tres decisiones, pero
+**hay una contradicción grave que no se ha resuelto**:
 
-| Decisión | Respuesta | Dónde |
+| Decisión | Documento de especificaciones | Pantallas que existen hoy |
 |---|---|---|
-| Precio y modelo | **3 planes mensuales**: Pro $29,95 · Premium $49,95 · Elite $79,95 | Sección 1.1 |
-| Costes fijos | $1.200/mes (infraestructura $150, datos $250, Stripe $100, marketing $700) | Sección 4.2 |
-| Punto de equilibrio | Subscription media de $25/mes | Sección 4.2 |
+| **Precio y modelo** | **3 planes mensuales**: Pro $29,95 · Premium $49,95 · Elite $79,95 | **1 solo plan**: 7 días gratis y después **$9,99/mes** |
 
-Las otras dos siguen sin decidir:
+Las dos cosas no pueden ser verdad a la vez. El diseño de las pantallas de
+suscripción (`/plan`, `/pago`, `/bienvenida`) está construido sobre el plan
+único de $9,99. **Esta contradicción sigue abierta** y hay que resolverla antes
+de conectar el cobro.
 
-| Decisión | Bloquea |
+Las otras dos:
+
+| Decisión | Estado |
 |---|---|
-| **Hosting:** gratuito (se suspende por inactividad) o de pago | La Fase 4 entera |
-| **KPIs:** ¿de la cuenta entera o del mes que se está viendo? | La incoherencia D2 del informe de estado |
+| **Hosting:** gratuito (se suspende por inactividad) o de pago | **Decidido: gratuito.** Neon (base), Render (backend), Cloudflare (frontend) y StatusCake (despertador). Cuentas sin crear todavía |
+| **KPIs:** ¿de la cuenta entera o del mes que se está viendo? | **Sin decidir.** Bloquea la incoherencia D2 del informe de estado |
 
 ---
 
@@ -79,4 +90,5 @@ no se han contrastado con la realidad del proyecto:
 
 2. **MAE/MFE necesita datos tick a tick**, y el reporte "Positions" de MT5 no los trae. Como está descrita, esa fase no es viable con el flujo actual de subir archivo.
 
-Ninguna de las dos bloquea el trabajo actual. Ambas están anotadas para que no seheny sales de la pantalla.
+Ninguna de las dos bloquea el trabajo actual. Ambas están anotadas para que no
+se pierdan de vista.
