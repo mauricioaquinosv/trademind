@@ -216,6 +216,36 @@ iniciada sola y entrada al dashboard. Lo que queda:
 - [ ] Las seis preguntas frecuentes se abren y se cierran
 - [ ] El boton de Google es de la marca y lleva el logotipo bien
 
+## A2c. Conexion en vivo con brokers
+
+Decidido el 12 oct. Hay dos modelos y la diferencia no es tecnica:
+
+| Modelo | Como funciona | Plataformas |
+|---|---|---|
+| **Autoservicio** | El usuario da su token a la plataforma y la app lo usa. No hace falta permiso de nadie | MT4, MT5, cTrader, TradeLocker |
+| **Asociacion directa** | El broker tiene que autorizarte a ti como empresa, uno por uno | Match-Trade, DXtrade |
+
+Lo decidido:
+
+1. **MT4 y MT5: solo importacion de archivo.** La pasarela que permitiria conectarlos
+   (MetaApi) cobra por cada cuenta conectada y no cabe en $9,99/mes por usuario. Se
+   retoma mas adelante, con coste, cuando el producto lo justifique.
+2. **cTrader: si, y es la unica que se construye ahora.** API gratis, oficial y hecha
+   para apps de terceros.
+3. **TradeLocker: pendiente de verificar** que su API sea autoservicio de verdad.
+   Cuando se confirme, se anade como otra implementacion de `LiveConnector`.
+4. **Match-Trade y DXtrade: descartados por ahora.** Requieren acuerdo con cada broker.
+
+- [ ] **Parser de MT4.** Reporte exportado, igual que MT5. Es el siguiente paso.
+      Hace falta un archivo real de ejemplo, con compras y ventas, comisiones y swaps
+      distintos de cero, y varios simbolos. Y hay que saber en que idioma esta el
+      terminal, porque MT4 escribe el nombre de las secciones traducido.
+- [ ] **Verificar la API de TradeLocker** antes de construir nada sobre ella.
+- [ ] **La politica de privacidad** habla de archivos, no de tokens de broker. Lo
+      lleva el titular del proyecto; hay que avisarle cuando la tenga.
+- [ ] **Un conector roto miente al usuario.** Si la API de cTrader cambia, los numeros
+      que ve estan mal hasta que se arregle. Con archivo eso no pasa.
+
 ## A3. Seguridad y robustez del backend
 
 Lista revisada punto por punto contra el codigo, el 10 oct. Cada uno lleva su
@@ -223,7 +253,7 @@ estado REAL, no el que parecia.
 
 | Punto | Estado |
 |---|---|
-| `SECRET_KEY` sin validar | **pendiente** |
+| `SECRET_KEY` sin validar | **resuelto** (lote 1) |
 | Contrasenas: minimo y limite de bcrypt | **resuelto** |
 | Limite del tamano de la subida | **resuelto** |
 | Limite de intentos en el login | **resuelto** |
@@ -253,8 +283,9 @@ estado REAL, no el que parecia.
 
 ### Lo que sigue pendiente
 
-- [ ] **`SECRET_KEY` se valida al arrancar.** Hoy `security.py:10` es
-      `os.getenv("SECRET_KEY")` y ya. Si falta, la app arranca bien y revienta en
+- [x] **`SECRET_KEY` falla al arrancar si falta.** Resuelto en el lote 1. Antes
+      arrancaba bien y el fallo salia en el primer login, que es cuando un usuario
+      real (o el revisor de 4Geeks) se lo encontraba. Si falta, la app arranca bien y revienta en
       el primer login. Lo que hay que hacer no es un 500 mas claro: es **fallar
       al arrancar**, que es cuando se arregla.
 - [ ] **`GET /trades/` devuelve todas las operaciones sin paginar.** La paginacion
@@ -329,8 +360,8 @@ etiquetas distintas. Mezclarlas hizo que parecieran todas igual de urgentes.
 | Subir el mismo archivo dos veces | **resuelto** | `separa_repetidas`, en `import_validacion.py` |
 | Tamaño de la subida | **resuelto** | `TAMANO_MAXIMO`, 25 MB, en `trades.py` |
 | Freno en el login | **resuelto** | `login_freno.py`, 10 intentos / 15 min |
-| `SECRET_KEY` | **despliegue** | `security.py:10` |
-| Instalar el backend | **despliegue** | no hay `requirements.txt` |
+| `SECRET_KEY` | **resuelto** | lote 1, falla al arrancar |
+| Instalar el backend | **despliegue** | no hay `Dockerfile` (`requirements.txt` ya está) |
 | Puerto 5432 abierto | **despliegue** | `docker-compose.yml:15` |
 | Crear cuenta desde la web | **resuelto** | ya no aplica: `login/page.tsx` |
 | Dirección del backend escrita a mano | **despliegue** | `dashboard/page.tsx` y `login/page.tsx` |
@@ -373,8 +404,7 @@ etiquetas distintas. Mezclarlas hizo que parecieran todas igual de urgentes.
       la cabecera `Content-Length`. Un archivo demasiado grande da 413, no 400.
 - [x] **El login tiene freno de intentos.** 10 intentos y 15 minutos, contados en la base
       por email **y** por IP. El bloqueo da 429, no 401.
-- [ ] **La app no arranca si falta `SECRET_KEY`.** Ahora arranca y revienta en el
-      primer login, que es el peor momento para descubrirlo.
+- [x] **La app falla al arrancar si falta `SECRET_KEY`.** Resuelto en el lote 1.
 - [ ] **Se puede instalar el backend desde cero**, con las versiones fijadas.
 - [ ] **En producción, Postgres no está abierto a internet.**
 - [ ] **La dirección del backend sale de una variable de entorno.** Hoy está

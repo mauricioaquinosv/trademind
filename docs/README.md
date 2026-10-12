@@ -60,24 +60,68 @@ en [`informe-estado-y-plan.md`](./informe-estado-y-plan.md).
 
 ## Decisiones de negocio ya tomadas
 
-El documento de especificaciones responde a una de las tres decisiones, pero
-**hay una contradicción grave que no se ha resuelto**:
-
-| Decisión | Documento de especificaciones | Pantallas que existen hoy |
-|---|---|---|
-| **Precio y modelo** | **3 planes mensuales**: Pro $29,95 · Premium $49,95 · Elite $79,95 | **1 solo plan**: 7 días gratis y después **$9,99/mes** |
-
-Las dos cosas no pueden ser verdad a la vez. El diseño de las pantallas de
-suscripción (`/plan`, `/pago`, `/bienvenida`) está construido sobre el plan
-único de $9,99. **Esta contradicción sigue abierta** y hay que resolverla antes
-de conectar el cobro.
-
-Las otras dos:
-
 | Decisión | Estado |
 |---|---|
-| **Hosting:** gratuito (se suspende por inactividad) o de pago | **Decidido: gratuito.** Neon (base), Render (backend), Cloudflare (frontend) y StatusCake (despertador). Cuentas sin crear todavía |
-| **KPIs:** ¿de la cuenta entera o del mes que se está viendo? | **Sin decidir.** Bloquea la incoherencia D2 del informe de estado |
+| **Precio y modelo** | **Un solo plan: 7 días gratis y después $9,99/mes.** Se reevaluará cuando haya producto terminado y se sepa lo que vale de verdad. No bloquea nada |
+| **Hosting** | **Gratuito.** Neon (base), Render (backend), Cloudflare (frontend) y StatusCake (despertador). Cuentas sin crear todavía |
+| **KPIs** | **Sin decidir.** ¿De la cuenta entera o del mes que se está viendo? Bloquea la incoherencia D2 del informe de estado |
+
+> **Nota sobre el precio.** El documento de especificaciones dice tres planes
+> (Pro $29,95, Premium $49,95, Elite $79,95). Se queda como referencia de por dónde
+> se empezó, pero **la decisión vigente es un solo plan de $9,99**, que es sobre lo
+> que están construidas las pantallas de suscripción.
+
+---
+
+## Conexión en vivo con brokers
+
+Decidido el 12 oct, después de investigar qué plataformas se pueden conectar y
+cómo. **No todas se pueden, y la diferencia no es técnica.**
+
+Hay dos modelos:
+
+| Modelo | Cómo funciona | Plataformas |
+|---|---|---|
+| **Autoservicio** | El usuario da su token a la plataforma (MT4, MT5, cTrader, TradeLocker) y la app lo usa. **No necesitas permiso de nadie.** | MT4, MT5, cTrader, TradeLocker |
+| **Asociación directa** | El broker tiene que autorizarte a ti como empresa, uno por uno, con acuerdo de por medio | Match-Trade, DXtrade |
+
+**Por qué importa:** con el primer grupo puedes conectarte solo. Con el segundo
+necesitas que una empresa firme contigo, y eso no depende de tu código.
+
+### Decisiones
+
+1. **MT4 y MT5: solo importación de archivo.** Se descarta la conexión en vivo
+   porque la pasarela que la permite (MetaApi) cobra por cada cuenta conectada, y
+   eso no cabe en $9,99/mes por usuario. **Queda anotado para más adelante**, con
+   coste, cuando el producto lo justifique.
+2. **cTrader: sí, y es la única que se construye ahora.** Su API es gratis, oficial
+   y está hecha para que se conecten apps de terceros.
+3. **TradeLocker: pendiente de verificar.** Su API es mucho menos conocida y no se
+   ha podido confirmar que sea autoservicio de verdad. Cuando se verifique, se
+   añade como otra implementación más de `LiveConnector` sin tocar el resto.
+4. **Match-Trade y DXtrade: descartados por ahora.** Requieren negociar con cada
+   broker por separado.
+
+### Lo que esto implica y no hay que olvidar
+
+- **cTrader en vivo, MT4/MT5 por archivo.** Son dos experiencias distintas para el
+  usuario. No se puede anunciar "conecta tu broker" a secas.
+- **Guardar credenciales de terceros cambia lo legal.** La política de privacidad
+  habla de archivos, no de tokens. **Lo lleva el titular del proyecto.**
+- **Un conector roto miente al usuario.** Si la API de cTrader cambia, los números
+  que ve el usuario están mal hasta que se arregle. Con archivo eso no pasa. Es una
+  carga de mantenimiento permanente.
+
+---
+
+## Lo que se está construyendo ahora
+
+| Paso | Estado |
+|---|---|
+| Parser de MT4 (reporte exportado, igual que MT5) | **Siguiente** |
+| Esqueleto de conexión en vivo, solo cTrader | Pendiente |
+| TradeLocker, cuando se verifique su API | Pendiente |
+| Motor de suscripciones (lotes 2, 3 y 4) | Pendiente |
 
 ---
 

@@ -1783,7 +1783,7 @@ cd web; npm run build                           <span class="c"># que compile de
 
         <tbody>
 
-          <tr><td class="ruta">SECRET_KEY sin validar</td><td><code>security.py:10</code></td></tr>
+          <tr><td class="ruta">SECRET_KEY sin validar</td><td class="t-verde">hecho &mdash; lote 1</td></tr>
 
           <tr><td class="ruta">GET /trades/ sin paginar</td><td><code>trades.py</code></td></tr>
 
@@ -1795,7 +1795,7 @@ cd web; npm run build                           <span class="c"># que compile de
 
           <tr><td class="ruta">Mensajes de Pydantic en inglés</td><td>Los que genera la librería, no los nuestros</td></tr>
 
-          <tr><td class="ruta">requirements.txt y Dockerfile</td><td>No existen. Bloquea instalar en un servidor limpio</td></tr>
+          <tr><td class="ruta">Dockerfile</td><td>No existe. <code>requirements.txt</code> ya está (lote 1). Sigue bloqueando el servidor</td></tr>
 
         </tbody>
 
@@ -1827,7 +1827,11 @@ cd web; npm run build                           <span class="c"># que compile de
 
           <tr><td class="ruta">Ficheros que ya no se usan</td><td><code>PanelAnimado.tsx</code> y los 4 PNG, ~360 KB</td></tr>
 
-          <tr><td class="ruta">La QA por zonas</td><td>Doce zonas para tachar en el Markdown. Ninguna probada</td></tr>
+          <tr><td class="ruta">La QA por zonas</td><td>Trece zonas para tachar en el Markdown. Ninguna probada</td></tr>
+
+          <tr><td class="ruta">Verificar la API de TradeLocker</td><td>Se anunció como autoservicio pero no está confirmado. De ello depende si se puede conectar en vivo</td></tr>
+
+          <tr><td class="ruta">Parser de MT4</td><td>Reporte exportado, igual que MT5. Es el siguiente paso. Hace falta un archivo real de ejemplo</td></tr>
 
         </tbody>
 
