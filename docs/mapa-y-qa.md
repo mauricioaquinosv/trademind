@@ -118,7 +118,7 @@ Si algo se rompe, mira estos primero. Son el cuello de botella.
 | Fichero | Que lleva |
 |---|---|
 | `app/parsers/mt5_parser.py` | Lee el reporte de MT5. Dice de que fila salio cada operacion |
-| `app/parsers/manual_template_parser.py` | Lee la plantilla de Excel |
+| `app/parsers/manual_template_parser.py` | Lee la plantilla de Excel. Dice de que fila salio cada operacion |
 | `app/parsers/file_reader.py` | Decide como abrir el fichero segun su extension |
 | `app/import_validacion.py` | Separa las operaciones buenas de las malas. Solo codigos |
 | `app/schemas.py` | Valida lo que llega del formulario |
@@ -569,7 +569,7 @@ Esto no lo pruebas tu, corre solo. Sirve para saber si se ha roto algo de lo
 de arriba:
 
 ```
-.\venv\Scripts\python.exe -m pytest     -> 312 tests de backend
+.\venv\Scripts\python.exe -m pytest     -> 316 tests de backend
 cd web; npm test                         -> 169 tests de frontend
 cd web; npm run test:traduccion          -> el guard de las cadenas sueltas
 cd web; npx tsc --noEmit                 -> los tipos
@@ -601,7 +601,7 @@ Si algo se rompe, mira estos primero. Son el cuello de botella.
 | Fichero | Qué lleva |
 |---|---|
 | `app/parsers/mt5_parser.py` | Lee el reporte de MT5. Dice de qué fila salió cada operación |
-| `app/parsers/manual_template_parser.py` | Lee la plantilla de Excel |
+| `app/parsers/manual_template_parser.py` | Lee la plantilla de Excel. Dice de que fila salio cada operacion |
 | `app/parsers/file_reader.py` | Decide cómo abrir el fichero según su extensión |
 | `app/import_validacion.py` | Separa lo bueno de lo malo, **y lo repetido de lo nuevo** |
 | `app/login_freno.py` | Cuenta los intentos fallidos del login |
