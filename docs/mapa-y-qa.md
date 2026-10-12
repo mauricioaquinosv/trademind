@@ -236,13 +236,24 @@ Lo decidido:
    Cuando se confirme, se anade como otra implementacion de `LiveConnector`.
 4. **Match-Trade y DXtrade: descartados por ahora.** Requieren acuerdo con cada broker.
 
-- [x] **Parser de MT4.** Hecho el 12 oct (`42ef557`), en `app/parsers/mt4_parser.py`, con
+- [x] **Parser de MT4.** Hecho el 12 oct (`42ef557`, refuerzo `2111131`), en `app/parsers/mt4_parser.py`, con
       dos reportes reales como fixtures. Lee la cabecera `Ticket | Open Time | ...`,
       quita el separador de miles que MT4 escribe con espacio, pasa los simbolos a
       mayusculas y salta la fila del balance y la de totales.
       **El idioma del terminal NO importa:** se comprobó con el programa en español y
       en inglés, y MT4 escribe los nombres de las secciones siempre en inglés, así que
       hace falta un solo parser, no dos. Esa duda queda cerrada.
+      **Solo entra lo que es `buy` o `sell`** (`2111131`). La fila de balance NO trae
+      cinco celdas ni fecha vacía: trae las mismas catorce que una operación, con
+      ticket numérico y fecha válida, así que las comprobaciones normales no la
+      pillan. Antes la frenaba únicamente que el tipo dijera literalmente `balance`;
+      cambiado el texto a `deposit` entraba como una venta con el saldo inicial como
+      P&L — 25 000,00 inventados que reventarían el win rate y el profit factor de la
+      cuenta entera sin que se viera nada raro en pantalla. La misma red se puso en el
+      parser de MT5 y en la plantilla manual, que además ya no fuerza `short` cuando
+      quien la llena escribe algo distinto de `buy`/`sell`: eso ahora llega a la
+      validación y se rechaza con `direction_invalid`. Comprobado que los tests nuevos
+      se ponen rojos si el arreglo se revierte.
       Pendiente: un reporte con **swap distinto de cero** (en los dos ejemplos todas las
       operaciones se abrieron y cerraron el mismo día) y un **símbolo con sufijo de
       broker** (`EURUSD.a`), que es frecuente y ninguno de los dos trae.
@@ -558,8 +569,8 @@ Esto no lo pruebas tu, corre solo. Sirve para saber si se ha roto algo de lo
 de arriba:
 
 ```
-.\venv\Scripts\python.exe -m pytest     -> 300 tests de backend
-cd web; npm test                         -> 167 tests de frontend
+.\venv\Scripts\python.exe -m pytest     -> 312 tests de backend
+cd web; npm test                         -> 169 tests de frontend
 cd web; npm run test:traduccion          -> el guard de las cadenas sueltas
 cd web; npx tsc --noEmit                 -> los tipos
 cd web; npm run build                    -> que compile de verdad

@@ -438,9 +438,9 @@
 
       <span class="tag t-azul">3 tablas</span>
 
-      <span class="tag t-azul">523 claves × 2 idiomas</span>
+      <span class="tag t-azul">604 claves × 2 idiomas</span>
 
-      <span class="tag t-verde">261 + 167 tests</span>
+      <span class="tag t-verde">312 + 169 tests</span>
 
       <span class="tag t-rojo">5 bloqueos</span>
 
@@ -463,12 +463,12 @@
     </p>
 
     <div class="meta">
-      <span class="tag t-verde">69 commits</span>
+      <span class="tag t-verde">77 commits</span>
       <span class="tag t-verde">140 ficheros</span>
       <span class="tag t-verde">todo subido a GitHub</span>
       <span class="tag t-azul">11 rutas · 14 endpoints</span>
-      <span class="tag t-azul">602 claves × 2 idiomas</span>
-      <span class="tag t-verde">300 + 167 tests</span>
+      <span class="tag t-azul">604 claves × 2 idiomas</span>
+      <span class="tag t-verde">312 + 169 tests</span>
       <span class="tag t-rojo">sin cobros</span>
     </div>
 
@@ -504,7 +504,7 @@
       <p style="margin-top:14px">
         <b>Todo traducido.</b> El español manda: su tipo define qué claves existen y el inglés
         está tipado contra él. Si se añade una clave en un idioma y no en el otro,
-        <b>no compila</b>. 602 claves en cada uno.
+        <b>no compila</b>. 604 claves en cada uno.
       </p>
 
     </div>
@@ -620,8 +620,8 @@
 cd C:\trademind\web        npm run dev          <span class="c"># la web, en :3000</span>
 
 cd C:\trademind
-.\venv\Scripts\python.exe -m pytest            <span class="c"># 300 tests de backend</span>
-cd web; npm test                                <span class="c"># 167 tests de frontend</span>
+.\venv\Scripts\python.exe -m pytest            <span class="c"># 312 tests de backend</span>
+cd web; npm test                                <span class="c"># 169 tests de frontend</span>
 cd web; npx tsc --noEmit                        <span class="c"># los tipos</span>
 cd web; npm run build                           <span class="c"># que compile de verdad</span></pre>
 
@@ -1593,7 +1593,7 @@ cd web; npm run build                           <span class="c"># que compile de
 
       <div class="qa-i human"><div class="L">K</div><div class="txt"><div class="t">Lo que necesita tus ojos</div><div class="d">Que los textos estén bien redactados, que el inglés suene natural, que nada quede torcido. <strong>No lo puedo hacer yo.</strong></div></div></div>
 
-      <div class="qa-i auto"><div class="L">L</div><div class="txt"><div class="t">Lo que ya corre solo</div><div class="d">261 tests de backend, 123 de frontend, el guard de traducción, los tipos y el build. No lo pruebas tú: sirve para saber si se ha roto algo de arriba.</div></div></div>
+      <div class="qa-i auto"><div class="L">L</div><div class="txt"><div class="t">Lo que ya corre solo</div><div class="d">312 tests de backend, 169 de frontend, el guard de traducción, los tipos y el build. No lo pruebas tú: sirve para saber si se ha roto algo de arriba.</div></div></div>
 
     </div>
 
@@ -1831,7 +1831,7 @@ cd web; npm run build                           <span class="c"># que compile de
 
           <tr><td class="ruta">Verificar la API de TradeLocker</td><td>Se anunció como autoservicio pero no está confirmado. De ello depende si se puede conectar en vivo</td></tr>
 
-          <tr><td class="ruta">Parser de MT4</td><td><strong>Hecho</strong> (<code>42ef557</code>). Dos reportes reales como fixtures; la suma de <code>pnl_neto</code> cuadra con el <em>Closed P/L</em> que escribe el propio MT4. Queda un reporte con swap distinto de cero y un símbolo con sufijo de broker</td></tr>
+          <tr><td class="ruta">Parser de MT4</td><td><strong>Hecho</strong> (<code>42ef557</code>, refuerzo <code>2111131</code>). Dos reportes reales como fixtures; la suma de <code>pnl_neto</code> cuadra con el <em>Closed P/L</em> que escribe el propio MT4. Solo se importan filas cuyo tipo es <code>buy</code> o <code>sell</code>, para que una fila de balance o depósito no acabe metida como una venta. Queda un reporte con swap distinto de cero y un símbolo con sufijo de broker</td></tr>
 
         </tbody>
 
