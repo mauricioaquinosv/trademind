@@ -199,7 +199,13 @@ iniciada sola y entrada al dashboard. Lo que queda:
 - [ ] **Los mensajes de validacion de Pydantic** llegan en ingles fijo.
 - [ ] **El motor de suscripciones no existe.** Las cinco pantallas del flujo son una
       maqueta: no hay tabla, no hay cobro y ningun boton hace nada. Es lo que decide
-      si esto se lanza o no.
+      si esto se lanza o no. El reparto que se acordó con Claude para construirlo —
+      **lote 2:** tabla de suscripciones y eventos de webhook; **lote 3:** pagos
+      simulados; **lote 4:** conectar el frontend — **nunca llegó**: no están "sin
+      revisar", hay que volverlos a pedir desde cero. La maqueta de las cinco
+      pantallas (10 oct) no cuenta como lote 3: no cobra ni guarda nada. Conviene
+      pedirlos con el proveedor de cobro ya decidido (4Geeks), porque de eso
+      depende el diseño de la tabla.
 
 ## A. La landing
 

@@ -121,7 +121,7 @@ necesitas que una empresa firme contigo, y eso no depende de tu código.
 | Parser de MT4 (reporte exportado, igual que MT5) | **Hecho** (`42ef557`) |
 | Esqueleto de conexión en vivo, solo cTrader | Pendiente |
 | TradeLocker, cuando se verifique su API | Pendiente |
-| Motor de suscripciones (lotes 2, 3 y 4) | Pendiente |
+| Motor de suscripciones (los lotes 2, 3 y 4 de Claude nunca llegaron; hay que volverlos a pedir) | Pendiente |
 
 ---
 
