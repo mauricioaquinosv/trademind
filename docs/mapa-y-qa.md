@@ -254,9 +254,12 @@ Lo decidido:
       quien la llena escribe algo distinto de `buy`/`sell`: eso ahora llega a la
       validación y se rechaza con `direction_invalid`. Comprobado que los tests nuevos
       se ponen rojos si el arreglo se revierte.
-      Pendiente: un reporte con **swap distinto de cero** (en los dos ejemplos todas las
-      operaciones se abrieron y cerraron el mismo día) y un **símbolo con sufijo de
-      broker** (`EURUSD.a`), que es frecuente y ninguno de los dos trae.
+      Pendiente: un **símbolo con sufijo de broker** (`EURUSD.a`), que es frecuente
+      y ninguno de los reportes trae. El otro pendiente que había — un reporte con
+      **swap distinto de cero** — quedó cerrado: `sample_data/Statement_MT4_swap.htm`
+      trae tres operaciones con swap (-4,24 · -1,35 · +0,40) y los tests nuevos exigen
+      que el swap total sea -5,19, igual que la fila de totales del propio reporte,
+      campo a campo y sin mezclarlo con commission ni taxes.
 - [ ] **Verificar la API de TradeLocker** antes de construir nada sobre ella.
 - [ ] **La politica de privacidad** habla de archivos, no de tokens de broker. Lo
       lleva el titular del proyecto; hay que avisarle cuando la tenga.

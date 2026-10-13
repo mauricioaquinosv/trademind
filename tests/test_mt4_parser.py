@@ -5,11 +5,17 @@ Antes de este fichero no existia soporte para MT4: solo MT5 y la plantilla
 manual. Cualquier .htm exportado desde MT4 se intentaba leer como reporte de
 MT5, no encontraba la seccion 'Positions' y devolvia un rechazo enganoso.
 
-Los dos ficheros de ejemplo son reportes REALES exportados desde el terminal,
-con el programa puesto en espanol por un lado y en ingles por otro: MT4 escribe
-los nombres de seccion en ingles en los dos casos, por eso aqui no se comprueba
-deteccion de idioma -- no hace falta, y comprobarlo seria testear algo que no
-depende de nosotros.
+Dos de los ficheros de ejemplo son reportes REALES exportados desde el
+terminal, con el programa puesto en espanol por un lado y en ingles por otro:
+MT4 escribe los nombres de seccion en ingles en los dos casos, por eso aqui no
+se comprueba deteccion de idioma -- no hace falta, y comprobarlo seria testear
+algo que no depende de nosotros.
+
+El tercero, `Statement_MT4_swap.htm`, existe por un motivo concreto: los dos
+primeros reportes traen Swap total 0.00, asi que las sumas de `swap` pasan
+incluso si la columna esta desplazada una posicion. Ese fichero tiene tres
+operaciones con swap distinto de cero y es el unico que protege de verdad el
+mapeo de la columna Swap.
 
 Las cifras no se inventan: son las que el propio MT4 escribe en su fila de
 totales y en su "Closed P/L". Si un refactor cambia el mapeo de columnas, los
@@ -24,6 +30,7 @@ from app.parsers.file_reader import read_any_table
 
 CORTO = "sample_data/Statement_MT4.htm"
 LARGO = "sample_data/Statement_MT4_largo.htm"
+SWAP = "sample_data/Statement_MT4_swap.htm"
 MT5 = "sample_data/ReportHistory-35023263.xlsx"
 
 # --- valores que el propio reporte declara --------------------------------
@@ -45,6 +52,18 @@ LARGO_IMPUESTOS = 0.00
 LARGO_SWAP = 0.00
 LARGO_BRUTO = -194.62
 LARGO_CLOSED_PL = -387.92
+
+# El reporte con swap != 0. Las tres cifras de abajo son las que MT4 escribe
+# en su propia fila de totales: Commission -416.88 | Taxes 0.00 | Swap -5.19 |
+# Profit 1 473.53, y "Closed P/L: 1 051.46". Solo tres operaciones tienen
+# swap distinto de cero (-4.24, -1.35 y 0.40), pero con esas tres basta: si la
+# columna Swap se desplaza, estas sumas dejan de cuadrar.
+SWAP_TRADES = 50
+SWAP_COMISION = -416.88
+SWAP_IMPUESTOS = 0.00
+SWAP_SWAP = -5.19
+SWAP_BRUTO = 1473.53
+SWAP_CLOSED_PL = 1051.46
 
 PRIMERA = {
     "position": "114488147",
@@ -69,6 +88,11 @@ def corto():
 @pytest.fixture
 def largo():
     return MT4Parser().parse(LARGO)
+
+
+@pytest.fixture
+def con_swap():
+    return MT4Parser().parse(SWAP)
 
 
 # --- se detecta y se parsea ------------------------------------------------
@@ -186,6 +210,63 @@ def test_taxes_tiene_su_propio_campo_y_no_va_a_comision(corto):
         assert isinstance(t, ClosedTrade)
         assert t.taxes == 0.0
         assert t.commission != 0.0  # las comisiones si existen en estos datos
+
+
+# --- el reporte con swap != 0 ---------------------------------------------
+#
+# Los dos reportes de arriba traen Swap total 0.00: sus sumas pasarian incluso
+# con la columna Swap desplazada. Este bloque es el que protege de verdad el
+# mapeo de las cuatro columnas de caja, porque este reporte tiene swap real.
+
+
+def test_el_reporte_con_swap_trae_50_operaciones(con_swap):
+    assert len(con_swap) == SWAP_TRADES
+
+
+def test_las_sumas_del_reporte_con_swap_cuadran(con_swap):
+    """Mismo oraculo que los otros dos reportes, pero con la particularidad de
+    que `SWAP_SWAP` es -5.19, no 0.00: una columna desplazada aqui no pasa
+    desapercibida."""
+    assert sum(t.commission for t in con_swap) == pytest.approx(SWAP_COMISION, abs=0.01)
+    assert sum(t.taxes for t in con_swap) == pytest.approx(SWAP_IMPUESTOS, abs=0.01)
+    assert sum(t.swap for t in con_swap) == pytest.approx(SWAP_SWAP, abs=0.01)
+    assert sum(t.pnl_bruto for t in con_swap) == pytest.approx(SWAP_BRUTO, abs=0.01)
+
+
+def test_el_neto_del_reporte_con_swap_es_el_closed_pl(con_swap):
+    """`pnl_neto` = bruto + commission + taxes + swap, la misma suma que MT4
+    llama 'Closed P/L: 1 051.46'. Si el swap se hubiera metido en commission
+    o en taxes la suma total no cambiaria (dan lo mismo), por eso abajo va la
+    comprobacion campo a campo."""
+    assert sum(t.pnl_neto for t in con_swap) == pytest.approx(SWAP_CLOSED_PL, abs=0.01)
+
+
+def test_swap_va_a_swap_y_no_a_comision_ni_a_taxes(con_swap):
+    """La comprobacion campo a campo.
+
+    El swap de este reporte esta en tres operaciones concretas: -4.24 en
+    EURUSD, -1.35 en GBPUSD y +0.40 en USDJPY, con commission -2.50/-1.25/
+    -1.25 y taxes 0.00 en las tres. Un desplazamiento de columnas pondria el
+    swap donde no va y estas cifras no saldrian.
+    """
+    swaps_no_cero = [t for t in con_swap if t.swap != 0.0]
+
+    # Exactamente tres operaciones con swap, ni una de mas (la fila de
+    # balance y la de totales no son operaciones y no deben colarse).
+    assert len(swaps_no_cero) == 3
+    assert sorted(t.swap for t in swaps_no_cero) == pytest.approx([-4.24, -1.35, 0.40])
+
+    # En esas tres, commission y taxes son las que dice el reporte: si el swap
+    # se hubiera metido en commission, esta saldria otra en EURUSD.
+    por_swap = {t.position: t for t in swaps_no_cero}
+    assert por_swap["114503678"].commission == pytest.approx(-2.50)  # EURUSD
+    assert por_swap["114503681"].commission == pytest.approx(-1.25)  # GBPUSD
+    assert por_swap["114503684"].commission == pytest.approx(-1.25)  # USDJPY
+    assert all(t.taxes == 0.0 for t in swaps_no_cero)
+
+    # Y las demas operaciones, con swap 0.00 en el reporte, lo tienen en cero:
+    # el swap no se reparte ni se pega a otros trades.
+    assert all(t.swap == 0.0 for t in con_swap if t.position not in por_swap)
 
 
 # --- las trampas del formato ----------------------------------------------

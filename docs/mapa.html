@@ -1831,7 +1831,7 @@ cd web; npm run build                           <span class="c"># que compile de
 
           <tr><td class="ruta">Verificar la API de TradeLocker</td><td>Se anunció como autoservicio pero no está confirmado. De ello depende si se puede conectar en vivo</td></tr>
 
-          <tr><td class="ruta">Parser de MT4</td><td><strong>Hecho</strong> (<code>42ef557</code>, refuerzo <code>2111131</code>). Dos reportes reales como fixtures; la suma de <code>pnl_neto</code> cuadra con el <em>Closed P/L</em> que escribe el propio MT4. Solo se importan filas cuyo tipo es <code>buy</code> o <code>sell</code>, para que una fila de balance o depósito no acabe metida como una venta. Queda un reporte con swap distinto de cero y un símbolo con sufijo de broker</td></tr>
+          <tr><td class="ruta">Parser de MT4</td><td><strong>Hecho</strong> (<code>42ef557</code>, refuerzo <code>2111131</code>). Dos reportes reales como fixtures; la suma de <code>pnl_neto</code> cuadra con el <em>Closed P/L</em> que escribe el propio MT4. Solo se importan filas cuyo tipo es <code>buy</code> o <code>sell</code>, para que una fila de balance o depósito no acabe metida como una venta. Con un reporte con swap distinto de cero como fixture (<code>Statement_MT4_swap.htm</code>), cuyos tests exigen swap total = -5,19 campo a campo; queda un símbolo con sufijo de broker</td></tr>
 
         </tbody>
 
